@@ -1,0 +1,155 @@
+.add-relation-modal {
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.add-relation-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.add-relation-modal__header .modal-card__title {
+  margin: 0;
+}
+
+.add-relation-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.add-relation-modal__close:hover {
+  background: color-mix(in srgb, var(--navy) 6%, #fff);
+  color: var(--navy);
+}
+
+.add-relation-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.add-relation-modal__hint {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+
+.add-relation-modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-fields-gap);
+}
+
+.add-relation-modal__client-select {
+  margin-top: 0.5rem;
+}
+
+.add-relation-modal__selected {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.add-relation-modal__selected strong {
+  color: var(--navy);
+}
+
+.add-relation-modal__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--form-fields-gap);
+}
+
+.add-relation-modal__error {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 720px) {
+  .add-relation-modal__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cp-role-fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.cp-role-fieldset__legend {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.cp-role-fieldset__hint {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-muted);
+}
+
+.cp-role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.cp-role-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.82rem;
+  color: var(--navy);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s, background 0.15s, font-weight 0.15s;
+}
+
+.cp-role-checkbox input {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--bronze);
+  cursor: pointer;
+}
+
+.cp-role-checkbox span {
+  line-height: 1.3;
+}
+
+.cp-role-checkbox--checked,
+.cp-role-checkbox:has(input:checked) {
+  border-color: var(--bronze);
+  background: color-mix(in srgb, var(--bronze) 8%, #fff);
+  font-weight: 600;
+}

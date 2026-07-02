@@ -1,0 +1,78 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-md);
+}
+
+.modal-card--form {
+  max-width: 460px;
+}
+
+.modal-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-fields-gap);
+}
+
+.modal-form .field span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.modal-form .field-input input {
+  width: 100%;
+}
+
+.modal-card > .cp-form-grid {
+  gap: var(--form-fields-gap);
+}
+
+.modal-card__title + .cp-form-grid,
+.modal-card__title + .modal-form {
+  margin-top: 0;
+}
+
+.cp-notes-download-error {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.82rem;
+}
+
+.modal-card--wide {
+  max-width: 620px;
+}
+
+.modal-card__title {
+  margin: 0 0 1.25rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  color: var(--navy);
+}
+
+.modal-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 0.25rem;
+}

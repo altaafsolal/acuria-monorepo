@@ -1,0 +1,10 @@
+#	Feature	What it is
+1
+Tasks / compliance to-do
+Per-client tasks (title, description, status, due date) — schema already in Baserow
+3
+KYC tracking
+DER / LdM / FCC status per client
+5
+Audit log
+Record and view sensitive actions per tenant

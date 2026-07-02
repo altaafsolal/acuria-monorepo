@@ -1,0 +1,80 @@
+.add-task-modal {
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.add-task-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.add-task-modal__header .modal-card__title {
+  margin: 0;
+}
+
+.add-task-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.add-task-modal__close:hover {
+  background: color-mix(in srgb, var(--navy) 6%, #fff);
+  color: var(--navy);
+}
+
+.add-task-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--form-fields-gap);
+}
+
+.add-task-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.add-task-modal__textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 0.75rem 0.85rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+}
+
+.add-task-modal__textarea:focus {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--navy) 10%, transparent);
+}
+
+.add-task-modal__error {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 720px) {
+  .add-task-modal__grid {
+    grid-template-columns: 1fr;
+  }
+}

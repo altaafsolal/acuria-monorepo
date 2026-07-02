@@ -1,0 +1,85 @@
+/* Legacy native select fallback (hidden where custom select is used) ── */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text);
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+select option {
+  color: var(--text);
+  background: #fff;
+}
+
+.field-input {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 0.85rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  color: #94a3b8;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field-input:focus-within {
+  border-color: var(--bronze);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bronze) 16%, transparent);
+}
+
+.field-input:has(> select)::after {
+  content: '';
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  background: var(--select-chevron) center / contain no-repeat;
+  pointer-events: none;
+  transition: background-image 0.15s;
+}
+
+.field-input:focus-within:has(> select)::after {
+  background-image: var(--select-chevron-focus);
+}
+
+.field-input input,
+.field-input select {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  padding: 0.75rem 0;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  background: transparent;
+}
+
+.field-input select {
+  width: 100%;
+  padding-right: 0.15rem;
+}
+
+.field-input--compact {
+  padding: 0 0.55rem;
+  border-radius: 8px;
+}
+
+.field-input--compact input,
+.field-input--compact select {
+  padding: 0.35rem 0;
+  font-size: 0.78rem;
+}
+
+.field-input--compact:has(> select)::after {
+  width: 0.85rem;
+  height: 0.85rem;
+}

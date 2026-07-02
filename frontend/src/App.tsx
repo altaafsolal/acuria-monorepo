@@ -1,0 +1,166 @@
+import { lazy, Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useApp } from './context/AppContext';
+import PageLoading from './components/ui/PageLoading';
+import Layout from './components/layout/Layout';
+import DashboardLayout from './components/layout/DashboardLayout';
+import ProtectedRoute from './components/routing/ProtectedRoute';
+import SuperAdminRoute from './components/routing/SuperAdminRoute';
+import TenantUserRoute from './components/routing/TenantUserRoute';
+
+const HomePage = lazy(() => import('./pages/public/HomePage'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const SetPasswordPage = lazy(() => import('./pages/auth/SetPasswordPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
+const AccueilPage = lazy(() => import('./pages/dashboard/AccueilPage'));
+const TenantsPage = lazy(() => import('./pages/tenants/TenantsPage'));
+const TenantUsersPage = lazy(() => import('./pages/tenants/TenantUsersPage'));
+const TenantClientsPage = lazy(() => import('./pages/tenants/TenantClientsPage'));
+const ClientsPage = lazy(() => import('./pages/clients/ClientsPage'));
+const ClientDetailPage = lazy(() => import('./pages/clients/ClientDetailPage'));
+const UsersPage = lazy(() => import('./pages/users/UsersPage'));
+const UserDetailPage = lazy(() => import('./pages/users/UserDetailPage'));
+const KycDerPage = lazy(() => import('./pages/kyc/KycDerPage'));
+const KycFccPage = lazy(() => import('./pages/kyc/KycFccPage'));
+const PlatformAuditPage = lazy(() => import('./pages/audit/PlatformAuditPage'));
+const TenantAuditPage = lazy(() => import('./pages/audit/TenantAuditPage'));
+
+function PageLoader() {
+  return <PageLoading fullScreen />;
+}
+
+function DashboardHome() {
+  const { isSuperAdmin } = useApp();
+  return isSuperAdmin ? <DashboardPage /> : <AccueilPage />;
+}
+
+export default function App() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<HomePage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="set-password" element={<SetPasswordPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+
+        <Route
+          element={(
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          )}
+        >
+          <Route path="dashboard" element={<DashboardHome />} />
+          <Route
+            path="dashboard/tenants"
+            element={(
+              <SuperAdminRoute>
+                <TenantsPage />
+              </SuperAdminRoute>
+            )}
+          />
+          <Route
+            path="dashboard/tenants/:tenantId/users"
+            element={(
+              <SuperAdminRoute>
+                <TenantUsersPage />
+              </SuperAdminRoute>
+            )}
+          />
+          <Route
+            path="dashboard/tenants/:tenantId/clients"
+            element={(
+              <SuperAdminRoute>
+                <TenantClientsPage />
+              </SuperAdminRoute>
+            )}
+          />
+          <Route
+            path="dashboard/clients"
+            element={(
+              <TenantUserRoute>
+                <ClientsPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/clients/new"
+            element={(
+              <TenantUserRoute>
+                <ClientDetailPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/clients/:clientId"
+            element={(
+              <TenantUserRoute>
+                <ClientDetailPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/kyc/der"
+            element={(
+              <TenantUserRoute>
+                <KycDerPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/kyc/fcc"
+            element={(
+              <TenantUserRoute>
+                <KycFccPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/platform/audit"
+            element={(
+              <SuperAdminRoute>
+                <PlatformAuditPage />
+              </SuperAdminRoute>
+            )}
+          />
+          <Route
+            path="dashboard/audit"
+            element={(
+              <TenantUserRoute adminOnly>
+                <TenantAuditPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/users"
+            element={(
+              <TenantUserRoute adminOnly>
+                <UsersPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/users/new"
+            element={(
+              <TenantUserRoute adminOnly>
+                <UserDetailPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/users/:userId"
+            element={(
+              <TenantUserRoute adminOnly>
+                <UserDetailPage />
+              </TenantUserRoute>
+            )}
+          />
+        </Route>
+      </Routes>
+    </Suspense>
+  );
+}

@@ -1,0 +1,27 @@
+import { Router } from 'express';
+import { authenticate, requireRole } from '../../middleware/index.js';
+import { auditService } from '../../services/index.js';
+import { asyncHandler, requireTenant } from '../../utils/index.js';
+
+const router = Router({ mergeParams: true });
+
+router.use(authenticate, requireRole('tenant_admin'));
+
+router.get('/', asyncHandler(async (req, res) => {
+  const tenantId = requireTenant(req);
+  const page = Number(req.query.page) || 1;
+  const size = Number(req.query.pageSize) || 50;
+  const userId = typeof req.query.userId === 'string' ? req.query.userId : undefined;
+  const search = typeof req.query.search === 'string' ? req.query.search : undefined;
+
+  const result = await auditService.listTenantAudit(tenantId, {
+    page,
+    size,
+    userId: userId || undefined,
+    search,
+  });
+
+  res.json(result);
+}));
+
+export default router;

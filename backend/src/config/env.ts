@@ -1,0 +1,121 @@
+import 'dotenv/config';
+
+export interface Env {
+  port: number;
+  nodeEnv: string;
+  isProduction: boolean;
+  appUrl: string;
+  jwt: {
+    accessSecret: string;
+    refreshSecret: string;
+    accessExpiresIn: string;
+    refreshExpiresIn: string;
+  };
+  corsOrigins: string[];
+  superAdmin: {
+    email: string;
+    password: string;
+    name: string;
+  };
+  baserow: {
+    apiUrl: string;
+    databaseToken: string;
+    mainDatabaseId: string;
+    workspaceId: string;
+    usersTableId: string;
+    tenantsTableId: string;
+    email: string;
+    password: string;
+  };
+  make: {
+    webhookDer: string;
+    webhookLdm: string;
+    webhookPreview: string;
+    webhookFcc: string;
+    webhookPasswordSet: string;
+    webhookOtp: string;
+  };
+  airtable: {
+    pat: string;
+    baseId: string;
+    tableClients: string;
+    tableRelations: string;
+    tableKycDocs: string;
+    tableGestionnaires: string;
+    tableNotes: string;
+    tableTasks: string;
+  };
+}
+
+export const env: Env = {
+  port: Number(process.env.PORT) || 3001,
+  nodeEnv: process.env.NODE_ENV || 'development',
+  isProduction: process.env.NODE_ENV === 'production',
+
+  appUrl: process.env.APP_URL
+    || (process.env.CORS_ORIGINS || 'http://localhost:4001').split(',')[0]?.trim()
+    || 'http://localhost:4001',
+
+  jwt: {
+    accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
+    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  },
+
+  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:4001')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+
+  superAdmin: {
+    email: (process.env.SUPER_ADMIN_EMAIL || 'admin@acuria.partners').toLowerCase(),
+    password: process.env.SUPER_ADMIN_PASSWORD || 'admin123',
+    name: process.env.SUPER_ADMIN_NAME || 'Super Admin',
+  },
+
+  baserow: {
+    apiUrl: (process.env.BASEROW_API_URL || 'https://api.baserow.io').replace(/\/$/, ''),
+    databaseToken: process.env.BASEROW_DATABASE_TOKEN
+      || process.env.BASEROW_MASTER_TOKEN
+      || '',
+    mainDatabaseId: process.env.BASEROW_MAIN_DATABASE_ID || '473304',
+    workspaceId: process.env.BASEROW_WORKSPACE_ID || '',
+    usersTableId: process.env.BASEROW_USERS_TABLE_ID || '',
+    tenantsTableId: process.env.BASEROW_TENANTS_TABLE_ID || '',
+    email: process.env.BASEROW_EMAIL || '',
+    password: process.env.BASEROW_PASSWORD || '',
+  },
+
+  make: {
+    webhookDer: process.env.MAKE_WEBHOOK_DER || 'https://hook.eu1.make.com/6cnprecwsm5gsljga1r826jtfvbtyohh',
+    webhookLdm: process.env.MAKE_WEBHOOK_LDM || 'https://hook.eu1.make.com/u3btpbbetbrfvazqpgs5xwh2baoh4lyc',
+    webhookPreview: process.env.MAKE_WEBHOOK_PREVIEW || 'https://hook.eu1.make.com/cn4pcd3pjprf8mzezpgp60lpp72tg0n0',
+    webhookFcc: process.env.MAKE_WEBHOOK_FCC || 'https://hook.eu1.make.com/noydem1a5c5z4d4vmql35183hw2kyjvv',
+    webhookPasswordSet: process.env.MAKE_WEBHOOK_PASSWORD_SET || '',
+    webhookOtp: process.env.MAKE_WEBHOOK_OTP || '',
+  },
+
+  airtable: {
+    pat: process.env.AIRTABLE_PAT || '',
+    baseId: process.env.AIRTABLE_BASE_ID || 'appDfjYwgxa6eTrRD',
+    tableClients: process.env.AIRTABLE_TABLE_CLIENTS || 'NM - Clients',
+    tableRelations: process.env.AIRTABLE_TABLE_RELATIONS || 'NM - Relation clients',
+    tableKycDocs: process.env.AIRTABLE_TABLE_KYC_DOCS || 'NM - Documents KYC',
+    tableGestionnaires: process.env.AIRTABLE_TABLE_GESTIONNAIRES || 'tblatPVdokDBqRUjh',
+    tableNotes: process.env.AIRTABLE_TABLE_NOTES || 'tblHFssvCt0EMZfsa',
+    tableTasks: process.env.AIRTABLE_TABLE_TASKS || 'tblknqykhXNfQzT9P',
+  },
+};
+
+export function isBaserowConfigured(): boolean {
+  return Boolean(env.baserow.databaseToken && env.baserow.mainDatabaseId);
+}
+
+export function isBaserowMigrateConfigured(): boolean {
+  return Boolean(
+    env.baserow.email
+    && env.baserow.password
+    && env.baserow.mainDatabaseId,
+  );
+}

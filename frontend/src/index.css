@@ -1,0 +1,14 @@
+/* Global styles — component/page CSS is co-located and imported from TSX */
+@import './styles/base/tokens.css';
+@import './styles/base/reset.css';
+@import './styles/shared/field.css';
+@import './styles/shared/field-input.css';
+@import './styles/shared/feedback.css';
+@import './styles/shared/buttons.css';
+@import './styles/shared/tenant-form.css';
+@import './styles/shared/empty-state.css';
+@import './styles/shared/data-panel.css';
+@import './styles/shared/badges.css';
+@import './styles/shared/animations.css';
+@import './styles/shared/breadcrumb.css';
+@import './styles/responsive.css';

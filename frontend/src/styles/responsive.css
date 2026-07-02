@@ -1,0 +1,85 @@
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-panel--brand {
+    min-height: auto;
+    padding: 2.5rem 2rem;
+  }
+
+  .login-panel-footer {
+    display: none;
+  }
+
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .dashboard-sidebar {
+    height: auto;
+    flex-shrink: 0;
+    gap: 1rem;
+  }
+
+  .dashboard-nav {
+    margin-top: 0;
+  }
+
+  .dashboard-user {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .crm-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stats-row--4,
+  .stats-row--5 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .todo-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .client-panel {
+    width: 100%;
+  }
+
+  .cp-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header--row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tenant-form__fields,
+  .tenant-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-form-grid,
+  .add-note-modal__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-tasks-composer__row,
+  .cp-relations-composer__row,
+  .cp-role-grid {
+    grid-template-columns: 1fr;
+  }
+}

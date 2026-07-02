@@ -1,0 +1,50 @@
+import type { Status } from './common';
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  status: Status;
+  createdAt: string | null;
+  updatedAt: string | null;
+  userCount?: number;
+  clientCount?: number;
+  brandingName?: string | null;
+  brandingOrias?: string | null;
+  brandingAccent?: string | null;
+  workspaceId?: string | null;
+  databaseId?: string | null;
+  databaseToken?: string | null;
+}
+
+export interface TenantsResponse {
+  tenants: Tenant[];
+}
+
+export interface TenantResponse {
+  tenant: Tenant;
+}
+
+export interface CreateTenantInput {
+  name: string;
+  slug: string;
+}
+
+export interface UpdateTenantBrandingInput {
+  brandingName?: string;
+  brandingOrias?: string;
+  brandingAccent?: string;
+  status?: 'active' | 'inactive';
+}
+
+export interface PlatformStats {
+  tenants: import('./common').CountStats;
+  users: import('./common').CountStats;
+  clients: import('./common').CountStats;
+}
+
+export interface TenantStats extends PlatformStats {
+  tenant: Tenant;
+}
+
+export type DashboardStats = PlatformStats | TenantStats;

@@ -1,0 +1,15 @@
+export * as api from './api.js';
+export * as registry from './registry.js';
+export * as usersRepo from './users.js';
+export * as tenantsRepo from './tenants.js';
+export * as tenantContext from './tenant-context.js';
+export * as tenantDatabase from './tenant-database.js';
+export * as tenantTables from './tenant-tables.js';
+export * as clientMapper from './client-mapper.js';
+export * as clientsRepo from './clients.js';
+export * as gestionnairesRepo from './gestionnaires.js';
+export * as kycDocsRepo from './kyc-documents.js';
+export * as notesRepo from './notes.js';
+export * as relationsRepo from './relations.js';
+export * as tasksRepo from './tasks.js';
+export * as auditLogsRepo from './audit-logs.js';

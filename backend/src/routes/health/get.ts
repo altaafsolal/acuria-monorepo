@@ -1,0 +1,19 @@
+import { Router } from 'express';
+import { baserow } from '../../services/index.js';
+import { asyncHandler, toIsoString } from '../../utils/index.js';
+
+const { api } = baserow;
+
+const router = Router({ mergeParams: true });
+
+router.get('/', asyncHandler(async (_req, res) => {
+  const connection = await api.testConnection();
+  res.json({
+    status: connection.connected ? 'ok' : 'degraded',
+    service: 'acuria-backend',
+    timestamp: toIsoString(),
+    baserow: connection,
+  });
+}));
+
+export default router;
