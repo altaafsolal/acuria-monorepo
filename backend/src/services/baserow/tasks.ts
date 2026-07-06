@@ -1,6 +1,6 @@
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
 import { normalizeDateForBaserow, pickFieldValue, pickLinkRowId, pickTextValue } from '../../utils/baserow.js';
-import { createRow, deleteRow, listAllRows, updateRow } from './api.js';
+import { createRow, deleteRow, getRow, listAllRows, updateRow } from './api.js';
 import { resolveTenantDbContext } from './tenant-context.js';
 import { resolveTenantTableId } from './tenant-tables.js';
 import type { BaserowRow, DbTask, PublicTask } from '../../types/domain.js';
@@ -40,9 +40,9 @@ export function toPublicTask(task: DbTask): PublicTask {
 async function listDbTasksByClient(tenantId: string, clientId: string): Promise<DbTask[]> {
   const ctx = await resolveTenantDbContext(tenantId);
   const tableId = await resolveTenantTableId(tenantId, 'tasks');
-  return (await listAllRows(tableId, {}, ctx))
-    .map(mapRow)
-    .filter((t) => t.client_id === clientId);
+  return (await listAllRows(tableId, {
+    filters: { filter_type: 'AND', filters: [{ type: 'link_row_has', field: F.clientId, value: clientId }] },
+  }, ctx)).map(mapRow);
 }
 
 export async function listTasksByClient(tenantId: string, clientId: string): Promise<PublicTask[]> {
@@ -53,12 +53,23 @@ export async function listDbTasksByClientId(tenantId: string, clientId: string):
   return listDbTasksByClient(tenantId, clientId);
 }
 
+export async function listBothTasksByClient(
+  tenantId: string,
+  clientId: string,
+): Promise<{ tasks: PublicTask[]; dbTasks: DbTask[] }> {
+  const dbTasks = await listDbTasksByClient(tenantId, clientId);
+  return { tasks: dbTasks.map(toPublicTask), dbTasks };
+}
+
 export async function getTaskById(tenantId: string, taskId: string): Promise<DbTask | null> {
-  const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'tasks');
-  const rows = await listAllRows(tableId, {}, ctx);
-  const row = rows.find((r) => String(r.id) === taskId);
-  return row ? mapRow(row) : null;
+  try {
+    const ctx = await resolveTenantDbContext(tenantId);
+    const tableId = await resolveTenantTableId(tenantId, 'tasks');
+    const row = await getRow(tableId, taskId, ctx);
+    return mapRow(row);
+  } catch {
+    return null;
+  }
 }
 
 export async function createTask(

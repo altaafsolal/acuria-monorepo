@@ -49,9 +49,11 @@ function computeFccStats(clients: DbClient[]): AccueilStats['fcc'] {
 }
 
 export async function getAccueilData(tenantId: string): Promise<AccueilResponse> {
-  const allClients = await clientsRepo.listClientsByTenantId(tenantId);
+  const [allClients, kycDocs] = await Promise.all([
+    clientsRepo.listClientsByTenantId(tenantId),
+    kycDocsRepo.listAllKycDocuments(tenantId),
+  ]);
   const clients = excludeArchived(allClients);
-  const kycDocs = await kycDocsRepo.listAllKycDocuments(tenantId);
 
   const stats: AccueilStats = {
     crm: computeCrmStats(clients),

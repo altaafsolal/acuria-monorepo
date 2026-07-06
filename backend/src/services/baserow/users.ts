@@ -89,10 +89,9 @@ export async function listUsers(): Promise<DbUser[]> {
 
 export async function listUsersByTenantId(tenantId: string): Promise<DbUser[]> {
   const tableId = await getUsersTableId();
-  const rows = await listAllRows(tableId);
-  return rows
-    .filter((item) => pickLinkRowId(item[F.tenantId]) === String(tenantId))
-    .map(mapUserRow);
+  return (await listAllRows(tableId, {
+    filters: { filter_type: 'AND', filters: [{ type: 'link_row_has', field: F.tenantId, value: tenantId }] },
+  })).map(mapUserRow);
 }
 
 export async function createUser(fields: CreateUserInput): Promise<DbUser> {

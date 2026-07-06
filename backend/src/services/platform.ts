@@ -77,16 +77,13 @@ export async function getPlatformStats(): Promise<{
 }> {
   const tenants = await tenantsRepo.listTenants();
   const users = usersRepo.excludeSuperAdmins(await usersRepo.listUsers());
-  const allClients: DbClient[] = [];
 
-  for (const tenant of tenants) {
-    try {
-      const clients = await clientsRepo.listClientsByTenantId(tenant.id);
-      allClients.push(...clients);
-    } catch {
-      // tenant tables not provisioned yet
-    }
-  }
+  const clientArrays = await Promise.all(
+    tenants.map((tenant) =>
+      clientsRepo.listClientsByTenantId(tenant.id).catch(() => [] as DbClient[]),
+    ),
+  );
+  const allClients = clientArrays.flat();
 
   return {
     tenants: countByStatus(tenants),

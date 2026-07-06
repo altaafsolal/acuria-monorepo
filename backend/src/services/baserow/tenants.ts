@@ -4,7 +4,7 @@ import {
   fetchBaserowFileDataUrl,
   invalidateBaserowFileDataUrlCache,
 } from '../../utils/baserow-file.js';
-import { createRow, listAllRows, updateRow, uploadUserFile } from './api.js';
+import { createRow, getRow, listAllRows, updateRow, uploadUserFile } from './api.js';
 import { getTenantsTableId } from './registry.js';
 import type {
   BaserowRow,
@@ -78,9 +78,12 @@ export function toPublicTenant(
 }
 
 export async function findTenantById(id: string): Promise<TenantRecord | null> {
-  const rows = await listAllRows(await getTenantsTableId());
-  const row = rows.find((item) => String(item.id) === String(id));
-  return row ? mapTenantRow(row) : null;
+  try {
+    const row = await getRow(await getTenantsTableId(), id);
+    return mapTenantRow(row);
+  } catch {
+    return null;
+  }
 }
 
 export async function findTenantBySlug(slug: string): Promise<TenantRecord | null> {

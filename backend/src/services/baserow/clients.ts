@@ -1,6 +1,6 @@
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
 import { pickTextValue } from '../../utils/baserow.js';
-import { createRow, deleteRow, getRow, listAllRows, updateRow } from './api.js';
+import { createRow, deleteRow, getRow, listAllRows, listRowsPage, updateRow } from './api.js';
 import { resolveTenantDbContext } from './tenant-context.js';
 import {
   clientInputToBaserow,
@@ -76,7 +76,10 @@ export async function deleteClient(tenantId: string, clientId: string): Promise<
 }
 
 export async function countClientsByTenantId(tenantId: string): Promise<number> {
-  return (await listClientsByTenantId(tenantId)).length;
+  const ctx = await resolveTenantDbContext(tenantId);
+  const tableId = await resolveTenantTableId(tenantId, 'clients');
+  const { count } = await listRowsPage(tableId, { size: 1 }, ctx);
+  return count;
 }
 
 export async function patchClientKycFields(

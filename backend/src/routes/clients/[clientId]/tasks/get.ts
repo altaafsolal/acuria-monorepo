@@ -14,10 +14,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const tenantId = requireTenant(req);
   const clientId = reqParam(req, 'clientId');
   const user = req.user!;
-  const [tasks, dbTasks] = await Promise.all([
-    tasksRepo.listTasksByClient(tenantId, clientId),
-    tasksRepo.listDbTasksByClientId(tenantId, clientId),
-  ]);
+  const { tasks, dbTasks } = await tasksRepo.listBothTasksByClient(tenantId, clientId);
   const filtered = await filterTasksForUser(tenantId, tasks, dbTasks, {
     userId: user.id,
     userName: user.name,

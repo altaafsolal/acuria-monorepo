@@ -1,6 +1,6 @@
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
 import { normalizeDateForBaserow, pickFieldValue, pickLinkRowId, pickTextValue } from '../../utils/baserow.js';
-import { createRow, listAllRows, updateRow } from './api.js';
+import { createRow, getRow, listAllRows, updateRow } from './api.js';
 import { resolveTenantDbContext } from './tenant-context.js';
 import { resolveTenantTableId } from './tenant-tables.js';
 import type { BaserowRow, DbKycDocument, PublicKycDocument } from '../../types/domain.js';
@@ -39,10 +39,9 @@ export async function listKycDocumentsByClient(
 ): Promise<PublicKycDocument[]> {
   const ctx = await resolveTenantDbContext(tenantId);
   const tableId = await resolveTenantTableId(tenantId, 'kyc_documents');
-  return (await listAllRows(tableId, {}, ctx))
-    .map(mapRow)
-    .filter((d) => d.client_id === clientId)
-    .map(toPublicKycDocument);
+  return (await listAllRows(tableId, {
+    filters: { filter_type: 'AND', filters: [{ type: 'link_row_has', field: F.clientId, value: clientId }] },
+  }, ctx)).map(mapRow).map(toPublicKycDocument);
 }
 
 export async function listAllKycDocuments(tenantId: string): Promise<DbKycDocument[]> {
@@ -55,11 +54,14 @@ export async function getKycDocumentById(
   tenantId: string,
   documentId: string,
 ): Promise<DbKycDocument | null> {
-  const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'kyc_documents');
-  const rows = await listAllRows(tableId, {}, ctx);
-  const row = rows.find((r) => String(r.id) === documentId);
-  return row ? mapRow(row) : null;
+  try {
+    const ctx = await resolveTenantDbContext(tenantId);
+    const tableId = await resolveTenantTableId(tenantId, 'kyc_documents');
+    const row = await getRow(tableId, documentId, ctx);
+    return mapRow(row);
+  } catch {
+    return null;
+  }
 }
 
 export async function createKycDocument(

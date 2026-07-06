@@ -1,8 +1,21 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from '../utils/index.js';
 import { authService } from '../services/index.js';
+import type { DbUser } from '../types/domain.js';
 
 const { findUserById } = authService;
+
+const USER_CACHE_TTL_MS = 30_000;
+interface CachedUser { user: DbUser; expiresAt: number; }
+const userCache = new Map<string, CachedUser>();
+
+async function getCachedUser(userId: string): Promise<DbUser | null> {
+  const cached = userCache.get(userId);
+  if (cached && Date.now() < cached.expiresAt) return cached.user;
+  const user = await findUserById(userId);
+  if (user) userCache.set(userId, { user, expiresAt: Date.now() + USER_CACHE_TTL_MS });
+  return user;
+}
 
 export async function authenticate(
   req: Request,
@@ -17,7 +30,7 @@ export async function authenticate(
 
   try {
     const payload = verifyAccessToken(header.slice(7));
-    const user = await findUserById(payload.user_id);
+    const user = await getCachedUser(payload.user_id);
 
     if (!user) {
       res.status(401).json({ error: "User not found" });

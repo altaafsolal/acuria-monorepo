@@ -19,19 +19,24 @@ export interface BaserowDbContext {
   databaseToken: string;
 }
 
-function createDatabaseClient(ctx?: BaserowDbContext): AxiosInstance {
+const dbClientCache = new Map<string, AxiosInstance>();
+
+function getDatabaseClient(ctx?: BaserowDbContext): AxiosInstance {
   const token = ctx?.databaseToken ?? env.baserow.databaseToken;
-  if (!token) {
-    throw new Error('Baserow database token is required');
+  if (!token) throw new Error('Baserow database token is required');
+  let client = dbClientCache.get(token);
+  if (!client) {
+    client = axios.create({
+      baseURL: `${env.baserow.apiUrl}/api`,
+      headers: {
+        Authorization: `Token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 20000,
+    });
+    dbClientCache.set(token, client);
   }
-  return axios.create({
-    baseURL: `${env.baserow.apiUrl}/api`,
-    headers: {
-      Authorization: `Token ${token}`,
-      'Content-Type': 'application/json',
-    },
-    timeout: 20000,
-  });
+  return client;
 }
 
 async function createAdminClient(): Promise<AxiosInstance> {
@@ -152,7 +157,7 @@ export async function listTableFields(
   tableId: string | number,
   ctx?: BaserowDbContext,
 ): Promise<BaserowField[]> {
-  const { data } = await createDatabaseClient(ctx).get<BaserowField[]>(
+  const { data } = await getDatabaseClient(ctx).get<BaserowField[]>(
     `/database/fields/table/${tableId}/`,
     { params: { user_field_names: true } },
   );
@@ -212,7 +217,7 @@ export async function listRows(
   if (orderBy) params.order_by = orderBy;
   if (search) params.search = search;
 
-  const { data } = await createDatabaseClient(ctx).get<BaserowListResponse<BaserowRow>>(
+  const { data } = await getDatabaseClient(ctx).get<BaserowListResponse<BaserowRow>>(
     `/database/rows/table/${tableId}/`,
     { params },
   );
@@ -236,18 +241,22 @@ export async function listAllRows(
   options: Omit<ListRowsOptions, 'page'> = {},
   ctx?: BaserowDbContext,
 ): Promise<BaserowRow[]> {
-  const rows: BaserowRow[] = [];
-  let page = 1;
-  let hasMore = true;
+  const pageSize = options.size ?? 200;
+  const first = await listRows(tableId, { ...options, size: pageSize, page: 1 }, ctx);
+  if (!first.next) return first.results;
 
-  while (hasMore) {
-    const data = await listRows(tableId, { ...options, page }, ctx);
-    rows.push(...data.results);
-    hasMore = data.next !== null;
-    page += 1;
-  }
+  const totalCount = first.count ?? first.results.length;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  if (totalPages <= 1) return first.results;
 
-  return rows;
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) =>
+      listRows(tableId, { ...options, size: pageSize, page: i + 2 }, ctx)
+        .then((d) => d.results),
+    ),
+  );
+
+  return [first.results, ...rest].flat();
 }
 
 export async function getRow(
@@ -255,7 +264,7 @@ export async function getRow(
   rowId: string | number,
   ctx?: BaserowDbContext,
 ): Promise<BaserowRow> {
-  const { data } = await createDatabaseClient(ctx).get<BaserowRow>(
+  const { data } = await getDatabaseClient(ctx).get<BaserowRow>(
     `/database/rows/table/${tableId}/${rowId}/`,
     { params: { user_field_names: true } },
   );
@@ -268,7 +277,7 @@ export async function createRow(
   ctx?: BaserowDbContext,
 ): Promise<BaserowRow> {
   try {
-    const { data } = await createDatabaseClient(ctx).post<BaserowRow>(
+    const { data } = await getDatabaseClient(ctx).post<BaserowRow>(
       `/database/rows/table/${tableId}/`,
       fields,
       { params: { user_field_names: true } },
@@ -286,7 +295,7 @@ export async function updateRow(
   ctx?: BaserowDbContext,
 ): Promise<BaserowRow> {
   try {
-    const { data } = await createDatabaseClient(ctx).patch<BaserowRow>(
+    const { data } = await getDatabaseClient(ctx).patch<BaserowRow>(
       `/database/rows/table/${tableId}/${rowId}/`,
       fields,
       { params: { user_field_names: true } },
@@ -310,7 +319,7 @@ export async function deleteRow(
   rowId: string | number,
   ctx?: BaserowDbContext,
 ): Promise<void> {
-  await createDatabaseClient(ctx).delete(`/database/rows/table/${tableId}/${rowId}/`);
+  await getDatabaseClient(ctx).delete(`/database/rows/table/${tableId}/${rowId}/`);
 }
 
 export async function batchDeleteRows(
@@ -319,7 +328,7 @@ export async function batchDeleteRows(
   ctx?: BaserowDbContext,
 ): Promise<void> {
   if (rowIds.length === 0) return;
-  await createDatabaseClient(ctx).post(
+  await getDatabaseClient(ctx).post(
     `/database/rows/table/${tableId}/batch-delete/`,
     { items: rowIds.map(Number) },
   );

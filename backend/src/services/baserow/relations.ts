@@ -25,8 +25,10 @@ function mapRow(row: BaserowRow): DbRelation {
 }
 
 async function enrichRelation(tenantId: string, rel: DbRelation): Promise<PublicRelation> {
-  const clientA = rel.client_a_id ? await clientsRepo.getClientById(tenantId, rel.client_a_id) : null;
-  const clientB = rel.client_b_id ? await clientsRepo.getClientById(tenantId, rel.client_b_id) : null;
+  const [clientA, clientB] = await Promise.all([
+    rel.client_a_id ? clientsRepo.getClientById(tenantId, rel.client_a_id) : Promise.resolve(null),
+    rel.client_b_id ? clientsRepo.getClientById(tenantId, rel.client_b_id) : Promise.resolve(null),
+  ]);
   return {
     id: rel.id,
     clientAId: rel.client_a_id,
@@ -42,9 +44,15 @@ async function enrichRelation(tenantId: string, rel: DbRelation): Promise<Public
 export async function listRelationsByClient(tenantId: string, clientId: string): Promise<PublicRelation[]> {
   const ctx = await resolveTenantDbContext(tenantId);
   const tableId = await resolveTenantTableId(tenantId, 'relations');
-  const rows = (await listAllRows(tableId, {}, ctx))
-    .map(mapRow)
-    .filter((r) => r.client_a_id === clientId || r.client_b_id === clientId);
+  const rows = (await listAllRows(tableId, {
+    filters: {
+      filter_type: 'OR',
+      filters: [
+        { type: 'link_row_has', field: F.clientAId, value: clientId },
+        { type: 'link_row_has', field: F.clientBId, value: clientId },
+      ],
+    },
+  }, ctx)).map(mapRow);
   return Promise.all(rows.map((r) => enrichRelation(tenantId, r)));
 }
 

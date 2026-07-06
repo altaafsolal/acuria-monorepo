@@ -44,10 +44,9 @@ export function toPublicNote(note: DbNote): PublicNote {
 export async function listNotesByClient(tenantId: string, clientId: string): Promise<PublicNote[]> {
   const ctx = await resolveTenantDbContext(tenantId);
   const tableId = await resolveTenantTableId(tenantId, 'notes');
-  return (await listAllRows(tableId, {}, ctx))
-    .map(mapRow)
-    .filter((n) => n.client_id === clientId)
-    .map(toPublicNote);
+  return (await listAllRows(tableId, {
+    filters: { filter_type: 'AND', filters: [{ type: 'link_row_has', field: F.clientId, value: clientId }] },
+  }, ctx)).map(mapRow).map(toPublicNote);
 }
 
 export async function createNote(
