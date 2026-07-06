@@ -96,25 +96,25 @@ export default function AddRelationModal({
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-card modal-card--wide modal-card--form add-relation-modal"
+        className="modal-card modal-card--wide modal-card--form modal-card--shell add-relation-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-relation-modal-title"
       >
-        <div className="add-relation-modal__header">
+        <header className="modal-card__header">
           <h2 id="add-relation-modal-title" className="modal-card__title">Nouvelle relation</h2>
           <button
             type="button"
-            className="add-relation-modal__close"
+            className="modal-card__close"
             onClick={onClose}
             aria-label="Fermer"
           >
             <FiX aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        <div className="add-relation-modal__body">
+        <div className="modal-card__body">
           <p className="add-relation-modal__hint">
             Liez ce client à un autre client du cabinet (conjoint, associé, bénéficiaire effectif…).
           </p>
@@ -197,7 +197,9 @@ export default function AddRelationModal({
           {error && (
             <p className="add-relation-modal__error" role="alert">{error}</p>
           )}
+        </div>
 
+        <footer className="modal-card__footer">
           <div className="modal-card__actions">
             <button type="button" className="btn-secondary" onClick={onClose} disabled={isSaving}>
               Annuler
@@ -206,7 +208,7 @@ export default function AddRelationModal({
               {isSaving ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </div>
-        </div>
+        </footer>
       </div>
     </div>,
     document.body,

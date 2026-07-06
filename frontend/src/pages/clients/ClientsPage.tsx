@@ -1,11 +1,10 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState } from 'react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import './crm.css';
+import AddClientModal from '../../components/clients/AddClientModal';
 import ClientPanel from '../../components/clients/ClientPanel';
 import LoadingPopup from '../../components/ui/LoadingPopup';
-import Modal from '../../components/ui/Modal';
 import PageLoading from '../../components/ui/PageLoading';
-import Select from '../../components/ui/Select';
 import {
   useAccueil,
   useClients,
@@ -36,8 +35,6 @@ export default function ClientsPage() {
   const [statutFilter, setStatutFilter] = useState('');
   const [panelClientId, setPanelClientId] = useState<string | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
-  const [newClientName, setNewClientName] = useState('');
-  const [newClientType, setNewClientType] = useState<'PP' | 'PM'>('PP');
 
   const stats = useMemo(() => {
     const active = clients.filter((c) => c.statutClient !== 'Archivé');
@@ -68,26 +65,16 @@ export default function ClientsPage() {
     queryClient.invalidateQueries({ queryKey: queryKeys.accueil.data });
   };
 
-  const handleCreateClient = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newClientName.trim()) return;
+  const handleCreateClient = async (input: CreateClientInput) => {
     const confirmed = await confirm({
       title: 'Créer le client',
-      message: `Créer le client « ${newClientName.trim()} » ?`,
+      message: `Créer le client « ${input.name} » ?`,
       confirmLabel: 'Créer',
     });
     if (!confirmed) return;
-    const input: CreateClientInput = {
-      name: newClientName.trim(),
-      clientType: newClientType,
-      statutClient: 'Prospect',
-      status: 'prospect',
-      kycStatus: 'pending',
-    };
     createClient.mutate(input, {
       onSuccess: (data) => {
         setShowNewModal(false);
-        setNewClientName('');
         setPanelClientId(data.client.id);
       },
     });
@@ -254,39 +241,12 @@ export default function ClientsPage() {
         <ClientPanel clientId={panelClientId} onClose={() => setPanelClientId(null)} />
       )}
 
-      <Modal open={showNewModal} onClose={() => setShowNewModal(false)} className="modal-card--form">
-        <h2 className="modal-card__title">Nouveau client</h2>
-        <form className="modal-form" onSubmit={handleCreateClient}>
-          <div className="modal-form__fields">
-            <label className="field field--full">
-              <span>Nom / Dénomination</span>
-              <div className="field-input">
-                <input
-                  value={newClientName}
-                  onChange={(e) => setNewClientName(e.target.value)}
-                  required
-                  autoFocus
-                />
-              </div>
-            </label>
-            <label className="field field--full">
-              <span>Type</span>
-              <Select value={newClientType} onChange={(e) => setNewClientType(e.target.value as 'PP' | 'PM')}>
-                <option value="PP">Personne physique</option>
-                <option value="PM">Personne morale</option>
-              </Select>
-            </label>
-          </div>
-          <div className="modal-card__actions">
-            <button type="button" className="btn-secondary" onClick={() => setShowNewModal(false)}>
-              Annuler
-            </button>
-            <button type="submit" className="btn-bronze" disabled={createClient.isPending}>
-              {createClient.isPending ? 'Création…' : 'Créer'}
-            </button>
-          </div>
-        </form>
-      </Modal>
+      <AddClientModal
+        open={showNewModal}
+        isSaving={createClient.isPending}
+        onClose={() => setShowNewModal(false)}
+        onSubmit={handleCreateClient}
+      />
     </div>
   );
 }

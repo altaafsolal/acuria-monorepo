@@ -122,25 +122,25 @@ export default function AddNoteModal({
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-card modal-card--wide modal-card--form add-note-modal"
+        className="modal-card modal-card--wide modal-card--form modal-card--shell add-note-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-note-modal-title"
       >
-        <div className="add-note-modal__header">
+        <header className="modal-card__header">
           <h2 id="add-note-modal-title" className="modal-card__title">Nouvelle note</h2>
           <button
             type="button"
-            className="add-note-modal__close"
+            className="modal-card__close"
             onClick={onClose}
             aria-label="Fermer"
           >
             <FiX aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        <div className="add-note-modal__body">
+        <div className="modal-card__body">
           <div className="add-note-modal__grid">
             <label className="cp-field">
               <span>Date <span className="field-required">*</span></span>
@@ -227,7 +227,9 @@ export default function AddNoteModal({
           {error && (
             <p className="add-note-modal__error" role="alert">{error}</p>
           )}
+        </div>
 
+        <footer className="modal-card__footer">
           <div className="modal-card__actions">
             <button type="button" className="btn-secondary" onClick={onClose} disabled={isSaving}>
               Annuler
@@ -236,7 +238,7 @@ export default function AddNoteModal({
               {isSaving ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </div>
-        </div>
+        </footer>
       </div>
     </div>,
     document.body,

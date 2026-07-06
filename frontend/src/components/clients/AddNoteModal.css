@@ -1,49 +1,11 @@
 .add-note-modal {
   max-width: 620px;
-  max-height: 88vh;
-  overflow-y: auto;
-}
-
-.add-note-modal__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-.add-note-modal__header .modal-card__title {
-  margin: 0;
-}
-
-.add-note-modal__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-}
-
-.add-note-modal__close:hover {
-  background: color-mix(in srgb, var(--navy) 6%, #fff);
-  color: var(--navy);
 }
 
 .add-note-modal__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--form-fields-gap);
-}
-
-.add-note-modal__body {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
 }
 
 .add-note-modal__textarea {

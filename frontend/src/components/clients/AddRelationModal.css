@@ -1,43 +1,5 @@
 .add-relation-modal {
   max-width: 520px;
-  max-height: 88vh;
-  overflow-y: auto;
-}
-
-.add-relation-modal__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.add-relation-modal__header .modal-card__title {
-  margin: 0;
-}
-
-.add-relation-modal__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-}
-
-.add-relation-modal__close:hover {
-  background: color-mix(in srgb, var(--navy) 6%, #fff);
-  color: var(--navy);
-}
-
-.add-relation-modal__body {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
 }
 
 .add-relation-modal__hint {

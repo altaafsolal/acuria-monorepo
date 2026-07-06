@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FiRefreshCw } from 'react-icons/fi';
+import { FiRefreshCw, FiX } from 'react-icons/fi';
 import '../clients/crm.css';
 import ClientPanel from '../../components/clients/ClientPanel';
 import Modal from '../../components/ui/Modal';
@@ -257,48 +257,65 @@ export default function KycDerPage() {
       <Modal
         open={Boolean(modalClient)}
         onClose={() => setModalClient(null)}
-        className="modal-card--wide modal-card--form"
+        className="modal-card--wide modal-card--form modal-card--shell"
+        titleId="kyc-der-modal-title"
       >
         {modalClient && (
           <>
-            <h2 className="modal-card__title">DER / LdM — {modalClient.name}</h2>
-            <div className="cp-form-grid">
-              <label className="cp-field">
-                <span>Signataire</span>
-                <Select value={signataireName} onChange={(e) => handleSignataireChange(e.target.value)}>
-                  {signataires.map((s) => (
-                    <option key={s.name} value={s.name}>{s.name}</option>
-                  ))}
-                </Select>
-              </label>
-              <label className="cp-field">
-                <span>Email signataire</span>
-                <input value={signataireEmail} onChange={(e) => setSignataireEmail(e.target.value)} />
-              </label>
-              <label className="cp-field cp-field-full">
-                <span>Type LdM</span>
-                <Select value={ldmType} onChange={(e) => setLdmType(e.target.value)}>
-                  <option value="PP_SANS">PP — Sans forfait</option>
-                  <option value="PP_AVEC">PP — Avec forfait</option>
-                  <option value="PM_SANS">PM — Sans forfait</option>
-                  <option value="PM_AVEC">PM — Avec forfait</option>
-                </Select>
-              </label>
-            </div>
-            <div className="modal-card__actions">
-              <button type="button" className="btn-secondary" onClick={() => setModalClient(null)}>Annuler</button>
-              <button type="button" className="btn-bronze" onClick={handleSendDer} disabled={sendDer.isPending}>
-                Envoyer DER
-              </button>
+            <header className="modal-card__header">
+              <h2 id="kyc-der-modal-title" className="modal-card__title">
+                DER / LdM — {modalClient.name}
+              </h2>
               <button
                 type="button"
-                className="btn-primary"
-                onClick={handleSendLdm}
-                disabled={sendLdm.isPending || !ldmIsUnlocked(modalClient.derDate)}
+                className="modal-card__close"
+                onClick={() => setModalClient(null)}
+                aria-label="Fermer"
               >
-                Envoyer LdM
+                <FiX aria-hidden="true" />
               </button>
+            </header>
+            <div className="modal-card__body">
+              <div className="cp-form-grid">
+                <label className="cp-field">
+                  <span>Signataire</span>
+                  <Select value={signataireName} onChange={(e) => handleSignataireChange(e.target.value)}>
+                    {signataires.map((s) => (
+                      <option key={s.name} value={s.name}>{s.name}</option>
+                    ))}
+                  </Select>
+                </label>
+                <label className="cp-field">
+                  <span>Email signataire</span>
+                  <input value={signataireEmail} onChange={(e) => setSignataireEmail(e.target.value)} />
+                </label>
+                <label className="cp-field cp-field-full">
+                  <span>Type LdM</span>
+                  <Select value={ldmType} onChange={(e) => setLdmType(e.target.value)}>
+                    <option value="PP_SANS">PP — Sans forfait</option>
+                    <option value="PP_AVEC">PP — Avec forfait</option>
+                    <option value="PM_SANS">PM — Sans forfait</option>
+                    <option value="PM_AVEC">PM — Avec forfait</option>
+                  </Select>
+                </label>
+              </div>
             </div>
+            <footer className="modal-card__footer">
+              <div className="modal-card__actions">
+                <button type="button" className="btn-secondary" onClick={() => setModalClient(null)}>Annuler</button>
+                <button type="button" className="btn-bronze" onClick={handleSendDer} disabled={sendDer.isPending}>
+                  Envoyer DER
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSendLdm}
+                  disabled={sendLdm.isPending || !ldmIsUnlocked(modalClient.derDate)}
+                >
+                  Envoyer LdM
+                </button>
+              </div>
+            </footer>
           </>
         )}
       </Modal>

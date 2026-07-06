@@ -96,25 +96,25 @@ export default function AddTaskModal({
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-card modal-card--wide modal-card--form add-task-modal"
+        className="modal-card modal-card--wide modal-card--form modal-card--shell add-task-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-task-modal-title"
       >
-        <div className="add-task-modal__header">
+        <header className="modal-card__header">
           <h2 id="add-task-modal-title" className="modal-card__title">Nouvelle tâche</h2>
           <button
             type="button"
-            className="add-task-modal__close"
+            className="modal-card__close"
             onClick={onClose}
             aria-label="Fermer"
           >
             <FiX aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        <div className="add-task-modal__body">
+        <div className="modal-card__body">
           <div className="add-task-modal__grid">
             <label className="cp-field cp-field-full">
               <span>Titre <span className="field-required">*</span></span>
@@ -190,7 +190,9 @@ export default function AddTaskModal({
           {error && (
             <p className="add-task-modal__error" role="alert">{error}</p>
           )}
+        </div>
 
+        <footer className="modal-card__footer">
           <div className="modal-card__actions">
             <button type="button" className="btn-secondary" onClick={onClose} disabled={isSaving}>
               Annuler
@@ -199,7 +201,7 @@ export default function AddTaskModal({
               {isSaving ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </div>
-        </div>
+        </footer>
       </div>
     </div>,
     document.body,
