@@ -18,6 +18,7 @@
  *
  * Required env: AIRTABLE_PAT (API mode), BASEROW_* (same as setup)
  */
+import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import 'dotenv/config';
@@ -119,28 +120,53 @@ function parseCsv(text: string): { headers: string[]; rows: string[][] } {
   return { headers: rows[0], rows: rows.slice(1) };
 }
 
-function csvToRecords(csvText: string): AirtableRecord[] {
+/** Fallback ID columns per step, used when no RECORD_ID_COLUMNS column exists. */
+const STEP_FALLBACK_ID_COLUMNS: Partial<Record<MigrationStep, string[]>> = {
+  notes: ['ID Note', 'id_note'],
+};
+
+function syntheticRecordId(cells: string[], rowIndex: number): string {
+  const hash = createHash('sha1').update(cells.join('|')).digest('hex').slice(0, 12);
+  return `synthetic:${hash}:${rowIndex}`;
+}
+
+function csvToRecords(csvText: string, step?: MigrationStep): AirtableRecord[] {
   const bom = csvText.charCodeAt(0) === 0xfeff ? 1 : 0;
   const { headers, rows } = parseCsv(bom ? csvText.slice(1) : csvText);
   if (!headers.length) return [];
 
-  const idCol = headers.find((h) => RECORD_ID_COLUMNS.includes(h.trim()));
+  const fallbackCols = (step && STEP_FALLBACK_ID_COLUMNS[step]) || [];
+  let idCol = headers.find((h) => RECORD_ID_COLUMNS.includes(h.trim()));
+  let synthetic = false;
   if (!idCol) {
-    throw new Error(
-      `CSV is missing a record ID column. Add a Formula field "migration_record_id" = RECORD_ID() before exporting. `
-      + `Found columns: ${headers.slice(0, 8).join(', ')}…`,
-    );
+    idCol = headers.find((h) => fallbackCols.includes(h.trim()));
+    if (idCol || fallbackCols.length) {
+      synthetic = true;
+      console.warn(
+        `  ! CSV for "${step}" has no migration_record_id column — falling back to `
+        + `${idCol ? `"${idCol}"` : 'synthetic row IDs'}. Re-export with a Formula field `
+        + `"migration_record_id" = RECORD_ID() for idempotent re-runs.`,
+      );
+    } else {
+      throw new Error(
+        `CSV is missing a record ID column. Add a Formula field "migration_record_id" = RECORD_ID() before exporting. `
+        + `Found columns: ${headers.slice(0, 8).join(', ')}…`,
+      );
+    }
   }
 
-  return rows.map((cells) => {
+  return rows.map((cells, rowIndex) => {
     const fields: Record<string, unknown> = {};
     headers.forEach((header, i) => {
       const value = (cells[i] ?? '').trim();
       if (header === idCol || value === '') return;
       fields[header] = value;
     });
-    const id = (cells[headers.indexOf(idCol)] ?? '').trim();
-    if (!id) throw new Error('CSV row missing migration_record_id — re-export with the formula column filled.');
+    const id = idCol ? (cells[headers.indexOf(idCol)] ?? '').trim() : '';
+    if (!id) {
+      if (synthetic) return { id: syntheticRecordId(cells, rowIndex), fields };
+      throw new Error('CSV row missing migration_record_id — re-export with the formula column filled.');
+    }
     return { id, fields };
   });
 }
@@ -234,7 +260,7 @@ async function loadExportFile(exportDir: string, step: MigrationStep): Promise<A
 
   const raw = await readFile(join(dir, match), 'utf8');
   if (match.toLowerCase().endsWith('.csv')) {
-    return csvToRecords(raw);
+    return csvToRecords(raw, step);
   }
   const parsed = JSON.parse(raw) as { records?: AirtableRecord[] } | AirtableRecord[];
   if (Array.isArray(parsed)) return parsed;
@@ -609,13 +635,16 @@ async function main() {
   if (steps.includes('kyc-docs')) {
     const kycDocRecords = await loadRecords('kyc-docs', exportDir, env.airtable.tableKycDocs);
     let imported = 0;
+    let orphans = 0;
     for (const rec of kycDocRecords) {
       const f = rec.fields;
-      const atClientId = str(f.client_id);
-      const clientId = clientIdMap.get(atClientId);
-      if (!clientId) continue;
+      const atClientId = str(f.client_id) || resolveClientAirtableId(f, clientDisplayMap) || '';
+      const clientId = atClientId ? clientIdMap.get(atClientId) : undefined;
+      if (!clientId) orphans++;
       await kycDocsRepo.upsertKycDocumentFromAirtable(tenantId, {
-        clientId,
+        clientId: clientId ?? null,
+        clientIdOld: !clientId && atClientId ? atClientId : null,
+        clientNom: !clientId ? str(f.client_nom) || null : null,
         docType: str(f.doc_type) || str(f.doc_code) || 'Document',
         recu: Boolean(f.recu),
         dateReception: str(f.date_reception) || null,
@@ -625,21 +654,21 @@ async function main() {
       });
       imported++;
     }
-    console.log(`✓ KYC documents: ${imported}/${kycDocRecords.length}`);
+    console.log(`✓ KYC documents: ${imported}/${kycDocRecords.length}${orphans ? ` (${orphans} without resolved client)` : ''}`);
   }
 
   if (steps.includes('notes')) {
     const noteRecords = await loadRecords('notes', exportDir, env.airtable.tableNotes);
     let imported = 0;
+    let orphans = 0;
     for (const rec of noteRecords) {
       const f = rec.fields;
       const atClientId = resolveClientAirtableId(f, clientDisplayMap);
-      if (!atClientId) continue;
-      const clientId = clientIdMap.get(atClientId);
-      if (!clientId) continue;
+      const clientId = atClientId ? clientIdMap.get(atClientId) : undefined;
+      if (!clientId) orphans++;
       const auteur = resolveLinkedName(f.Auteur, gestionnaireNames) || '';
       await notesRepo.upsertNoteFromAirtable(tenantId, {
-        clientId,
+        clientId: clientId ?? null,
         date: str(f.Date) || undefined,
         noteType: str(f.Type) || 'Note interne',
         auteur,
@@ -648,7 +677,7 @@ async function main() {
       });
       imported++;
     }
-    console.log(`✓ Notes: ${imported}/${noteRecords.length}`);
+    console.log(`✓ Notes: ${imported}/${noteRecords.length}${orphans ? ` (${orphans} without resolved client)` : ''}`);
   }
 
   if (steps.includes('tasks')) {

@@ -12,6 +12,8 @@ function mapRow(row: BaserowRow): DbKycDocument {
     id: String(row.id),
     name: String(row[F.name] || ''),
     client_id: pickLinkRowId(row[F.clientId]),
+    client_id_old: pickTextValue(row[F.clientIdOld]),
+    client_nom: pickTextValue(row[F.clientNom]),
     doc_type: pickTextValue(row[F.docType]) || '',
     recu: Boolean(row[F.recu]),
     date_reception: pickTextValue(row[F.dateReception]),
@@ -25,6 +27,8 @@ export function toPublicKycDocument(doc: DbKycDocument): PublicKycDocument {
   return {
     id: doc.id,
     clientId: doc.client_id,
+    clientIdOld: doc.client_id_old,
+    clientNom: doc.client_nom,
     docType: doc.doc_type,
     recu: doc.recu,
     dateReception: doc.date_reception,
@@ -122,7 +126,9 @@ export async function updateKycDocument(
 export async function upsertKycDocumentFromAirtable(
   tenantId: string,
   data: {
-    clientId: string;
+    clientId?: string | null;
+    clientIdOld?: string | null;
+    clientNom?: string | null;
     docType: string;
     recu?: boolean;
     dateReception?: string | null;
@@ -137,7 +143,9 @@ export async function upsertKycDocumentFromAirtable(
   const existing = rows.find((r) => pickTextValue(r[F.airtableRecordId]) === data.airtableRecordId);
   const payload: Record<string, unknown> = {
     [F.name]: data.docType,
-    [F.clientId]: [Number(data.clientId)],
+    [F.clientId]: data.clientId ? [Number(data.clientId)] : [],
+    [F.clientIdOld]: data.clientIdOld || '',
+    [F.clientNom]: data.clientNom || '',
     [F.docType]: data.docType,
     [F.recu]: data.recu ?? false,
     [F.urlDocument]: data.urlDocument || '',

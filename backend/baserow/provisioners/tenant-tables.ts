@@ -113,7 +113,7 @@ async function ensureKycDocumentsFields(tableId: string | number, clientsTableId
     { name: F.clientId, type: 'link_row', link_row_table_id: Number(clientsTableId) },
     existing,
   );
-  await ensureTextFields(tableId, [F.docType, F.airtableRecordId], existing);
+  await ensureTextFields(tableId, [F.docType, F.clientIdOld, F.clientNom, F.airtableRecordId], existing);
   await ensureField(tableId, { name: F.recu, type: 'boolean' }, existing);
   await ensureField(tableId, { name: F.dateReception, type: 'date' }, existing);
   await ensureField(tableId, { name: F.dateValidite, type: 'date' }, existing);

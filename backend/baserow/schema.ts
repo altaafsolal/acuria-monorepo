@@ -150,6 +150,8 @@ export const BASEROW_FIELDS = {
   kycDocuments: {
     name: 'Name',
     clientId: 'client_id',
+    clientIdOld: 'client_id_old',
+    clientNom: 'client_nom',
     docType: 'doc_type',
     recu: 'recu',
     dateReception: 'date_reception',

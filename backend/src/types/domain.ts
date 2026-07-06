@@ -518,6 +518,8 @@ export interface DbKycDocument {
   id: string;
   name: string;
   client_id: string | null;
+  client_id_old: string | null;
+  client_nom: string | null;
   doc_type: string;
   recu: boolean;
   date_reception: string | null;
@@ -529,6 +531,8 @@ export interface DbKycDocument {
 export interface PublicKycDocument {
   id: string;
   clientId: string | null;
+  clientIdOld: string | null;
+  clientNom: string | null;
   docType: string;
   recu: boolean;
   dateReception: string | null;

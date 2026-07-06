@@ -93,7 +93,7 @@ export async function deleteNote(tenantId: string, noteId: string): Promise<bool
 export async function upsertNoteFromAirtable(
   tenantId: string,
   data: {
-    clientId: string;
+    clientId?: string | null;
     date?: string;
     noteType: string;
     auteur: string;
@@ -107,7 +107,7 @@ export async function upsertNoteFromAirtable(
   const existing = rows.find((r) => pickTextValue(r[F.airtableRecordId]) === data.airtableRecordId);
   const payload = {
     [F.name]: `${data.noteType} — ${data.auteur}`,
-    [F.clientId]: [Number(data.clientId)],
+    [F.clientId]: data.clientId ? [Number(data.clientId)] : [],
     [F.date]: normalizeDateTimeForBaserow(data.date),
     [F.noteType]: data.noteType,
     [F.auteur]: data.auteur,
