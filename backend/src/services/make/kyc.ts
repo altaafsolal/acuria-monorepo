@@ -1,18 +1,11 @@
-import { env } from '../config/env.js';
+import { env } from '../../config/env.js';
+import { webhookUrl, postWebhook } from './http.js';
+import type { DbClient } from '../../types/domain.js';
 
 export const NM_SIGNATAIRES = {
   'Baptiste Money': { name: 'Baptiste Money', email: 'baptistemoney@nm-prime.com', titre: 'Président' },
   'Jean du Boisdulier': { name: 'Jean du Boisdulier', email: 'jeanduboisdulier@nm-prime.com', titre: 'Directeur Général Délégué' },
 } as const;
-
-function getLdmTemplateIds(): Record<string, string> {
-  return {
-    PP_SANS: env.kyc.ldmTemplatePpSans,
-    PP_AVEC: env.kyc.ldmTemplatePpAvec,
-    PM_SANS: env.kyc.ldmTemplatePmSans,
-    PM_AVEC: env.kyc.ldmTemplatePmAvec,
-  };
-}
 
 export interface KycWebhookVars {
   record_id: string;
@@ -45,38 +38,17 @@ export interface KycWebhookVars {
   der_envoi_local?: string;
 }
 
-function webhookUrl(key: keyof typeof env.make): string {
-  return env.make[key] || '';
-}
-
-async function postWebhook(url: string, payload: unknown): Promise<Response> {
-  if (!url) throw new Error('Make.com webhook URL is not configured');
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Make webhook failed (${res.status}): ${text || res.statusText}`);
-  }
-  return res;
-}
-
-async function postOptionalWebhook(
-  url: string,
-  payload: unknown,
-  devLogLabel: string,
-): Promise<void> {
-  if (!url) {
-    console.log(`[dev] ${devLogLabel}:`, JSON.stringify(payload, null, 2));
-    return;
-  }
-  await postWebhook(url, payload);
+function getLdmTemplateIds(): Record<string, string> {
+  return {
+    PP_SANS: env.kyc.ldmTemplatePpSans,
+    PP_AVEC: env.kyc.ldmTemplatePpAvec,
+    PM_SANS: env.kyc.ldmTemplatePmSans,
+    PM_AVEC: env.kyc.ldmTemplatePmAvec,
+  };
 }
 
 export function buildKycVars(
-  client: import('../types/domain.js').DbClient,
+  client: DbClient,
   options: {
     ldmType?: string;
     signataireName: string;
@@ -128,7 +100,7 @@ export function buildKycVars(
   };
 }
 
-export function buildFccPrefillLink(client: import('../types/domain.js').DbClient): { link: string; type: 'PP' | 'PM' } {
+export function buildFccPrefillLink(client: DbClient): { link: string; type: 'PP' | 'PM' } {
   const type = client.client_type === 'PM' ? 'PM' : 'PP';
   const baseUrl = type === 'PP' ? env.kyc.fccFormUrlPp : env.kyc.fccFormUrlPm;
   if (!baseUrl) throw new Error(`FCC form URL not configured for type ${type} — set FCC_FORM_URL_${type} in .env`);
@@ -213,26 +185,6 @@ export async function sendFccEmail(
   });
 }
 
-export async function sendPasswordSetEmail(
-  email: string,
-  name: string,
-  setPasswordLink: string,
-): Promise<void> {
-  await postOptionalWebhook(
-    webhookUrl('webhookPasswordSet'),
-    { email, name, set_password_link: setPasswordLink },
-    'Password set email',
-  );
-}
-
-export async function sendOtpEmail(email: string, name: string, otpCode: string): Promise<void> {
-  await postOptionalWebhook(
-    webhookUrl('webhookOtp'),
-    { email, name, otp_code: otpCode },
-    'OTP email',
-  );
-}
-
 export function ldmAvailableDate(derDate: string | null): Date | null {
   if (!derDate) return null;
   const d = new Date(derDate);
@@ -249,4 +201,3 @@ export function ldmIsUnlocked(derDate: string | null): boolean {
 export function derIsSent(statut: string | null | undefined): boolean {
   return statut === 'Envoyé' || statut === 'Signé';
 }
-

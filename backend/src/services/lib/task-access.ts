@@ -1,5 +1,5 @@
-import { gestionnairesRepo } from './baserow/index.js';
-import type { DbTask, PublicTask, Role } from '../types/domain.js';
+import { gestionnairesRepo } from '../baserow/index.js';
+import type { DbTask, PublicTask, Role } from '../../types/domain.js';
 
 export interface TaskAccessContext {
   userId: string;

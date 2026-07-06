@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../../../middleware/index.js';
 import { baserow } from '../../../../services/index.js';
-import { assertTaskAccess } from '../../../../services/task-access.js';
+import { assertTaskAccess } from '../../../../services/lib/task-access.js';
 import { asyncHandler, HttpError, requireTenant, reqParam } from '../../../../utils/index.js';
 
 const { tasksRepo } = baserow;

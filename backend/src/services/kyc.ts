@@ -1,5 +1,5 @@
 import { clientsRepo, notesRepo, tasksRepo, clientMapper, tenantsRepo } from './baserow/index.js';
-import { filterTasksForUser } from './task-access.js';
+import { filterTasksForUser } from './lib/task-access.js';
 import {
   buildFccPrefillLink,
   buildKycVars,
@@ -10,8 +10,8 @@ import {
   sendDerEmail,
   sendFccEmail,
   sendLdmDocuSign,
-} from './make.js';
-import { filterDerClients, filterFccClients } from './accueil.js';
+} from './make/index.js';
+import { filterDerClients, filterFccClients } from './lib/client-filters.js';
 import type { DbClient, PublicClient, SendDerInput, SendLdmInput } from '../types/domain.js';
 
 const { resolveClientDisplayName, toPublicClient } = clientMapper;

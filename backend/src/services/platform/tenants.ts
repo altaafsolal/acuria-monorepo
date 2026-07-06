@@ -1,54 +1,15 @@
-import { clientsRepo, tenantsRepo, usersRepo, tenantDatabase } from './baserow/index.js';
-import * as passwordResetService from './password-reset.js';
-import * as userGestionnaireService from './user-gestionnaire.js';
-import { isBaserowMigrateConfigured } from '../config/env.js';
-import { provisionTenantTables } from '../../baserow/provisioners/tenant-tables.js';
-import { broadcast } from '../realtime/socket.js';
+import { clientsRepo, tenantsRepo, usersRepo, tenantDatabase } from '../baserow/index.js';
+import { isBaserowMigrateConfigured } from '../../config/env.js';
+import { provisionTenantTables } from '../../../baserow/provisioners/tenant-tables.js';
+import { broadcast } from '../../realtime/socket.js';
 import type {
-  CountStats,
   CreateTenantInput,
-  DbClient,
-  DbUser,
   PublicClient,
   PublicTenant,
-  PublicUser,
-  Role,
   TenantRecord,
-  UpdateUserInput,
-} from '../types/domain.js';
+} from '../../types/domain.js';
 
-const MANAGEABLE_ROLES: Role[] = ['tenant_admin', 'standard_user'];
-
-function isTenantMember(user: DbUser | null, tenantId: string): user is DbUser {
-  if (!user) return false;
-  if (usersRepo.isSuperAdmin(user)) return false;
-  return user.tenant_id === tenantId;
-}
-
-async function requireTenantRecord(tenantId: string): Promise<TenantRecord> {
-  const tenant = await tenantsRepo.findTenantById(tenantId);
-  if (!tenant) {
-    throw new Error('Tenant not found');
-  }
-  return tenant;
-}
-
-function countByStatus<T extends { status: string }>(
-  items: T[],
-  activeValue = 'active',
-): CountStats {
-  return items.reduce<CountStats>(
-    (acc, item) => {
-      acc.total += 1;
-      if (item.status === activeValue) acc.active += 1;
-      else acc.inactive += 1;
-      return acc;
-    },
-    { total: 0, active: 0, inactive: 0 },
-  );
-}
-
-async function enrichTenants(
+export async function enrichTenants(
   tenants: TenantRecord[],
   { includeLogoDataUrl = false }: { includeLogoDataUrl?: boolean } = {},
 ): Promise<PublicTenant[]> {
@@ -68,58 +29,6 @@ async function enrichTenants(
 
     return publicTenant;
   }));
-}
-
-export async function getPlatformStats(): Promise<{
-  tenants: CountStats;
-  users: CountStats;
-  clients: CountStats;
-}> {
-  const tenants = await tenantsRepo.listTenants();
-  const users = usersRepo.excludeSuperAdmins(await usersRepo.listUsers());
-
-  const clientArrays = await Promise.all(
-    tenants.map((tenant) =>
-      clientsRepo.listClientsByTenantId(tenant.id).catch(() => [] as DbClient[]),
-    ),
-  );
-  const allClients = clientArrays.flat();
-
-  return {
-    tenants: countByStatus(tenants),
-    users: countByStatus(users),
-    clients: countByStatus(allClients),
-  };
-}
-
-export async function getTenantStats(tenantId: string): Promise<{
-  tenant: PublicTenant;
-  tenants: CountStats;
-  users: CountStats;
-  clients: CountStats;
-} | null> {
-  const tenant = await tenantsRepo.findTenantById(tenantId);
-  if (!tenant) return null;
-
-  const users = usersRepo.excludeSuperAdmins(
-    await usersRepo.listUsersByTenantId(tenantId),
-  );
-  let clients: DbClient[] = [];
-  try {
-    clients = await clientsRepo.listClientsByTenantId(tenantId);
-  } catch {
-    // tenant tables not provisioned yet
-  }
-
-  return {
-    tenant: tenantsRepo.toPublicTenant(tenant, {
-      userCount: users.length,
-      clientCount: clients.length,
-    }),
-    tenants: countByStatus([tenant]),
-    users: countByStatus(users),
-    clients: countByStatus(clients),
-  };
 }
 
 export async function listTenants(): Promise<PublicTenant[]> {
@@ -165,57 +74,6 @@ export async function updateTenantBranding(
 
   const [enriched] = await enrichTenants([record], { includeLogoDataUrl: true });
   return enriched;
-}
-
-export async function listTenantUsers(tenantId: string): Promise<PublicUser[]> {
-  return usersRepo.excludeSuperAdmins(
-    await usersRepo.listUsersByTenantId(tenantId),
-  ).map(usersRepo.toPublicUser);
-}
-
-export async function createTenantUser(
-  tenantId: string,
-  input: { name: string; email: string; role: string },
-): Promise<PublicUser> {
-  await requireTenantRecord(tenantId);
-  const result = await userGestionnaireService.createManagedUser(tenantId, input);
-  return result.user;
-}
-
-export async function updateTenantUser(
-  tenantId: string,
-  userId: string,
-  input: { name?: string; email?: string; role?: string; status?: string },
-): Promise<PublicUser> {
-  await requireTenantRecord(tenantId);
-  const result = await userGestionnaireService.updateManagedUser(tenantId, userId, input);
-  return result.user;
-}
-
-export async function resetTenantUserPassword(tenantId: string, userId: string): Promise<void> {
-  await requireTenantRecord(tenantId);
-
-  const existing = await usersRepo.findUserById(userId);
-  if (!isTenantMember(existing, tenantId)) {
-    throw new Error('User not found');
-  }
-
-  if (!usersRepo.hasUserEmail(existing)) {
-    throw new Error('User has no email address');
-  }
-
-  await passwordResetService.issueSetPasswordToken(existing);
-}
-
-export async function deleteTenantUser(tenantId: string, userId: string): Promise<void> {
-  await requireTenantRecord(tenantId);
-
-  const existing = await usersRepo.findUserById(userId);
-  if (!isTenantMember(existing, tenantId)) {
-    throw new Error('User not found');
-  }
-
-  await usersRepo.deleteUser(userId);
 }
 
 export async function listTenantClients(tenantId: string): Promise<PublicClient[] | null> {

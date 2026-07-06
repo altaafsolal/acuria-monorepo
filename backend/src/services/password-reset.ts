@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { env } from '../config/env.js';
 import { usersRepo } from './baserow/index.js';
-import { sendOtpEmail, sendPasswordSetEmail } from './make.js';
+import { sendOtpEmail, sendPasswordSetEmail } from './make/index.js';
 import type { DbUser } from '../types/domain.js';
 
 const { hasUserEmail } = usersRepo;
