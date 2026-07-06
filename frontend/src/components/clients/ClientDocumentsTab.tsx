@@ -23,7 +23,7 @@ import {
   getDocumentCatalog,
   type KycDocumentCatalogItem,
 } from './kycDocumentCatalog';
-import './ClientDocumentsTab.css';
+
 
 function formatDocType(value: string): string {
   return value

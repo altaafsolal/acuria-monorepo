@@ -23,7 +23,6 @@ import {
 } from "../../utils/attachments";
 import { filterBySearch } from "../../utils";
 import { formatDateTimeFr } from "../../utils/kyc";
-import "./ClientNotesTab.css";
 import Select from "../ui/Select";
 import AddNoteModal, { type AddNoteInput } from "./AddNoteModal";
 

@@ -1,5 +1,5 @@
+import clsx from 'clsx';
 import { FiLoader } from 'react-icons/fi';
-import './PageLoading.css';
 
 interface PageLoadingProps {
   message?: string;
@@ -12,22 +12,21 @@ export default function PageLoading({
   fullScreen = false,
   compact = false,
 }: PageLoadingProps) {
-  const className = [
-    'page-loading',
-    fullScreen && 'page-loading--fullscreen',
-    compact && 'page-loading--compact',
-  ]
-    .filter(Boolean)
-    .join(' ');
   return (
     <div
-      className={className}
+      className={clsx(
+        'flex flex-col items-center justify-center gap-4 text-[var(--color-muted)]',
+        fullScreen ? 'min-h-screen' : compact ? 'py-10' : 'min-h-[280px] py-12 px-6',
+      )}
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <FiLoader className="page-loading__icon spin" aria-hidden="true" />
-      <p className="page-loading__text">{message}</p>
+      <FiLoader
+        className={clsx('text-[var(--color-navy)] animate-spin-app', compact ? 'w-7 h-7' : 'w-9 h-9')}
+        aria-hidden="true"
+      />
+      <p className="m-0 text-[0.95rem] font-medium text-[var(--color-muted)]">{message}</p>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
-import './crm.css';
+
 import AddClientModal from '../../components/clients/AddClientModal';
 import ClientPanel from '../../components/clients/ClientPanel';
 import LoadingPopup from '../../components/ui/LoadingPopup';
@@ -158,7 +158,7 @@ export default function ClientsPage() {
           disabled={isFetching}
           title="Rafraîchir"
         >
-          <FiRefreshCw className={isFetching ? 'spin' : undefined} />
+          <FiRefreshCw className={isFetching ? 'animate-spin-app' : undefined} />
         </button>
       </div>
 

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../api';
 import { queryKeys } from '../api/queryKeys';
-import { useDelete, useGet, usePost, usePut } from '../lib/api';
+import { useGet, usePost, usePut } from '../lib/api';
 import { put } from '../lib/http';
 import type {
   Client,
@@ -59,17 +59,6 @@ export function useUpdateClient() {
     mutationFn: ({ id, ...input }) => put<ClientResponse>(api.clientById(id), input),
     onSuccess: async (_data, variables) => {
       await invalidateClientQueries(queryClient, variables.id);
-    },
-  });
-}
-
-export function useDeleteClient() {
-  const queryClient = useQueryClient();
-
-  return useDelete<void, string>({
-    path: (id) => api.clientById(id),
-    onSuccess: async () => {
-      await invalidateClientQueries(queryClient);
     },
   });
 }

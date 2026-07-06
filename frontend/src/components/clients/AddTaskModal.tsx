@@ -4,8 +4,6 @@ import { FiX } from 'react-icons/fi';
 import { useApp } from '../../context/AppContext';
 import type { Gestionnaire } from '../../types';
 import Select from '../ui/Select';
-import '../ui/Modal.css';
-import './AddTaskModal.css';
 import {
   TASK_PRIORITE_OPTIONS,
   TASK_STATUS_OPTIONS,
@@ -96,7 +94,7 @@ export default function AddTaskModal({
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-card modal-card--wide modal-card--form modal-card--shell add-task-modal"
+        className="modal-card modal-card--form modal-card--shell max-w-[560px]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -115,7 +113,7 @@ export default function AddTaskModal({
         </header>
 
         <div className="modal-card__body">
-          <div className="add-task-modal__grid">
+          <div className="grid grid-cols-2 gap-[var(--form-fields-gap)] max-[720px]:grid-cols-1">
             <label className="cp-field cp-field-full">
               <span>Titre <span className="field-required">*</span></span>
               <input
@@ -178,7 +176,7 @@ export default function AddTaskModal({
             <label className="cp-field cp-field-full">
               <span>Description</span>
               <textarea
-                className="add-task-modal__textarea"
+                className="w-full min-h-[96px] py-3 px-[0.85rem] border-[1.5px] border-[var(--color-border)] rounded-[10px] font-[inherit] text-[0.9rem] leading-[1.55] resize-y outline-none focus:border-[var(--color-navy)] focus:shadow-[0_0_0_3px_var(--ring-navy)]"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Détails, contexte ou consignes (optionnel)…"
@@ -188,7 +186,7 @@ export default function AddTaskModal({
           </div>
 
           {error && (
-            <p className="add-task-modal__error" role="alert">{error}</p>
+            <p className="m-0 py-[0.55rem] px-[0.7rem] rounded-lg bg-[#fef2f2] text-[#b91c1c] text-[0.84rem]" role="alert">{error}</p>
           )}
         </div>
 

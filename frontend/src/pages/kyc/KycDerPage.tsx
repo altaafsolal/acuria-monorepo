@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FiRefreshCw, FiX } from 'react-icons/fi';
-import '../clients/crm.css';
+
 import ClientPanel from '../../components/clients/ClientPanel';
 import Modal from '../../components/ui/Modal';
 import PageLoading from '../../components/ui/PageLoading';
@@ -146,7 +146,7 @@ export default function KycDerPage() {
         <div className="card-toolbar">
           <h2 className="card-title">Suivi DER / Lettre de Mission</h2>
           <button type="button" className="btn-secondary btn-secondary--sm" onClick={handleRefresh} disabled={isFetching}>
-            <FiRefreshCw className={isFetching ? 'spin' : undefined} />
+            <FiRefreshCw className={isFetching ? 'animate-spin-app' : undefined} />
             Rafraîchir
           </button>
         </div>

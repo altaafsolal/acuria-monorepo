@@ -18,7 +18,6 @@ const TenantsPage = lazy(() => import('./pages/tenants/TenantsPage'));
 const TenantUsersPage = lazy(() => import('./pages/tenants/TenantUsersPage'));
 const TenantClientsPage = lazy(() => import('./pages/tenants/TenantClientsPage'));
 const ClientsPage = lazy(() => import('./pages/clients/ClientsPage'));
-const ClientDetailPage = lazy(() => import('./pages/clients/ClientDetailPage'));
 const UsersPage = lazy(() => import('./pages/users/UsersPage'));
 const UserDetailPage = lazy(() => import('./pages/users/UserDetailPage'));
 const KycDerPage = lazy(() => import('./pages/kyc/KycDerPage'));
@@ -84,22 +83,6 @@ export default function App() {
             element={(
               <TenantUserRoute>
                 <ClientsPage />
-              </TenantUserRoute>
-            )}
-          />
-          <Route
-            path="dashboard/clients/new"
-            element={(
-              <TenantUserRoute>
-                <ClientDetailPage />
-              </TenantUserRoute>
-            )}
-          />
-          <Route
-            path="dashboard/clients/:clientId"
-            element={(
-              <TenantUserRoute>
-                <ClientDetailPage />
               </TenantUserRoute>
             )}
           />

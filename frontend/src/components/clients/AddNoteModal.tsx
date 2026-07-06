@@ -5,8 +5,6 @@ import { useApp } from '../../context/AppContext';
 import type { Gestionnaire } from '../../types';
 import { NOTE_TYPE_OPTIONS, type NoteTypeOption } from './ClientNotesTab';
 import Select from '../ui/Select';
-import '../ui/Modal.css';
-import './AddNoteModal.css';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_EXTENSIONS = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg';
@@ -122,7 +120,7 @@ export default function AddNoteModal({
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-card modal-card--wide modal-card--form modal-card--shell add-note-modal"
+        className="modal-card modal-card--wide modal-card--form modal-card--shell"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -141,7 +139,7 @@ export default function AddNoteModal({
         </header>
 
         <div className="modal-card__body">
-          <div className="add-note-modal__grid">
+          <div className="grid grid-cols-2 gap-[var(--form-fields-gap)] max-[720px]:grid-cols-1">
             <label className="cp-field">
               <span>Date <span className="field-required">*</span></span>
               <input
@@ -182,7 +180,7 @@ export default function AddNoteModal({
             <label className="cp-field cp-field-full">
               <span>Contenu <span className="field-required">*</span></span>
               <textarea
-                className="add-note-modal__textarea"
+                className="w-full min-h-[140px] py-3 px-[0.85rem] border-[1.5px] border-[var(--color-border)] rounded-[10px] font-[inherit] text-[0.9rem] leading-[1.55] resize-y outline-none focus:border-[var(--color-navy)] focus:shadow-[0_0_0_3px_var(--ring-navy)]"
                 value={contenu}
                 onChange={(e) => setContenu(e.target.value)}
                 placeholder="Compte-rendu, points évoqués, décisions, suites à donner…"
@@ -198,20 +196,21 @@ export default function AddNoteModal({
                 multiple
                 accept={ACCEPTED_EXTENSIONS}
                 onChange={handleFileChange}
-                className="add-note-modal__file-input"
+                className="w-full py-[0.55rem] px-[0.65rem] border-[1.5px] border-[var(--color-border)] rounded-lg text-[0.84rem] bg-white"
               />
-              <p className="add-note-modal__file-hint">
+              <p className="m-0 mt-[0.35rem] text-[0.76rem] text-[var(--color-muted)]">
                 PDF, Word, Excel, images. Max 5 Mo par fichier.
               </p>
               {files.length > 0 && (
-                <ul className="add-note-modal__file-preview">
+                <ul className="list-none m-0 mt-[0.55rem] p-0 flex flex-col gap-[0.4rem]">
                   {files.map((file, index) => (
-                    <li key={`${file.name}-${index}`} className="add-note-modal__file-chip">
+                    <li key={`${file.name}-${index}`} className="flex items-center gap-[0.45rem] py-[0.45rem] px-[0.6rem] border border-[var(--color-border)] rounded-lg bg-[color-mix(in_srgb,var(--color-navy)_3%,#fff)] text-[0.82rem] text-[var(--color-navy)]">
                       <FiPaperclip aria-hidden="true" />
-                      <span title={file.name}>{file.name}</span>
-                      <small>{formatFileSize(file.size)}</small>
+                      <span className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={file.name}>{file.name}</span>
+                      <small className="text-[var(--color-muted)] text-[0.72rem]">{formatFileSize(file.size)}</small>
                       <button
                         type="button"
+                        className="inline-flex items-center justify-center w-6 h-6 border-none rounded-md bg-transparent text-[var(--color-muted)] cursor-pointer hover:bg-[#fee2e2] hover:text-[#b91c1c]"
                         onClick={() => removeFile(index)}
                         aria-label={`Retirer ${file.name}`}
                       >
@@ -225,7 +224,7 @@ export default function AddNoteModal({
           </div>
 
           {error && (
-            <p className="add-note-modal__error" role="alert">{error}</p>
+            <p className="mt-[0.85rem] mb-0 py-[0.55rem] px-[0.7rem] rounded-lg bg-[#fef2f2] text-[#b91c1c] text-[0.84rem]" role="alert">{error}</p>
           )}
         </div>
 

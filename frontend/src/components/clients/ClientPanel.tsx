@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import './ClientPanel.css';
+
 import {
   useClient,
   useClients,

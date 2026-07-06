@@ -1,8 +1,8 @@
-import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../api';
 import { queryKeys } from '../api/queryKeys';
 import { useDelete, useGet, usePost, usePut } from '../lib/api';
-import { post, postForm, put } from '../lib/http';
+import { postForm, put } from '../lib/http';
 import type {
   ClientNote,
   ClientRelation,
@@ -189,16 +189,5 @@ export function useClientTimeline(clientId: string | undefined) {
     queryKey: queryKeys.clients.timeline(clientId ?? ''),
     select: (data) => data.events,
     enabled: Boolean(clientId),
-  });
-}
-
-export function useArchiveClient() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (clientId: string) => post(api.clientArchive(clientId)),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.clients.list });
-      queryClient.invalidateQueries({ queryKey: queryKeys.accueil.data });
-    },
   });
 }

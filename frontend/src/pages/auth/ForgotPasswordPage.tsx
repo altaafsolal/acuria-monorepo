@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiLayout, FiLock, FiMail } from 'react-icons/fi';
 import { useForgotPassword, useSetPassword, useVerifyOtp } from '../../hooks';
-import './auth.css';
+
 
 type Step = 'email' | 'otp' | 'password' | 'done';
 

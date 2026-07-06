@@ -30,7 +30,6 @@ import {
 import { ROLE_LABELS, type Role } from "../../constants/roles";
 import { lightenHex } from "../../utils/color";
 import PageTopbar from "./PageTopbar";
-import "./DashboardLayout.css";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Accueil",
@@ -64,15 +63,15 @@ export default function DashboardLayout() {
       return undefined;
     }
 
-    document.documentElement.style.setProperty("--bronze", accent);
+    document.documentElement.style.setProperty("--color-bronze", accent);
     document.documentElement.style.setProperty(
-      "--bronze-light",
+      "--color-bronze-light",
       lightenHex(accent, 0.25),
     );
 
     return () => {
-      document.documentElement.style.removeProperty("--bronze");
-      document.documentElement.style.removeProperty("--bronze-light");
+      document.documentElement.style.removeProperty("--color-bronze");
+      document.documentElement.style.removeProperty("--color-bronze-light");
     };
   }, [branding?.branding?.accent]);
 

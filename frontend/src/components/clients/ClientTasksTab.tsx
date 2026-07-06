@@ -15,7 +15,7 @@ import type { ClientTask, Gestionnaire } from '../../types';
 import Select from '../ui/Select';
 import { formatDateFr } from '../../utils/kyc';
 import AddTaskModal, { type AddTaskInput } from './AddTaskModal';
-import './ClientTasksTab.css';
+
 
 export const TASK_STATUS_OPTIONS = [
   'À faire',

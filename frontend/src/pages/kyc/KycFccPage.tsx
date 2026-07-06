@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FiRefreshCw } from 'react-icons/fi';
-import '../clients/crm.css';
+
 import ClientPanel from '../../components/clients/ClientPanel';
 import PageLoading from '../../components/ui/PageLoading';
 import { useAccueil, useKycFccClients, useSendFcc } from '../../hooks';
@@ -88,7 +88,7 @@ export default function KycFccPage() {
         <div className="card-toolbar">
           <h2 className="card-title">Suivi FCC — Fiches Connaissance Client</h2>
           <button type="button" className="btn-secondary btn-secondary--sm" onClick={handleRefresh} disabled={isFetching}>
-            <FiRefreshCw className={isFetching ? 'spin' : undefined} />
+            <FiRefreshCw className={isFetching ? 'animate-spin-app' : undefined} />
             Rafraîchir
           </button>
         </div>

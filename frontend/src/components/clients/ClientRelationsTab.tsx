@@ -12,7 +12,6 @@ import {
 } from "react-icons/fi";
 import type { Client, ClientRelation } from "../../types";
 import AddRelationModal, { type AddRelationInput } from "./AddRelationModal";
-import "./ClientRelationsTab.css";
 
 export type { AddRelationInput, RelationRoleValue } from "./AddRelationModal";
 export { RELATION_ROLE_OPTIONS } from "./AddRelationModal";

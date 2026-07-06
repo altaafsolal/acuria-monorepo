@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import '../../pages/clients/crm.css';
+
 import PageLoading from '../../components/ui/PageLoading';
 import ClientPanel from '../../components/clients/ClientPanel';
 import { useApp } from '../../context/AppContext';

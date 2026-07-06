@@ -3,9 +3,7 @@ import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
 import { useGestionnaires } from '../../hooks';
 import type { ClientType, CreateClientInput } from '../../types';
-import Select from '../ui/Select';
-import '../ui/Modal.css';
-import './AddClientModal.css';
+import Select from "../ui/Select";
 import {
   CLIENT_CIVILITE_OPTIONS,
   CLIENT_INITIAL_STATUT_OPTIONS,
@@ -186,14 +184,16 @@ export default function AddClientModal({
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-card modal-card--wide modal-card--form modal-card--shell add-client-modal"
+        className="modal-card modal-card--form modal-card--shell max-w-[860px]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-client-modal-title"
       >
         <header className="modal-card__header">
-          <h2 id="add-client-modal-title" className="modal-card__title">Nouveau client</h2>
+          <h2 id="add-client-modal-title" className="modal-card__title">
+            Nouveau client
+          </h2>
           <button
             type="button"
             className="modal-card__close"
@@ -205,9 +205,11 @@ export default function AddClientModal({
         </header>
 
         <div className="modal-card__body">
-          <div className="add-client-modal__grid">
+          <div className="grid grid-cols-3 gap-[var(--form-fields-gap)] max-[720px]:grid-cols-1">
             <label className="cp-field">
-              <span>Type <span className="field-required">*</span></span>
+              <span>
+                Type <span className="field-required">*</span>
+              </span>
               <Select
                 value={clientType}
                 onChange={(e) => setClientType(e.target.value as ClientType)}
@@ -224,7 +226,9 @@ export default function AddClientModal({
                 onChange={(e) => setStatutClient(e.target.value)}
               >
                 {CLIENT_INITIAL_STATUT_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
                 ))}
               </Select>
             </label>
@@ -232,43 +236,60 @@ export default function AddClientModal({
             {!isPm ? (
               <>
                 <label className="cp-field">
-                  <span>Civilité <span className="field-required">*</span></span>
+                  <span>
+                    Civilité <span className="field-required">*</span>
+                  </span>
                   <Select
                     value={pp.civilite}
-                    onChange={(e) => setPp((prev) => ({ ...prev, civilite: e.target.value }))}
+                    onChange={(e) =>
+                      setPp((prev) => ({ ...prev, civilite: e.target.value }))
+                    }
                   >
                     <option value="">—</option>
                     {CLIENT_CIVILITE_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
                     ))}
                   </Select>
                 </label>
-                <div className="cp-field" aria-hidden="true" />
                 <label className="cp-field">
-                  <span>Nom <span className="field-required">*</span></span>
+                  <span>
+                    Nom <span className="field-required">*</span>
+                  </span>
                   <input
                     type="text"
-                    className="add-client-modal__uppercase"
+                    className="uppercase"
                     value={pp.lastName}
-                    onChange={(e) => setPp((prev) => ({ ...prev, lastName: e.target.value }))}
+                    onChange={(e) =>
+                      setPp((prev) => ({ ...prev, lastName: e.target.value }))
+                    }
                     placeholder="NOM DE FAMILLE"
                     autoFocus
                   />
                 </label>
                 <label className="cp-field">
-                  <span>Prénom <span className="field-required">*</span></span>
+                  <span>
+                    Prénom <span className="field-required">*</span>
+                  </span>
                   <input
                     type="text"
                     value={pp.firstName}
-                    onChange={(e) => setPp((prev) => ({ ...prev, firstName: e.target.value }))}
+                    onChange={(e) =>
+                      setPp((prev) => ({ ...prev, firstName: e.target.value }))
+                    }
                   />
                 </label>
                 <label className="cp-field">
-                  <span>Email <span className="field-required">*</span></span>
+                  <span>
+                    Email <span className="field-required">*</span>
+                  </span>
                   <input
                     type="email"
                     value={pp.email}
-                    onChange={(e) => setPp((prev) => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setPp((prev) => ({ ...prev, email: e.target.value }))
+                    }
                   />
                 </label>
                 <label className="cp-field">
@@ -276,29 +297,39 @@ export default function AddClientModal({
                   <input
                     type="tel"
                     value={pp.phone}
-                    onChange={(e) => setPp((prev) => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setPp((prev) => ({ ...prev, phone: e.target.value }))
+                    }
                   />
                 </label>
               </>
             ) : (
               <>
                 <label className="cp-field cp-field-full">
-                  <span>Raison sociale <span className="field-required">*</span></span>
+                  <span>
+                    Raison sociale <span className="field-required">*</span>
+                  </span>
                   <input
                     type="text"
-                    className="add-client-modal__uppercase"
+                    className="uppercase"
                     value={pm.tradeName}
-                    onChange={(e) => setPm((prev) => ({ ...prev, tradeName: e.target.value }))}
+                    onChange={(e) =>
+                      setPm((prev) => ({ ...prev, tradeName: e.target.value }))
+                    }
                     placeholder="DÉNOMINATION SOCIALE"
                     autoFocus
                   />
                 </label>
                 <label className="cp-field">
-                  <span>SIREN <span className="field-required">*</span></span>
+                  <span>
+                    SIREN <span className="field-required">*</span>
+                  </span>
                   <input
                     type="text"
                     value={pm.siren}
-                    onChange={(e) => setPm((prev) => ({ ...prev, siren: e.target.value }))}
+                    onChange={(e) =>
+                      setPm((prev) => ({ ...prev, siren: e.target.value }))
+                    }
                     placeholder="9 chiffres"
                     maxLength={9}
                   />
@@ -307,20 +338,28 @@ export default function AddClientModal({
                   <span>Forme juridique</span>
                   <Select
                     value={pm.legalForm}
-                    onChange={(e) => setPm((prev) => ({ ...prev, legalForm: e.target.value }))}
+                    onChange={(e) =>
+                      setPm((prev) => ({ ...prev, legalForm: e.target.value }))
+                    }
                   >
                     <option value="">—</option>
                     {CLIENT_LEGAL_FORM_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
                     ))}
                   </Select>
                 </label>
                 <label className="cp-field">
-                  <span>Email <span className="field-required">*</span></span>
+                  <span>
+                    Email <span className="field-required">*</span>
+                  </span>
                   <input
                     type="email"
                     value={pm.email}
-                    onChange={(e) => setPm((prev) => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setPm((prev) => ({ ...prev, email: e.target.value }))
+                    }
                   />
                 </label>
                 <label className="cp-field">
@@ -328,15 +367,24 @@ export default function AddClientModal({
                   <input
                     type="tel"
                     value={pm.phone}
-                    onChange={(e) => setPm((prev) => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setPm((prev) => ({ ...prev, phone: e.target.value }))
+                    }
                   />
                 </label>
                 <label className="cp-field">
-                  <span>Représentant légal <span className="field-required">*</span></span>
+                  <span>
+                    Représentant légal <span className="field-required">*</span>
+                  </span>
                   <input
                     type="text"
                     value={pm.legalRepName}
-                    onChange={(e) => setPm((prev) => ({ ...prev, legalRepName: e.target.value }))}
+                    onChange={(e) =>
+                      setPm((prev) => ({
+                        ...prev,
+                        legalRepName: e.target.value,
+                      }))
+                    }
                     placeholder="Nom Prénom"
                   />
                 </label>
@@ -345,7 +393,12 @@ export default function AddClientModal({
                   <input
                     type="text"
                     value={pm.legalRepRole}
-                    onChange={(e) => setPm((prev) => ({ ...prev, legalRepRole: e.target.value }))}
+                    onChange={(e) =>
+                      setPm((prev) => ({
+                        ...prev,
+                        legalRepRole: e.target.value,
+                      }))
+                    }
                     placeholder="Président, Gérant…"
                   />
                 </label>
@@ -360,7 +413,9 @@ export default function AddClientModal({
               >
                 <option value="">—</option>
                 {docusignSigners.map((g) => (
-                  <option key={g.id} value={g.name}>{g.name}</option>
+                  <option key={g.id} value={g.name}>
+                    {g.name}
+                  </option>
                 ))}
               </Select>
             </label>
@@ -373,17 +428,24 @@ export default function AddClientModal({
               >
                 <option value="">—</option>
                 {activeGestionnaires.map((g) => (
-                  <option key={g.id} value={g.name}>{g.name}</option>
+                  <option key={g.id} value={g.name}>
+                    {g.name}
+                  </option>
                 ))}
               </Select>
             </label>
 
             <label className="cp-field">
               <span>Origine</span>
-              <Select value={origine} onChange={(e) => setOrigine(e.target.value)}>
+              <Select
+                value={origine}
+                onChange={(e) => setOrigine(e.target.value)}
+              >
                 <option value="">—</option>
                 {CLIENT_ORIGINE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
                 ))}
               </Select>
             </label>
@@ -391,7 +453,7 @@ export default function AddClientModal({
             <label className="cp-field cp-field-full">
               <span>Note initiale</span>
               <textarea
-                className="add-client-modal__textarea"
+                className="w-full min-h-[60px] resize-y"
                 value={notesInternes}
                 onChange={(e) => setNotesInternes(e.target.value)}
                 placeholder="Contexte, premier contact…"
@@ -401,17 +463,32 @@ export default function AddClientModal({
           </div>
 
           {error && (
-            <p className="add-client-modal__error" role="alert">{error}</p>
+            <p
+              className="m-0 py-[0.55rem] px-3 rounded-lg bg-[#fef2f2] border border-[#fecaca] text-[#b91c1c] text-[0.82rem]"
+              role="alert"
+            >
+              {error}
+            </p>
           )}
         </div>
 
         <footer className="modal-card__footer">
           <div className="modal-card__actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isSaving}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={onClose}
+              disabled={isSaving}
+            >
               Annuler
             </button>
-            <button type="button" className="btn-bronze" onClick={handleSubmit} disabled={isSaving}>
-              {isSaving ? 'Création…' : 'Créer'}
+            <button
+              type="button"
+              className="btn-bronze"
+              onClick={handleSubmit}
+              disabled={isSaving}
+            >
+              {isSaving ? "Création…" : "Créer"}
             </button>
           </div>
         </footer>

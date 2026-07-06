@@ -10,10 +10,6 @@ export function now(): Dayjs {
   return dayjs();
 }
 
-export function toIsoString(value?: string | Date | Dayjs): string {
-  return (value ? dayjs(value) : dayjs()).toISOString();
-}
-
 export function currentYear(): number {
   return dayjs().year();
 }

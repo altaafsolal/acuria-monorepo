@@ -1,5 +1,5 @@
 export { useAuthSession, useLogin, useLogout } from './useAuth';
-export { useClients, useClient, useCreateClient, useUpdateClient, useDeleteClient } from './useClients';
+export { useClients, useClient, useCreateClient, useUpdateClient } from './useClients';
 export { useUsers, useUser, useCreateUser, useUpdateUser, useDeleteUser, useResetUserPassword } from './useUsers';
 export {
   usePlatformStats,
@@ -17,7 +17,7 @@ export {
 } from './usePlatform';
 export { usePlatformSocket } from './usePlatformSocket';
 export { useHealth } from './useHealth';
-export { useAccueil, useInvalidateAccueil } from './useAccueil';
+export { useAccueil } from './useAccueil';
 export {
   useKycSignataires,
   useKycDerClients,
@@ -25,7 +25,6 @@ export {
   useSendDer,
   useSendLdm,
   useSendFcc,
-  previewLdmPdf,
   useTenantBranding,
 } from './useKyc';
 export { useGestionnaires } from './useGestionnaires';
@@ -44,7 +43,6 @@ export {
   useCreateKycDocument,
   useUpdateKycDocument,
   useClientTimeline,
-  useArchiveClient,
 } from './useClientPanel';
 export { usePlatformAuditLogs, useTenantAuditLogs } from './useAudit';
 export { useForgotPassword, useVerifyOtp, useSetPassword } from './usePasswordReset';

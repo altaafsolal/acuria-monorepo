@@ -4,7 +4,6 @@ import api from '../api';
 import { queryKeys } from '../api/queryKeys';
 import { useGet, usePost } from '../lib/api';
 import { fetchAuthenticatedBlob } from '../lib/authenticatedBlob';
-import { getAccessToken, tryRefreshAccessToken } from '../lib/http';
 import type {
   Client,
   ClientResponse,
@@ -67,37 +66,6 @@ export function useSendFcc() {
     path: api.kycFccSend,
     onSuccess: () => invalidateKycQueries(queryClient),
   });
-}
-
-export async function previewLdmPdf(input: SendLdmInput): Promise<Blob> {
-  return fetchLdmPreview(input, false);
-}
-
-async function fetchLdmPreview(input: SendLdmInput, retried: boolean): Promise<Blob> {
-  const token = getAccessToken();
-  const response = await fetch(api.kycLdmPreview, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    credentials: 'include',
-    body: JSON.stringify(input),
-  });
-
-  if (response.status === 401 && !retried) {
-    const newToken = await tryRefreshAccessToken();
-    if (newToken) {
-      return fetchLdmPreview(input, true);
-    }
-  }
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({})) as { error?: string };
-    throw new Error(data.error || 'Échec de la prévisualisation');
-  }
-
-  return response.blob();
 }
 
 export function useTenantBranding(enabled = true) {

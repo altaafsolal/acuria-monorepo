@@ -5,7 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { useLogin } from '../../hooks';
 import PageLoading from '../../components/ui/PageLoading';
 import { DEV_SUPER_ADMIN } from '../../config/auth';
-import './auth.css';
+
 
 export default function LoginPage() {
   const navigate = useNavigate();

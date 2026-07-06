@@ -66,7 +66,7 @@ export default function PlatformAuditPage() {
           onClick={() => refetch()}
           disabled={isFetching}
         >
-          <FiRefreshCw className={isFetching ? 'spin' : undefined} />
+          <FiRefreshCw className={isFetching ? 'animate-spin-app' : undefined} />
           {isFetching ? 'Actualisation…' : 'Actualiser'}
         </button>
       </header>

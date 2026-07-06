@@ -3,8 +3,6 @@ import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
 import type { Client } from '../../types';
 import Select from '../ui/Select';
-import '../ui/Modal.css';
-import './AddRelationModal.css';
 
 export const RELATION_ROLE_OPTIONS = [
   { value: 'Associé', label: 'Associé' },
@@ -96,7 +94,7 @@ export default function AddRelationModal({
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-card modal-card--wide modal-card--form modal-card--shell add-relation-modal"
+        className="modal-card modal-card--form modal-card--shell max-w-[520px]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -115,11 +113,11 @@ export default function AddRelationModal({
         </header>
 
         <div className="modal-card__body">
-          <p className="add-relation-modal__hint">
+          <p className="m-0 text-[0.84rem] text-[var(--color-muted)] leading-[1.45]">
             Liez ce client à un autre client du cabinet (conjoint, associé, bénéficiaire effectif…).
           </p>
 
-          <div className="add-relation-modal__fields">
+          <div className="flex flex-col gap-[var(--form-fields-gap)]">
             <label className="cp-field cp-field-full">
               <span>Client lié <span className="field-required">*</span></span>
               <Select
@@ -138,7 +136,7 @@ export default function AddRelationModal({
                 ))}
               </Select>
               {selectedClient && (
-                <p className="add-relation-modal__selected">
+                <p className="m-0 mt-[0.45rem] text-[0.82rem] text-[var(--color-muted)]">
                   Sélectionné : <strong>{selectedClient.name}</strong>
                 </p>
               )}
@@ -169,7 +167,7 @@ export default function AddRelationModal({
               </div>
             </fieldset>
 
-            <div className="add-relation-modal__row">
+            <div className="grid grid-cols-2 gap-[var(--form-fields-gap)] max-[720px]:grid-cols-1">
               <label className="cp-field">
                 <span>% de détention</span>
                 <input
@@ -195,7 +193,7 @@ export default function AddRelationModal({
           </div>
 
           {error && (
-            <p className="add-relation-modal__error" role="alert">{error}</p>
+            <p className="m-0 py-[0.55rem] px-[0.7rem] rounded-lg bg-[#fef2f2] text-[#b91c1c] text-[0.84rem]" role="alert">{error}</p>
           )}
         </div>
 

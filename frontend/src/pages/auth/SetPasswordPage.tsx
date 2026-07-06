@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { FiArrowRight, FiLayout, FiLock } from 'react-icons/fi';
 import { useSetPassword } from '../../hooks';
-import './auth.css';
+
 
 export default function SetPasswordPage() {
   const [searchParams] = useSearchParams();

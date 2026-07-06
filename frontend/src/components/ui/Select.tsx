@@ -15,7 +15,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { FiChevronDown, FiSearch } from 'react-icons/fi';
-import './Select.css';
+
 
 interface SelectOption {
   value: string;

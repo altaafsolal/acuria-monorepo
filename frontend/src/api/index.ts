@@ -43,7 +43,6 @@ const api = {
   clients: `${baseUrl}/clients`,
   clientById: (id: string) => `${baseUrl}/clients/${id}`,
   clientTimeline: (id: string) => `${baseUrl}/clients/${id}/timeline`,
-  clientArchive: (id: string) => `${baseUrl}/clients/${id}/archive`,
   clientNotes: (clientId: string) => `${baseUrl}/clients/${clientId}/notes`,
   clientNoteById: (clientId: string, noteId: string) => `${baseUrl}/clients/${clientId}/notes/${noteId}`,
   clientRelations: (clientId: string) => `${baseUrl}/clients/${clientId}/relations`,
@@ -60,7 +59,6 @@ const api = {
   kycFcc: (filter = '') => `${baseUrl}/kyc/fcc${filter ? `?filter=${encodeURIComponent(filter)}` : ''}`,
   kycDerSend: `${baseUrl}/kyc/der/send`,
   kycLdmSend: `${baseUrl}/kyc/ldm/send`,
-  kycLdmPreview: `${baseUrl}/kyc/ldm/preview`,
   kycFccSend: `${baseUrl}/kyc/fcc/send`,
 
   // Gestionnaires

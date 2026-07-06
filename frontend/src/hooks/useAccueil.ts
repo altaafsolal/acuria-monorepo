@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import api from '../api';
 import { queryKeys } from '../api/queryKeys';
 import { useGet } from '../lib/api';
@@ -10,9 +9,4 @@ export function useAccueil(enabled = true) {
     queryKey: queryKeys.accueil.data,
     enabled,
   });
-}
-
-export function useInvalidateAccueil() {
-  const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: queryKeys.accueil.data });
 }
