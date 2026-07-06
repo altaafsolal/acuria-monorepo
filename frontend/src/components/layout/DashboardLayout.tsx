@@ -14,6 +14,8 @@ import {
   FiLogOut,
   FiSearch,
   FiShield,
+  FiSliders,
+  FiTrendingUp,
   FiUsers,
 } from "react-icons/fi";
 import api from "../../api";
@@ -40,6 +42,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/audit": "Audit",
   "/dashboard/platform/audit": "Audit",
   "/dashboard/tenants": "Tenants",
+  "/dashboard/marches": "Marchés financiers",
+  "/dashboard/simulateurs": "Simulateurs",
 };
 
 function navClass({ isActive }: { isActive: boolean }): string {
@@ -158,6 +162,16 @@ export default function DashboardLayout() {
                 {pendingFcc > 0 && (
                   <span className="nav-badge">{pendingFcc}</span>
                 )}
+              </NavLink>
+
+              <span className="nav-label nav-section">Outils</span>
+              <NavLink to="/dashboard/marches" className={navClass}>
+                <FiTrendingUp className="nav-icon" />
+                Marchés financiers
+              </NavLink>
+              <NavLink to="/dashboard/simulateurs" className={navClass}>
+                <FiSliders className="nav-icon" />
+                Simulateurs
               </NavLink>
             </>
           )}

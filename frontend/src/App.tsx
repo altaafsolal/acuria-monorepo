@@ -24,6 +24,8 @@ const KycDerPage = lazy(() => import('./pages/kyc/KycDerPage'));
 const KycFccPage = lazy(() => import('./pages/kyc/KycFccPage'));
 const PlatformAuditPage = lazy(() => import('./pages/audit/PlatformAuditPage'));
 const TenantAuditPage = lazy(() => import('./pages/audit/TenantAuditPage'));
+const MarchesPage = lazy(() => import('./pages/outils/MarchesPage'));
+const SimulateursPage = lazy(() => import('./pages/outils/SimulateursPage'));
 
 function PageLoader() {
   return <PageLoading fullScreen />;
@@ -139,6 +141,22 @@ export default function App() {
             element={(
               <TenantUserRoute adminOnly>
                 <UserDetailPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/marches"
+            element={(
+              <TenantUserRoute>
+                <MarchesPage />
+              </TenantUserRoute>
+            )}
+          />
+          <Route
+            path="dashboard/simulateurs"
+            element={(
+              <TenantUserRoute>
+                <SimulateursPage />
               </TenantUserRoute>
             )}
           />
