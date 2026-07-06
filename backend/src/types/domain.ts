@@ -496,6 +496,7 @@ export interface DbTask {
   status: string;
   priorite: string | null;
   assigne_a: string | null;
+  cree_par: string | null;
   due_date: string | null;
   client_id: string | null;
   airtable_record_id: string | null;
@@ -508,6 +509,7 @@ export interface PublicTask {
   status: string;
   priorite: string | null;
   assigneA: string | null;
+  creePar: string | null;
   dueDate: string | null;
   clientId: string | null;
 }

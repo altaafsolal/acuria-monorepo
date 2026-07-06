@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
 import type { Client } from '../../types';
@@ -26,7 +26,6 @@ export interface AddRelationInput {
 
 interface AddRelationModalProps {
   open: boolean;
-  clientId: string;
   allClients: Client[];
   isSaving: boolean;
   onClose: () => void;
@@ -35,7 +34,6 @@ interface AddRelationModalProps {
 
 export default function AddRelationModal({
   open,
-  clientId,
   allClients,
   isSaving,
   onClose,
@@ -47,12 +45,7 @@ export default function AddRelationModal({
   const [relationNote, setRelationNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const availableClients = useMemo(
-    () => allClients.filter((client) => client.id !== clientId),
-    [allClients, clientId],
-  );
-
-  const selectedClient = availableClients.find((client) => client.id === relationClientId);
+  const selectedClient = allClients.find((client) => client.id === relationClientId);
 
   useEffect(() => {
     if (!open) return;
@@ -138,7 +131,7 @@ export default function AddRelationModal({
                 }}
               >
                 <option value="">Choisir un client…</option>
-                {availableClients.map((client) => (
+                {allClients.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.name} ({client.clientType}){client.email ? ` — ${client.email}` : ''}
                   </option>

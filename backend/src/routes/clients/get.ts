@@ -17,7 +17,12 @@ router.get('/', asyncHandler(async (req, res) => {
 
 router.get('/:id/timeline', asyncHandler(async (req, res) => {
   const tenantId = requireTenant(req);
-  const events = await kycService.getClientTimeline(tenantId, reqParam(req, 'id'));
+  const user = req.user!;
+  const events = await kycService.getClientTimeline(tenantId, reqParam(req, 'id'), {
+    userId: user.id,
+    userName: user.name,
+    role: user.role,
+  });
   res.json({ events });
 }));
 

@@ -24,6 +24,9 @@ router.post('/', asyncHandler(async (req, res) => {
   if (!title) {
     throw new HttpError(400, 'title is required');
   }
+  if (!assigneA?.trim()) {
+    throw new HttpError(400, 'assigneA is required');
+  }
 
   const task = await tasksRepo.createTask(tenantId, {
     clientId,
@@ -31,7 +34,8 @@ router.post('/', asyncHandler(async (req, res) => {
     description,
     status,
     priorite,
-    assigneA,
+    assigneA: assigneA.trim(),
+    creePar: req.user?.name || '',
     dueDate,
   });
   res.status(201).json({ task });

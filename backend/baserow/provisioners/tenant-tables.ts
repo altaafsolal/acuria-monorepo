@@ -174,7 +174,7 @@ async function ensureTasksFields(tableId: string | number, clientsTableId: strin
     { name: F.priorite, type: 'single_select', select_options: [...TASK_PRIORITE_OPTIONS] },
     existing,
   );
-  await ensureTextFields(tableId, [F.assigneA, F.airtableRecordId], existing);
+  await ensureTextFields(tableId, [F.assigneA, F.creePar, F.airtableRecordId], existing);
   await ensureField(tableId, { name: F.dueDate, type: 'date' }, existing);
   await ensureField(
     tableId,

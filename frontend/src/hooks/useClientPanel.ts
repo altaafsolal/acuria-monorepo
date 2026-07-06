@@ -105,7 +105,7 @@ export function useCreateClientTask(clientId: string) {
   const queryClient = useQueryClient();
   return usePost<
     { task: ClientTask },
-    { title: string; description?: string; status?: string; priorite?: string; assigneA?: string; dueDate?: string }
+    { title: string; description?: string; status?: string; priorite?: string; assigneA: string; dueDate?: string }
   >({
     path: api.clientTasks(clientId),
     onSuccess: () => {

@@ -238,7 +238,7 @@ export default function ClientPanel({ clientId, onClose }: ClientPanelProps) {
       status: input.status,
       priorite: input.priorite,
       dueDate: input.dueDate || undefined,
-      assigneA: input.assigneA || undefined,
+      assigneA: input.assigneA,
     }, { onSuccess });
   };
 
@@ -614,7 +614,6 @@ export default function ClientPanel({ clientId, onClose }: ClientPanelProps) {
               {activeTab === 'relations' && (
                 <div className="cp-tab-content active">
                   <ClientRelationsTab
-                    clientId={clientId}
                     relations={relations}
                     allClients={allClients}
                     isAdding={createRelation.isPending}

@@ -184,6 +184,7 @@ export const BASEROW_FIELDS = {
     status: 'status',
     priorite: 'priorite',
     assigneA: 'assigne_a',
+    creePar: 'cree_par',
     dueDate: 'due_date',
     clientId: 'client_id',
     airtableRecordId: 'airtable_record_id',

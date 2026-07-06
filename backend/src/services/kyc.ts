@@ -1,4 +1,5 @@
 import { clientsRepo, notesRepo, tasksRepo, clientMapper } from './baserow/index.js';
+import { filterTasksForUser } from './task-access.js';
 import {
   buildFccPrefillLink,
   buildKycVars,
@@ -110,14 +111,24 @@ export async function sendFcc(tenantId: string, clientId: string): Promise<{ cli
   return { client: toPublicClient(client), link };
 }
 
-export async function getClientTimeline(tenantId: string, clientId: string) {
+export async function getClientTimeline(
+  tenantId: string,
+  clientId: string,
+  viewer?: { userId: string; userName: string; role: import('../types/domain.js').Role },
+) {
   const client = await clientsRepo.getClientById(tenantId, clientId);
   if (!client) return [];
 
-  const [notes, tasks] = await Promise.all([
+  const [notes, tasks, dbTasks] = await Promise.all([
     notesRepo.listNotesByClient(tenantId, clientId),
     tasksRepo.listTasksByClient(tenantId, clientId),
+    tasksRepo.listDbTasksByClientId(tenantId, clientId),
   ]);
+
+  let visibleTasks = tasks;
+  if (viewer) {
+    visibleTasks = await filterTasksForUser(tenantId, tasks, dbTasks, viewer);
+  }
 
   const events: Array<{ date: string; type: string; label: string; detail: string }> = [];
 
@@ -143,7 +154,7 @@ export async function getClientTimeline(tenantId: string, clientId: string) {
     });
   }
 
-  for (const task of tasks) {
+  for (const task of visibleTasks) {
     events.push({
       date: task.dueDate || '',
       type: 'task',

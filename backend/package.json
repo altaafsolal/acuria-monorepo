@@ -10,6 +10,8 @@
     "setup": "tsx cli/setup.ts",
     "migrate:airtable": "tsx cli/migrate-airtable.ts",
     "provision:tenant-workspace": "tsx cli/provision-tenant-workspace.ts",
+    "provision:tenant-tables": "tsx cli/provision-tenant-tables.ts",
+    "provision:tenant": "tsx cli/provision-tenant-tables.ts",
     "typecheck": "tsc --noEmit",
     "kill-port": "kill-port 3001"
   },

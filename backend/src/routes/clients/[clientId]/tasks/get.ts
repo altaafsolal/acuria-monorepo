@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../../../middleware/index.js';
 import { baserow } from '../../../../services/index.js';
+import { filterTasksForUser } from '../../../../services/task-access.js';
 import { asyncHandler, requireTenant, reqParam } from '../../../../utils/index.js';
 
 const { tasksRepo } = baserow;
@@ -12,8 +13,17 @@ router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
 router.get('/', asyncHandler(async (req, res) => {
   const tenantId = requireTenant(req);
   const clientId = reqParam(req, 'clientId');
-  const tasks = await tasksRepo.listTasksByClient(tenantId, clientId);
-  res.json({ tasks });
+  const user = req.user!;
+  const [tasks, dbTasks] = await Promise.all([
+    tasksRepo.listTasksByClient(tenantId, clientId),
+    tasksRepo.listDbTasksByClientId(tenantId, clientId),
+  ]);
+  const filtered = await filterTasksForUser(tenantId, tasks, dbTasks, {
+    userId: user.id,
+    userName: user.name,
+    role: user.role,
+  });
+  res.json({ tasks: filtered });
 }));
 
 export default router;

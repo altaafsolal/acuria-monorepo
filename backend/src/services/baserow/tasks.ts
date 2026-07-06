@@ -16,6 +16,7 @@ function mapRow(row: BaserowRow): DbTask {
     status: pickFieldValue(row[F.status]) || 'À faire',
     priorite: pickFieldValue(row[F.priorite]),
     assigne_a: pickTextValue(row[F.assigneA]),
+    cree_par: pickTextValue(row[F.creePar]),
     due_date: pickTextValue(row[F.dueDate]),
     client_id: pickLinkRowId(row[F.clientId]),
     airtable_record_id: pickTextValue(row[F.airtableRecordId]),
@@ -30,18 +31,34 @@ export function toPublicTask(task: DbTask): PublicTask {
     status: task.status,
     priorite: task.priorite,
     assigneA: task.assigne_a,
+    creePar: task.cree_par,
     dueDate: task.due_date,
     clientId: task.client_id,
   };
 }
 
-export async function listTasksByClient(tenantId: string, clientId: string): Promise<PublicTask[]> {
+async function listDbTasksByClient(tenantId: string, clientId: string): Promise<DbTask[]> {
   const ctx = await resolveTenantDbContext(tenantId);
   const tableId = await resolveTenantTableId(tenantId, 'tasks');
   return (await listAllRows(tableId, {}, ctx))
     .map(mapRow)
-    .filter((t) => t.client_id === clientId)
-    .map(toPublicTask);
+    .filter((t) => t.client_id === clientId);
+}
+
+export async function listTasksByClient(tenantId: string, clientId: string): Promise<PublicTask[]> {
+  return (await listDbTasksByClient(tenantId, clientId)).map(toPublicTask);
+}
+
+export async function listDbTasksByClientId(tenantId: string, clientId: string): Promise<DbTask[]> {
+  return listDbTasksByClient(tenantId, clientId);
+}
+
+export async function getTaskById(tenantId: string, taskId: string): Promise<DbTask | null> {
+  const ctx = await resolveTenantDbContext(tenantId);
+  const tableId = await resolveTenantTableId(tenantId, 'tasks');
+  const rows = await listAllRows(tableId, {}, ctx);
+  const row = rows.find((r) => String(r.id) === taskId);
+  return row ? mapRow(row) : null;
 }
 
 export async function createTask(
@@ -53,6 +70,7 @@ export async function createTask(
     status?: string;
     priorite?: string;
     assigneA?: string;
+    creePar?: string;
     dueDate?: string;
   },
 ): Promise<PublicTask> {
@@ -65,6 +83,7 @@ export async function createTask(
     [F.status]: input.status || 'À faire',
     [F.priorite]: input.priorite || 'Normale',
     [F.assigneA]: input.assigneA || '',
+    [F.creePar]: input.creePar || '',
     [F.dueDate]: normalizeDateForBaserow(input.dueDate),
     [F.clientId]: [Number(input.clientId)],
   }, ctx);
@@ -126,6 +145,7 @@ export async function upsertTaskFromAirtable(
     [F.status]: data.status || 'À faire',
     [F.priorite]: data.priorite || 'Normale',
     [F.assigneA]: data.assigneA || '',
+    [F.creePar]: '',
     [F.dueDate]: normalizeDateForBaserow(data.dueDate),
     [F.clientId]: [Number(data.clientId)],
     [F.airtableRecordId]: data.airtableRecordId,

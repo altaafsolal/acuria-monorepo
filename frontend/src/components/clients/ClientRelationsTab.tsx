@@ -56,7 +56,6 @@ function relatedClientName(relation: ClientRelation): string {
 }
 
 interface ClientRelationsTabProps {
-  clientId: string;
   relations: ClientRelation[];
   allClients: Client[];
   isAdding: boolean;
@@ -65,7 +64,6 @@ interface ClientRelationsTabProps {
 }
 
 export default function ClientRelationsTab({
-  clientId,
   relations,
   allClients,
   isAdding,
@@ -177,7 +175,6 @@ export default function ClientRelationsTab({
 
       <AddRelationModal
         open={modalOpen}
-        clientId={clientId}
         allClients={allClients}
         isSaving={isAdding}
         onClose={() => setModalOpen(false)}

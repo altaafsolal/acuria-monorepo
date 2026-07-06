@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
+import { useApp } from '../../context/AppContext';
 import type { Gestionnaire } from '../../types';
 import Select from '../ui/Select';
 import '../ui/Modal.css';
@@ -36,6 +37,7 @@ export default function AddTaskModal({
   onClose,
   onSubmit,
 }: AddTaskModalProps) {
+  const { user } = useApp();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatusOption>('À faire');
@@ -44,6 +46,12 @@ export default function AddTaskModal({
   const [assigneA, setAssigneA] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const defaultAssigneA = useMemo(() => {
+    if (!user?.name) return '';
+    const match = gestionnaires.find((g) => g.name === user.name);
+    return match?.name ?? '';
+  }, [gestionnaires, user?.name]);
+
   useEffect(() => {
     if (!open) return;
     setTitle('');
@@ -51,9 +59,9 @@ export default function AddTaskModal({
     setStatus('À faire');
     setPriorite('Normale');
     setDueDate('');
-    setAssigneA('');
+    setAssigneA(defaultAssigneA);
     setError(null);
-  }, [open]);
+  }, [open, defaultAssigneA]);
 
   useEffect(() => {
     if (!open) return;
@@ -67,8 +75,11 @@ export default function AddTaskModal({
   if (!open) return null;
 
   const handleSubmit = () => {
-    if (!title.trim()) {
-      setError('Le titre est obligatoire.');
+    const missing: string[] = [];
+    if (!title.trim()) missing.push('Titre');
+    if (!assigneA.trim()) missing.push('Assigné à');
+    if (missing.length > 0) {
+      setError(`Champs obligatoires : ${missing.join(', ')}`);
       return;
     }
     setError(null);
@@ -151,12 +162,13 @@ export default function AddTaskModal({
             </label>
 
             <label className="cp-field">
-              <span>Assigné à</span>
+              <span>Assigné à <span className="field-required">*</span></span>
               <Select
                 value={assigneA}
                 onChange={(e) => setAssigneA(e.target.value)}
+                required
               >
-                <option value="">Non assigné</option>
+                <option value="">—</option>
                 {gestionnaires.map((g) => (
                   <option key={g.id} value={g.name}>{g.name}</option>
                 ))}

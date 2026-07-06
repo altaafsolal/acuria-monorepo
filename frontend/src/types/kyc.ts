@@ -77,6 +77,7 @@ export interface ClientTask {
   status: string;
   priorite: string | null;
   assigneA: string | null;
+  creePar?: string | null;
   dueDate: string | null;
   clientId: string | null;
 }
