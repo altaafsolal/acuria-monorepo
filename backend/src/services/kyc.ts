@@ -12,7 +12,7 @@ import {
   sendLdmDocuSign,
 } from './make/index.js';
 import { filterDerClients, filterFccClients } from './lib/client-filters.js';
-import type { DbClient, PublicClient, SendDerInput, SendLdmInput } from '../types/domain.js';
+import type { PublicClient, SendDerInput, SendLdmInput } from '../types/domain.js';
 
 const { resolveClientDisplayName, toPublicClient } = clientMapper;
 
@@ -27,7 +27,10 @@ export async function listFccClients(tenantId: string, filter = ''): Promise<Pub
 }
 
 export async function sendDer(tenantId: string, input: SendDerInput): Promise<PublicClient> {
-  const client = await clientsRepo.getClientById(tenantId, input.clientId);
+  const [client, tenant] = await Promise.all([
+    clientsRepo.getClientById(tenantId, input.clientId),
+    tenantsRepo.findTenantById(tenantId),
+  ]);
   if (!client) throw new Error('Client not found');
   if (!client.email) throw new Error('Email client manquant');
 
@@ -38,7 +41,9 @@ export async function sendDer(tenantId: string, input: SendDerInput): Promise<Pu
     montantForfait: input.montantForfait,
   });
 
-  await sendDerEmail(vars);
+  const tenantName = tenant?.branding_name || tenant?.name || '';
+  const tenantEmail = tenant?.email || '';
+  await sendDerEmail(vars, tenantName, tenantEmail);
 
   const today = new Date().toISOString().split('T')[0];
   const updated = await clientsRepo.patchClientKycFields(tenantId, client.id, {
@@ -51,7 +56,10 @@ export async function sendDer(tenantId: string, input: SendDerInput): Promise<Pu
 }
 
 export async function sendLdm(tenantId: string, input: SendLdmInput): Promise<PublicClient> {
-  const client = await clientsRepo.getClientById(tenantId, input.clientId);
+  const [client, tenant] = await Promise.all([
+    clientsRepo.getClientById(tenantId, input.clientId),
+    tenantsRepo.findTenantById(tenantId),
+  ]);
   if (!client) throw new Error('Client not found');
   if (!derIsSent(client.der_statut)) throw new Error('La DER doit être envoyée avant la LdM');
   if (!ldmIsUnlocked(client.der_date)) {
@@ -67,7 +75,9 @@ export async function sendLdm(tenantId: string, input: SendLdmInput): Promise<Pu
     montantForfait: input.montantForfait,
   });
 
-  await sendLdmDocuSign(vars);
+  const tenantName = tenant?.branding_name || tenant?.name || '';
+  const tenantEmail = tenant?.email || '';
+  await sendLdmDocuSign(vars, tenantName, tenantEmail);
 
   const updated = await clientsRepo.patchClientKycFields(tenantId, client.id, {
     ldm_statut: 'Envoyé',

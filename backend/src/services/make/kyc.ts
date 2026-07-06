@@ -147,7 +147,11 @@ export function buildFccPrefillLink(client: DbClient): { link: string; type: 'PP
   return { link: `${baseUrl}/?data=${encoded}`, type };
 }
 
-export async function sendDerEmail(vars: KycWebhookVars): Promise<void> {
+export async function sendDerEmail(
+  vars: KycWebhookVars,
+  tenantName: string,
+  tenantEmail: string,
+): Promise<void> {
   const nowISO = new Date().toISOString();
   const nowLocal = new Date().toLocaleString('fr-FR', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -156,11 +160,21 @@ export async function sendDerEmail(vars: KycWebhookVars): Promise<void> {
     ...vars,
     der_envoi_timestamp: nowISO,
     der_envoi_local: nowLocal,
+    tenant_name: tenantName,
+    tenant_email: tenantEmail,
   });
 }
 
-export async function sendLdmDocuSign(vars: KycWebhookVars): Promise<void> {
-  await postWebhook(webhookUrl('webhookLdm'), vars);
+export async function sendLdmDocuSign(
+  vars: KycWebhookVars,
+  tenantName: string,
+  tenantEmail: string,
+): Promise<void> {
+  await postWebhook(webhookUrl('webhookLdm'), {
+    ...vars,
+    tenant_name: tenantName,
+    tenant_email: tenantEmail,
+  });
 }
 
 export async function previewLdm(vars: KycWebhookVars): Promise<Buffer> {
