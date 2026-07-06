@@ -4,7 +4,9 @@ import { pathToFileURL } from 'url';
 import type { Application, Router } from 'express';
 import { Router as createRouter } from 'express';
 
-const VERB_FILES = ['get', 'post', 'put', 'patch', 'delete'] as const;
+const VERB_PREFIXES = ['delete', 'patch', 'post', 'put', 'get'] as const;
+
+const VERB_FILE_RE = /^(get|post|put|patch|delete)(\.ts$|[A-Z].*\.ts$)/;
 
 async function walkDirs(dir: string): Promise<string[]> {
   const dirs: string[] = [dir];
@@ -28,27 +30,20 @@ function folderToMountPath(routesDir: string, folder: string): string {
   return `/api/${segments.join('/')}`;
 }
 
-async function hasVerbFile(folder: string): Promise<boolean> {
-  for (const verb of VERB_FILES) {
-    try {
-      await fs.access(path.join(folder, `${verb}.ts`));
-      return true;
-    } catch {
-      // not present
-    }
-  }
-  return false;
-}
-
-async function loadVerbRouter(folder: string, verb: string): Promise<Router | null> {
-  const verbPath = path.join(folder, `${verb}.ts`);
-  try {
-    await fs.access(verbPath);
-    const mod = await import(pathToFileURL(verbPath).href) as { default?: Router };
-    return mod.default ?? null;
-  } catch {
-    return null;
-  }
+async function getVerbFilesInDir(folder: string): Promise<string[]> {
+  const entries = await fs.readdir(folder, { withFileTypes: true });
+  const files = entries
+    .filter((e) => e.isFile() && VERB_FILE_RE.test(e.name))
+    .map((e) => e.name)
+    .sort((a, b) => {
+      // Sort by verb prefix order first, then alphabetically
+      const aVerb = VERB_PREFIXES.find((v) => a.toLowerCase().startsWith(v)) ?? '';
+      const bVerb = VERB_PREFIXES.find((v) => b.toLowerCase().startsWith(v)) ?? '';
+      const verbOrder = VERB_PREFIXES.indexOf(aVerb as typeof VERB_PREFIXES[number]) -
+        VERB_PREFIXES.indexOf(bVerb as typeof VERB_PREFIXES[number]);
+      return verbOrder !== 0 ? verbOrder : a.localeCompare(b);
+    });
+  return files.map((f) => path.join(folder, f));
 }
 
 export async function loadRoutes(app: Application, routesDir: string): Promise<void> {
@@ -56,7 +51,8 @@ export async function loadRoutes(app: Application, routesDir: string): Promise<v
   const groups: { folder: string; mountPath: string }[] = [];
 
   for (const folder of allDirs) {
-    if (await hasVerbFile(folder)) {
+    const verbFiles = await getVerbFilesInDir(folder);
+    if (verbFiles.length > 0) {
       groups.push({ folder, mountPath: folderToMountPath(routesDir, folder) });
     }
   }
@@ -65,11 +61,16 @@ export async function loadRoutes(app: Application, routesDir: string): Promise<v
 
   for (const { folder, mountPath } of groups) {
     const router = createRouter({ mergeParams: true });
+    const verbFiles = await getVerbFilesInDir(folder);
 
-    for (const verb of VERB_FILES) {
-      const verbRouter = await loadVerbRouter(folder, verb);
-      if (verbRouter) {
-        router.use(verbRouter);
+    for (const filePath of verbFiles) {
+      try {
+        const mod = await import(pathToFileURL(filePath).href) as { default?: Router };
+        if (mod.default) {
+          router.use(mod.default);
+        }
+      } catch {
+        // file not loadable
       }
     }
 

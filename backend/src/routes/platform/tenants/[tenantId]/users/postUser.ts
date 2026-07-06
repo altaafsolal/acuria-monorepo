@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../../../../middleware/index.js';
-import { platformService, userGestionnaireService } from '../../../../../services/index.js';
+import { userGestionnaireService } from '../../../../../services/index.js';
 import { asyncHandler, HttpError, reqParam } from '../../../../../utils/index.js';
 import type { GestionnaireUserInput, Role } from '../../../../../types/domain.js';
 
@@ -49,25 +49,6 @@ router.post('/', asyncHandler(async (req, res) => {
       throw new HttpError(400, message);
     }
     if (message === 'Role must be tenant_admin or standard_user') {
-      throw new HttpError(400, message);
-    }
-    throw error;
-  }
-}));
-
-router.post('/:userId/reset-password', asyncHandler(async (req, res) => {
-  const tenantId = reqParam(req, 'tenantId');
-  const userId = reqParam(req, 'userId');
-
-  try {
-    await platformService.resetTenantUserPassword(tenantId, userId);
-    res.json({ message: 'Password reset email sent' });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to reset password';
-    if (message === 'Tenant not found' || message === 'User not found') {
-      throw new HttpError(404, message);
-    }
-    if (message === 'User has no email address') {
       throw new HttpError(400, message);
     }
     throw error;

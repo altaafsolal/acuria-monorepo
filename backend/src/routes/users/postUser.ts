@@ -1,11 +1,9 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { baserow, passwordResetService, userGestionnaireService } from '../../services/index.js';
-import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
+import { userGestionnaireService } from '../../services/index.js';
+import { asyncHandler, HttpError, requireTenant } from '../../utils/index.js';
 import type { GestionnaireUserInput, Role } from '../../types/domain.js';
-import { isManageableUser, MANAGEABLE_ROLES } from './helpers.js';
-
-const { usersRepo } = baserow;
+import { MANAGEABLE_ROLES } from './helpers.js';
 
 const router = Router({ mergeParams: true });
 
@@ -48,24 +46,6 @@ router.post('/', asyncHandler(async (req, res) => {
     }
     throw error;
   }
-}));
-
-router.post('/:id/reset-password', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
-  const userId = reqParam(req, 'id');
-
-  const existing = await usersRepo.findUserById(userId);
-  if (!isManageableUser(existing, tenantId)) {
-    throw new HttpError(404, 'User not found');
-  }
-
-  if (!usersRepo.hasUserEmail(existing!)) {
-    throw new HttpError(400, 'User has no email address');
-  }
-
-  await passwordResetService.issueSetPasswordToken(existing!);
-
-  res.json({ message: 'Password reset email sent' });
 }));
 
 export default router;
