@@ -1,5 +1,6 @@
 import { clientsRepo, tenantsRepo, usersRepo, tenantDatabase } from './baserow/index.js';
 import * as passwordResetService from './password-reset.js';
+import * as userGestionnaireService from './user-gestionnaire.js';
 import { isBaserowMigrateConfigured } from '../config/env.js';
 import { provisionTenantTables } from '../../baserow/provisioners/tenant-tables.js';
 import { broadcast } from '../realtime/socket.js';
@@ -47,13 +48,25 @@ function countByStatus<T extends { status: string }>(
   );
 }
 
-async function enrichTenants(tenants: TenantRecord[]): Promise<PublicTenant[]> {
+async function enrichTenants(
+  tenants: TenantRecord[],
+  { includeLogoDataUrl = false }: { includeLogoDataUrl?: boolean } = {},
+): Promise<PublicTenant[]> {
   return Promise.all(tenants.map(async (tenant) => {
     const users = usersRepo.excludeSuperAdmins(
       await usersRepo.listUsersByTenantId(tenant.id),
     );
     const clientCount = await clientsRepo.countClientsByTenantId(tenant.id);
-    return tenantsRepo.toPublicTenant(tenant, { userCount: users.length, clientCount });
+    const publicTenant = tenantsRepo.toPublicTenant(tenant, {
+      userCount: users.length,
+      clientCount,
+    });
+
+    if (includeLogoDataUrl) {
+      publicTenant.brandingLogoDataUrl = await tenantsRepo.resolveTenantBrandingLogoDataUrl(tenant);
+    }
+
+    return publicTenant;
   }));
 }
 
@@ -130,11 +143,15 @@ export async function updateTenantBranding(
     brandingOrias?: string;
     brandingAccent?: string;
     status?: string;
+    brandingLogo?: { buffer: Buffer; originalName: string; mimeType?: string };
+    removeBrandingLogo?: boolean;
   },
 ): Promise<PublicTenant | null> {
   const hasBrandingFields = branding.brandingName !== undefined
     || branding.brandingOrias !== undefined
-    || branding.brandingAccent !== undefined;
+    || branding.brandingAccent !== undefined
+    || branding.brandingLogo !== undefined
+    || branding.removeBrandingLogo === true;
 
   let record = hasBrandingFields
     ? await tenantsRepo.patchTenantBranding(tenantId, branding)
@@ -147,7 +164,7 @@ export async function updateTenantBranding(
     if (!record) return null;
   }
 
-  const [enriched] = await enrichTenants([record]);
+  const [enriched] = await enrichTenants([record], { includeLogoDataUrl: true });
   return enriched;
 }
 
@@ -162,52 +179,18 @@ export async function createTenantUser(
   input: { name: string; email: string; role: string },
 ): Promise<PublicUser> {
   await requireTenantRecord(tenantId);
-
-  if (!MANAGEABLE_ROLES.includes(input.role as Role)) {
-    throw new Error('Role must be tenant_admin or standard_user');
-  }
-
-  if (await usersRepo.userExists(input.email)) {
-    throw new Error('A user with this email already exists');
-  }
-
-  const user = await usersRepo.createUser({
-    email: input.email.trim().toLowerCase(),
-    password_hash: '',
-    name: input.name.trim(),
-    role: input.role,
-    tenant_id: tenantId,
-    status: 'pending',
-  });
-
-  await passwordResetService.issueSetPasswordToken(user);
-
-  return usersRepo.toPublicUser(user);
+  const result = await userGestionnaireService.createManagedUser(tenantId, input);
+  return result.user;
 }
 
 export async function updateTenantUser(
   tenantId: string,
   userId: string,
-  input: { name?: string; role?: string; status?: string },
+  input: { name?: string; email?: string; role?: string; status?: string },
 ): Promise<PublicUser> {
   await requireTenantRecord(tenantId);
-
-  if (input.role !== undefined && !MANAGEABLE_ROLES.includes(input.role as Role)) {
-    throw new Error('Role must be tenant_admin or standard_user');
-  }
-
-  const existing = await usersRepo.findUserById(userId);
-  if (!isTenantMember(existing, tenantId)) {
-    throw new Error('User not found');
-  }
-
-  const updates: UpdateUserInput = {};
-  if (input.name !== undefined) updates.name = input.name.trim();
-  if (input.role !== undefined) updates.role = input.role;
-  if (input.status !== undefined) updates.status = input.status;
-
-  const user = await usersRepo.updateUser(userId, updates);
-  return usersRepo.toPublicUser(user);
+  const result = await userGestionnaireService.updateManagedUser(tenantId, userId, input);
+  return result.user;
 }
 
 export async function resetTenantUserPassword(tenantId: string, userId: string): Promise<void> {
@@ -216,6 +199,10 @@ export async function resetTenantUserPassword(tenantId: string, userId: string):
   const existing = await usersRepo.findUserById(userId);
   if (!isTenantMember(existing, tenantId)) {
     throw new Error('User not found');
+  }
+
+  if (!usersRepo.hasUserEmail(existing)) {
+    throw new Error('User has no email address');
   }
 
   await passwordResetService.issueSetPasswordToken(existing);

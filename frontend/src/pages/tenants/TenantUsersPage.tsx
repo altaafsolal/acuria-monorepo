@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { FiArrowLeft, FiEdit2, FiKey, FiPlus, FiTrash2 } from "react-icons/fi";
 import {
@@ -6,16 +6,26 @@ import {
   useDeleteTenantUser,
   useResetTenantUserPassword,
   useTenant,
+  useTenantUser,
   useTenantUsers,
   useUpdateTenantUser,
 } from "../../hooks";
+import StandardUserGestionnaireFields from "../../components/users/StandardUserGestionnaireFields";
 import LoadingPopup from "../../components/ui/LoadingPopup";
 import PageLoading from "../../components/ui/PageLoading";
 import Select from "../../components/ui/Select";
 import StatusBadge from "../../components/ui/StatusBadge";
 import { useConfirm } from "../../context/ConfirmContext";
 import { ROLE_LABELS, ROLES, USER_STATUS } from "../../constants/roles";
-import type { Role, Status } from "../../types";
+import {
+  buildUserNameFromGestionnaire,
+  EMPTY_GESTIONNAIRE_FORM,
+  gestionnaireFromResponse,
+  hasUserEmail,
+  type GestionnaireUserInput,
+  type Role,
+  type Status,
+} from "../../types";
 import { dayjs } from "../../utils";
 
 interface UserFormState {
@@ -45,19 +55,37 @@ export default function TenantUsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [form, setForm] = useState<UserFormState>(EMPTY_FORM);
+  const [gestionnaireForm, setGestionnaireForm] = useState(EMPTY_GESTIONNAIRE_FORM);
   const [formError, setFormError] = useState<string | null>(null);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
 
+  const editingUserQuery = useTenantUser(tenantId, editingUserId ?? undefined);
   const isEditing = editingUserId !== null;
   const isPending = createTenantUser.isPending || updateTenantUser.isPending;
+  const isStandardUser = form.role === ROLES.STANDARD_USER;
+  const migratedWithoutEmail = isEditing && !hasUserEmail(editingUserQuery.data?.user.email);
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
+    setGestionnaireForm(EMPTY_GESTIONNAIRE_FORM);
     setEditingUserId(null);
     setFormError(null);
     setResetMessage(null);
     setShowForm(false);
   };
+
+  useEffect(() => {
+    if (!editingUserQuery.data) return;
+
+    const { user, gestionnaire } = editingUserQuery.data;
+    setForm({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    });
+    setGestionnaireForm(gestionnaireFromResponse(gestionnaire, user));
+  }, [editingUserQuery.data]);
 
   const handleChange = (field: keyof UserFormState, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -77,6 +105,7 @@ export default function TenantUsersPage() {
       role: user.role,
       status: user.status,
     });
+    setGestionnaireForm(gestionnaireFromResponse(null, user));
     setFormError(null);
     setResetMessage(null);
     setShowForm(true);
@@ -117,43 +146,64 @@ export default function TenantUsersPage() {
     setFormError(null);
     setResetMessage(null);
 
-    if (!form.name.trim()) {
+    const email = isStandardUser
+      ? gestionnaireForm.email.trim()
+      : form.email.trim();
+
+    if (isStandardUser) {
+      if (!gestionnaireForm.firstName.trim() || !gestionnaireForm.lastName.trim()) {
+        setFormError("Le prénom et le nom sont obligatoires.");
+        return;
+      }
+    } else if (!form.name.trim()) {
       setFormError("Le nom est obligatoire.");
       return;
     }
-    if (!isEditing && !form.email.trim()) {
+
+    if (!email) {
       setFormError("L'e-mail est obligatoire.");
       return;
     }
+
+    const displayName = isStandardUser
+      ? buildUserNameFromGestionnaire(gestionnaireForm)
+      : form.name.trim();
 
     const confirmed = await confirm(
       isEditing
         ? {
             title: "Enregistrer les modifications",
-            message: `Confirmer les modifications du compte « ${form.name.trim()} » ?`,
+            message: `Confirmer les modifications du compte « ${displayName} » ?`,
             confirmLabel: "Enregistrer",
           }
         : {
             title: "Créer l'utilisateur",
-            message: `Un e-mail d'activation sera envoyé à ${form.email.trim()}. Continuer ?`,
+            message: `Un e-mail d'activation sera envoyé à ${email}. Continuer ?`,
             confirmLabel: "Créer",
           },
     );
     if (!confirmed) return;
 
+    const gestionnairePayload: GestionnaireUserInput | undefined = isStandardUser
+      ? { ...gestionnaireForm, email }
+      : undefined;
+
     try {
       if (isEditing && editingUserId) {
         await updateTenantUser.mutateAsync({
           id: editingUserId,
-          name: form.name.trim(),
+          name: displayName,
+          email,
           role: form.role,
           status: form.status,
+          gestionnaire: gestionnairePayload,
         });
       } else {
         await createTenantUser.mutateAsync({
-          name: form.name.trim(),
-          email: form.email.trim(),
+          name: displayName,
+          email,
           role: form.role,
+          gestionnaire: gestionnairePayload,
         });
       }
       resetForm();
@@ -220,6 +270,7 @@ export default function TenantUsersPage() {
             } else {
               setEditingUserId(null);
               setForm(EMPTY_FORM);
+              setGestionnaireForm(EMPTY_GESTIONNAIRE_FORM);
               setFormError(null);
               setResetMessage(null);
               setShowForm((open) => !open);
@@ -239,7 +290,9 @@ export default function TenantUsersPage() {
             </h2>
             <p className="tenant-form__hint">
               {isEditing
-                ? "Modifiez les informations du compte utilisateur."
+                ? migratedWithoutEmail
+                  ? "Cet utilisateur migré n'a pas d'e-mail : ajoutez-en un pour pouvoir l'enregistrer."
+                  : "Modifiez les informations du compte utilisateur."
                 : "Un e-mail sera envoyé à l'utilisateur pour définir son mot de passe."}
             </p>
 
@@ -247,33 +300,8 @@ export default function TenantUsersPage() {
             {resetMessage && <p className="form-success">{resetMessage}</p>}
 
             <div className="tenant-form__fields">
-              <label className="field">
-                <span>Nom</span>
-                <div className="field-input">
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => handleChange("name", e.target.value)}
-                    required
-                  />
-                </div>
-              </label>
-
-              <label className="field">
-                <span>E-mail</span>
-                <div className="field-input">
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                    readOnly={isEditing}
-                    required={!isEditing}
-                  />
-                </div>
-              </label>
-
-              <label className="field">
-                <span>Rôle</span>
+              <label className="field field--full">
+                <span>Type de compte</span>
                 <Select
                   value={form.role}
                   onChange={(e) => handleChange("role", e.target.value)}
@@ -287,9 +315,38 @@ export default function TenantUsersPage() {
                 </Select>
               </label>
 
+              {!isStandardUser && (
+                <>
+                  <label className="field">
+                    <span>Nom</span>
+                    <div className="field-input">
+                      <input
+                        type="text"
+                        value={form.name}
+                        onChange={(e) => handleChange("name", e.target.value)}
+                        required
+                      />
+                    </div>
+                  </label>
+
+                  <label className="field">
+                    <span>E-mail</span>
+                    <div className="field-input">
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => handleChange("email", e.target.value)}
+                        readOnly={isEditing && hasUserEmail(form.email)}
+                        required
+                      />
+                    </div>
+                  </label>
+                </>
+              )}
+
               {isEditing && (
                 <label className="field">
-                  <span>Statut</span>
+                  <span>Statut plateforme</span>
                   <Select
                     value={form.status}
                     onChange={(e) => handleChange("status", e.target.value)}
@@ -304,6 +361,15 @@ export default function TenantUsersPage() {
               )}
             </div>
 
+            {isStandardUser && (
+              <StandardUserGestionnaireFields
+                value={gestionnaireForm}
+                onChange={setGestionnaireForm}
+                emailReadOnly={isEditing && hasUserEmail(editingUserQuery.data?.user.email)}
+                emailRequired
+              />
+            )}
+
             <div className="tenant-form__actions">
               <button
                 type="button"
@@ -316,7 +382,7 @@ export default function TenantUsersPage() {
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={isPending}
+                disabled={isPending || (isEditing && editingUserQuery.isLoading)}
               >
                 {isPending ? "Création…" : isEditing ? "Sauvegarder" : "Créer"}
               </button>
@@ -366,7 +432,7 @@ export default function TenantUsersPage() {
                     <td>
                       <strong>{user.name}</strong>
                     </td>
-                    <td>{user.email}</td>
+                    <td>{user.email?.trim() || "—"}</td>
                     <td>
                       <span className="role-pill">
                         {ROLE_LABELS[user.role] || user.role}
@@ -390,17 +456,19 @@ export default function TenantUsersPage() {
                           <FiEdit2 />
                           Modifier
                         </button>
-                        <button
-                          type="button"
-                          className="btn-secondary btn-secondary--sm"
-                          onClick={() =>
-                            handleResetPassword(user.id, user.name)
-                          }
-                          disabled={resetTenantUserPassword.isPending}
-                        >
-                          <FiKey />
-                          Réinitialiser le MDP
-                        </button>
+                        {hasUserEmail(user.email) && (
+                          <button
+                            type="button"
+                            className="btn-secondary btn-secondary--sm"
+                            onClick={() =>
+                              handleResetPassword(user.id, user.name)
+                            }
+                            disabled={resetTenantUserPassword.isPending}
+                          >
+                            <FiKey />
+                            Réinitialiser le MDP
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn-secondary btn-secondary--sm"

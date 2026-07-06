@@ -40,6 +40,7 @@ export const BASEROW_FIELDS = {
     brandingName: 'branding_name',
     brandingOrias: 'branding_orias',
     brandingAccent: 'branding_accent',
+    brandingLogo: 'branding_logo',
     createdOn: 'created_on',
     updatedOn: 'updated_on',
   },
@@ -216,6 +217,12 @@ export const USER_STATUS_OPTIONS = [
   { value: 'active', color: 'dark-green' },
   { value: 'inactive', color: 'dark-orange' },
   { value: 'pending', color: 'dark-yellow' },
+] as const;
+
+export const USER_ROLE_OPTIONS = [
+  { value: 'super_admin', color: 'dark-blue' },
+  { value: 'tenant_admin', color: 'dark-purple' },
+  { value: 'standard_user', color: 'dark-gray' },
 ] as const;
 
 export const KYC_STATUS_OPTIONS = [

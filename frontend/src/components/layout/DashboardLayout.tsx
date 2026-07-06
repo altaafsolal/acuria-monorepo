@@ -16,8 +16,11 @@ import {
   FiShield,
   FiUsers,
 } from "react-icons/fi";
+import api from "../../api";
+import { queryKeys } from "../../api/queryKeys";
 import { useApp } from "../../context/AppContext";
 import { useConfirm } from "../../context/ConfirmContext";
+import AuthenticatedImage from "../ui/AuthenticatedImage";
 import {
   useAccueil,
   useLogout,
@@ -91,6 +94,7 @@ export default function DashboardLayout() {
 
   const brandName = branding?.branding?.name || "Acuria";
   const orias = branding?.branding?.orias;
+  const showBrandingLogo = Boolean(branding?.branding?.hasLogo);
   const pageTitle = PAGE_TITLES[location.pathname] || "Tableau de bord";
   const pendingFcc = accueil?.stats.fcc.aEnvoyer ?? 0;
   const clientCount = accueil?.stats.crm.total;
@@ -101,18 +105,28 @@ export default function DashboardLayout() {
     <div className="dashboard">
       <aside className="dashboard-sidebar">
         <Link to="/dashboard" className="sidebar-logo">
-          <div className="sidebar-logo-text">
-            {(() => {
-              const parts = brandName.split(" ");
-              if (parts.length <= 1) return brandName;
-              const last = parts.pop();
-              return (
-                <>
-                  {parts.join(" ")} <span>{last}</span>
-                </>
-              );
-            })()}
-          </div>
+          {showBrandingLogo ? (
+            <AuthenticatedImage
+              dataUrl={branding?.branding?.logoDataUrl}
+              src={api.tenantBrandingLogo}
+              queryKey={queryKeys.tenant.logo}
+              alt={brandName}
+              className="sidebar-logo-image"
+            />
+          ) : (
+            <div className="sidebar-logo-text">
+              {(() => {
+                const parts = brandName.split(" ");
+                if (parts.length <= 1) return brandName;
+                const last = parts.pop();
+                return (
+                  <>
+                    {parts.join(" ")} <span>{last}</span>
+                  </>
+                );
+              })()}
+            </div>
+          )}
           <div className="sidebar-sub">Dashboard Activité</div>
         </Link>
 

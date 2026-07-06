@@ -18,7 +18,7 @@ const router = Router({ mergeParams: true });
 router.post('/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body as { email?: string; password?: string };
 
-  if (!email || !password) {
+  if (!email?.trim() || !password) {
     res.status(400).json({ error: 'Email and password are required' });
     return;
   }
@@ -26,6 +26,11 @@ router.post('/login', asyncHandler(async (req, res) => {
   const user = await findUserByEmail(email);
   if (!user) {
     res.status(401).json({ error: 'Invalid email or password' });
+    return;
+  }
+
+  if (!user.email?.trim()) {
+    res.status(403).json({ error: 'Account cannot sign in without an email address' });
     return;
   }
 

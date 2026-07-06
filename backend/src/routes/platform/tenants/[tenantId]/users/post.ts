@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../../../../middleware/index.js';
-import { platformService } from '../../../../../services/index.js';
+import { platformService, userGestionnaireService } from '../../../../../services/index.js';
 import { asyncHandler, HttpError, reqParam } from '../../../../../utils/index.js';
-import type { Role } from '../../../../../types/domain.js';
+import type { GestionnaireUserInput, Role } from '../../../../../types/domain.js';
 
 const MANAGEABLE_ROLES: Role[] = ['tenant_admin', 'standard_user'];
 
@@ -16,6 +16,7 @@ router.post('/', asyncHandler(async (req, res) => {
     name?: string;
     email?: string;
     role?: string;
+    gestionnaire?: GestionnaireUserInput;
   };
 
   if (!body?.name?.trim()) {
@@ -29,12 +30,13 @@ router.post('/', asyncHandler(async (req, res) => {
   }
 
   try {
-    const user = await platformService.createTenantUser(tenantId, {
+    const result = await userGestionnaireService.createManagedUser(tenantId, {
       name: body.name,
       email: body.email,
       role: body.role,
+      gestionnaire: body.gestionnaire,
     });
-    res.status(201).json({ user });
+    res.status(201).json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to create user';
     if (message === 'Tenant not found') {
@@ -42,6 +44,9 @@ router.post('/', asyncHandler(async (req, res) => {
     }
     if (message === 'A user with this email already exists') {
       throw new HttpError(409, message);
+    }
+    if (message === 'Email is required') {
+      throw new HttpError(400, message);
     }
     if (message === 'Role must be tenant_admin or standard_user') {
       throw new HttpError(400, message);
@@ -61,6 +66,9 @@ router.post('/:userId/reset-password', asyncHandler(async (req, res) => {
     const message = error instanceof Error ? error.message : 'Failed to reset password';
     if (message === 'Tenant not found' || message === 'User not found') {
       throw new HttpError(404, message);
+    }
+    if (message === 'User has no email address') {
+      throw new HttpError(400, message);
     }
     throw error;
   }

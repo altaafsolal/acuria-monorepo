@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import api from '../api';
 import { queryKeys } from '../api/queryKeys';
 import { useGet, usePost } from '../lib/api';
+import { fetchAuthenticatedBlob } from '../lib/authenticatedBlob';
 import { getAccessToken, tryRefreshAccessToken } from '../lib/http';
 import type {
   Client,
@@ -99,9 +101,26 @@ async function fetchLdmPreview(input: SendLdmInput, retried: boolean): Promise<B
 }
 
 export function useTenantBranding(enabled = true) {
-  return useGet<{ branding: { name: string; orias: string | null; accent: string } }>({
+  const queryClient = useQueryClient();
+  const query = useGet<{ branding: import('../types').TenantBranding }>({
     path: api.tenantBranding,
     queryKey: queryKeys.tenant.branding,
     enabled,
+    staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    const branding = query.data?.branding;
+    if (!enabled || !branding?.hasLogo || branding.logoDataUrl) {
+      return;
+    }
+
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.tenant.logo,
+      queryFn: () => fetchAuthenticatedBlob(api.tenantBrandingLogo),
+      staleTime: 24 * 60 * 60 * 1000,
+    });
+  }, [enabled, query.data?.branding, queryClient]);
+
+  return query;
 }

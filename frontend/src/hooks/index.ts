@@ -8,6 +8,7 @@ export {
   useUpdateTenantBranding,
   useTenant,
   useTenantUsers,
+  useTenantUser,
   useTenantClients,
   useCreateTenantUser,
   useUpdateTenantUser,

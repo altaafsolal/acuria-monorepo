@@ -11,53 +11,11 @@ import {
   TASK_STATUS_OPTIONS,
   TENANT_TABLE_BASES,
 } from '../schema.js';
-import {
-  createField,
-  createTable,
-  listDatabaseTables,
-  listTableFieldsWithJwt,
-} from '../../src/services/baserow/api.js';
-import type { BaserowTable } from '../types/baserow.js';
-import type { FieldDef } from '../types/baserow.js';
+import { ensureField, ensureTable, ensureTextFields } from '../lib/schema-helpers.js';
+import { listDatabaseTables, listTableFieldsWithJwt } from '../../src/services/baserow/api.js';
 import type { TenantRecord } from '../../src/types/domain.js';
 
 const tableIdCache = new Map<string, string>();
-
-async function ensureField(
-  tableId: string | number,
-  fieldDef: FieldDef,
-  existingNames: Set<string>,
-): Promise<void> {
-  if (existingNames.has(fieldDef.name)) {
-    console.log(`    · field "${fieldDef.name}" already exists`);
-    return;
-  }
-  await createField(tableId, fieldDef);
-  existingNames.add(fieldDef.name);
-  console.log(`    ✓ created field "${fieldDef.name}"`);
-}
-
-async function ensureTextFields(
-  tableId: string | number,
-  names: string[],
-  existing: Set<string>,
-): Promise<void> {
-  for (const name of names) {
-    await ensureField(tableId, { name, type: 'text' }, existing);
-  }
-}
-
-async function ensureTable(databaseId: string, tableName: string): Promise<BaserowTable> {
-  const tables = await listDatabaseTables(databaseId);
-  let table = tables.find((item) => item.name === tableName);
-  if (!table) {
-    table = await createTable(databaseId, tableName);
-    console.log(`  ✓ created table "${tableName}" (id: ${table.id})`);
-  } else {
-    console.log(`  · table "${tableName}" already exists (id: ${table.id})`);
-  }
-  return table;
-}
 
 async function ensureClientsFields(tableId: string | number): Promise<void> {
   const F = BASEROW_FIELDS.clients;
@@ -249,10 +207,12 @@ export async function provisionTenantTables(
 
   console.log(`Provisioning tenant ${tenantKey} in database ${databaseId}…`);
 
-  const clientsTable = await ensureTable(databaseId, 'clients');
+  const existingTables = await listDatabaseTables(databaseId);
+
+  const clientsTable = await ensureTable(databaseId, 'clients', existingTables);
   await ensureClientsFields(clientsTable.id);
 
-  const gestionnairesTable = await ensureTable(databaseId, 'gestionnaires');
+  const gestionnairesTable = await ensureTable(databaseId, 'gestionnaires', existingTables);
   await ensureGestionnairesFields(gestionnairesTable.id);
   tableIdCache.set(`${tenantKey}:gestionnaires`, String(gestionnairesTable.id));
 
@@ -267,12 +227,12 @@ export async function provisionTenantTables(
   ];
 
   for (const [base, ensureFields] of linkedTables) {
-    const table = await ensureTable(databaseId, base);
+    const table = await ensureTable(databaseId, base, existingTables);
     await ensureFields(table.id, clientsTableId);
     tableIdCache.set(`${tenantKey}:${base}`, String(table.id));
   }
 
-  const auditTable = await ensureTable(databaseId, 'audit_logs');
+  const auditTable = await ensureTable(databaseId, 'audit_logs', existingTables);
   await ensureAuditLogsFields(auditTable.id);
   tableIdCache.set(`${tenantKey}:audit_logs`, String(auditTable.id));
 

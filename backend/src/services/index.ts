@@ -5,4 +5,5 @@ export * as makeService from './make.js';
 export * as platformService from './platform.js';
 export * as auditService from './audit.js';
 export * as passwordResetService from './password-reset.js';
+export * as userGestionnaireService from './user-gestionnaire.js';
 export * as baserow from './baserow/index.js';

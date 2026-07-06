@@ -1,6 +1,10 @@
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
-import { pickFieldValue } from '../../utils/baserow.js';
-import { createRow, listAllRows, updateRow } from './api.js';
+import { pickFieldValue, pickFileValues } from '../../utils/baserow.js';
+import {
+  fetchBaserowFileDataUrl,
+  invalidateBaserowFileDataUrlCache,
+} from '../../utils/baserow-file.js';
+import { createRow, listAllRows, updateRow, uploadUserFile } from './api.js';
 import { getTenantsTableId } from './registry.js';
 import type {
   BaserowRow,
@@ -10,6 +14,8 @@ import type {
 } from '../../types/domain.js';
 
 const F = BASEROW_FIELDS.tenants;
+
+export type TenantBrandingLogo = TenantRecord['branding_logo'][number];
 
 function mapTenantRow(row: BaserowRow): TenantRecord {
   return {
@@ -23,9 +29,29 @@ function mapTenantRow(row: BaserowRow): TenantRecord {
     branding_name: String(row[F.brandingName] || '').trim() || null,
     branding_orias: String(row[F.brandingOrias] || '').trim() || null,
     branding_accent: String(row[F.brandingAccent] || '').trim() || null,
+    branding_logo: pickFileValues(row[F.brandingLogo]),
     created_on: pickFieldValue(row[F.createdOn]),
     updated_on: pickFieldValue(row[F.updatedOn]),
   };
+}
+
+export function getTenantBrandingLogo(tenant: TenantRecord): TenantBrandingLogo | null {
+  return tenant.branding_logo[0] ?? null;
+}
+
+function tenantLogoCacheKey(tenantId: string, logoName: string): string {
+  return `tenant-logo:${tenantId}:${logoName}`;
+}
+
+export async function resolveTenantBrandingLogoDataUrl(
+  tenant: TenantRecord,
+): Promise<string | null> {
+  const logo = getTenantBrandingLogo(tenant);
+  if (!logo) return null;
+
+  return fetchBaserowFileDataUrl(logo.url, {
+    cacheKey: tenantLogoCacheKey(tenant.id, logo.name),
+  });
 }
 
 export function toPublicTenant(
@@ -44,6 +70,7 @@ export function toPublicTenant(
     brandingName: tenant.branding_name,
     brandingOrias: tenant.branding_orias,
     brandingAccent: tenant.branding_accent,
+    hasBrandingLogo: tenant.branding_logo.length > 0,
     workspaceId: tenant.workspace_id,
     databaseId: tenant.database_id,
     databaseToken: tenant.database_token,
@@ -85,15 +112,40 @@ export async function createTenant(fields: CreateTenantFields): Promise<TenantRe
 
 export async function patchTenantBranding(
   tenantId: string,
-  branding: { brandingName?: string; brandingOrias?: string; brandingAccent?: string },
+  branding: {
+    brandingName?: string;
+    brandingOrias?: string;
+    brandingAccent?: string;
+    brandingLogo?: { buffer: Buffer; originalName: string; mimeType?: string };
+    removeBrandingLogo?: boolean;
+  },
 ): Promise<TenantRecord | null> {
   const existing = await findTenantById(tenantId);
   if (!existing) return null;
+
+  const existingLogo = getTenantBrandingLogo(existing);
+  if (existingLogo && (branding.removeBrandingLogo || branding.brandingLogo)) {
+    invalidateBaserowFileDataUrlCache(tenantLogoCacheKey(tenantId, existingLogo.name));
+  }
 
   const payload: Record<string, unknown> = {};
   if (branding.brandingName !== undefined) payload[F.brandingName] = branding.brandingName;
   if (branding.brandingOrias !== undefined) payload[F.brandingOrias] = branding.brandingOrias;
   if (branding.brandingAccent !== undefined) payload[F.brandingAccent] = branding.brandingAccent;
+
+  if (branding.removeBrandingLogo) {
+    payload[F.brandingLogo] = [];
+  } else if (branding.brandingLogo) {
+    const uploaded = await uploadUserFile(
+      branding.brandingLogo.buffer,
+      branding.brandingLogo.originalName,
+      branding.brandingLogo.mimeType,
+    );
+    payload[F.brandingLogo] = [{
+      name: uploaded.name,
+      visible_name: branding.brandingLogo.originalName,
+    }];
+  }
 
   const row = await updateRow(await getTenantsTableId(), tenantId, payload);
   return mapTenantRow(row);

@@ -1,132 +1,46 @@
 # Baserow setup
 
-
-
 This folder holds everything that **sets up or populates** Baserow — separate from the running API (`src/`).
-
-
-
-## What each folder does
-
-
-
-| Folder | Purpose | Safe to re-run? |
-
-|--------|---------|-----------------|
-
-| `migrations/` | **Schema** — creates tables & fields in the main database (users, tenants) | Yes |
-
-| `seeds/` | **Data** — inserts initial rows (super admin, NM Prime tenant + dedicated database) | Yes (skips existing) |
-
-| `provisioners/` | **Per-tenant schema** — creates `clients`, `gestionnaires`, `kyc_documents`, `notes`, `relations`, `tasks`, `audit_logs` in each tenant workspace | Yes |
-
-
-
-Blank placeholder rows created by Baserow are removed automatically at the end of setup.
-
-
 
 ## Architecture
 
+| Database | Tables |
+|----------|--------|
+| **Main** (`BASEROW_MAIN_DATABASE_ID`) | `tenants`, `users`, `audit_logs` |
+| **Per-tenant** (`tenants.database_id`) | `clients`, `gestionnaires`, `kyc_documents`, `notes`, `relations`, `tasks`, `audit_logs` |
 
+## Setup flow (`npm run setup`)
 
-- **Main database** (`BASEROW_MAIN_DATABASE_ID`) — platform tables: `users`, `tenants`
+1. **Migrate** — main-database schema (single migration)
+2. **Seed** — super admin, NM Prime tenant + workspace
+3. **Provision** — tenant tables in each tenant workspace
+4. **Cleanup** — remove Baserow blank placeholder rows
 
-- **Tenant database** (one per tenant workspace, stored in `tenants.database_id`) — `clients`, `gestionnaires`, `kyc_documents`, `notes`, `relations`, `tasks`, `audit_logs`
-
-
-
-## Files
-
-
-
-- `schema.js` — table names, field names, select options (shared by migrations, provisioners, and runtime code)
-
-- `lib/run-scripts.js` — runs migration and seed files in timestamp order (used by `setup`)
-
-- `lib/script-filename.js` — timestamp naming and chronological sort
-
-
-
-## Naming migrations & seeds
-
-
-
-Every file in `migrations/` and `seeds/` must start with a timestamp so you can track when it was added:
-
-
-
-```
-
-DD_MMM_YYYY-HH_mm_description.ts
-
-```
-
-
-
-Scripts run **oldest first** (parsed from the timestamp prefix).
-
-
-
-To add a new migration or seed, create a file manually with the current date/time in the name, export `up()`, then run `npm run setup`.
-
-
-
-## Idempotency (safe to re-run `npm run setup`)
-
-
-
-| Step | On re-run |
-
-|------|-----------|
-
-| **Migrate** | Skips existing tables and fields; only adds what is missing |
-
-| **Seed** | Skips existing users/tenants; **never** resets passwords or updates rows |
-
-| **Provision** | Skips existing tenant tables and fields; **never** deletes rows |
-
-| **Cleanup** | Removes **only** rows where every field is empty (Baserow placeholders) |
-
-
-
-Nothing is dropped, truncated, or overwritten.
-
-
-
-## Typical first-time setup
-
-
+Then run Airtable import:
 
 ```bash
-
-npm run setup    # from backend/
-
+npm run migrate:airtable -- --tenant-slug=nm-prime
 ```
 
+## Folder layout
 
+| Folder | Purpose |
+|--------|---------|
+| `migrations/` | Main-database schema (one file) |
+| `seeds/` | Bootstrap rows |
+| `provisioners/` | Per-tenant table schemas |
+| `lib/` | Shared helpers (`schema-helpers`, `run-scripts`, `setup-database`) |
+| `schema.ts` | Table/field names and select options |
 
-### What `npm run setup` does (4 steps)
+## Adding schema changes
 
+- **Main DB** — edit `migrations/01_Jul_2026-10_00_main-platform-schema.ts` (or add a new timestamped migration if you need incremental upgrades later).
+- **Tenant DB** — edit `provisioners/tenant-tables.ts`.
 
+Filenames use `DD_MMM_YYYY-HH_mm_description.ts`; scripts run oldest first.
 
-1. **Migrate** — creates `users` + `tenants` tables (with `database_id` field) in main database
+## Idempotency
 
-2. **Seed** — super admin, NM Prime tenant (with dedicated Baserow database), tenant admin user
+Safe to re-run: existing tables and fields are skipped, seeds skip existing rows, cleanup only removes empty placeholder rows.
 
-3. **Provision** — tenant tables in each tenant's dedicated workspace database
-
-4. **Cleanup** — removes Baserow auto-created blank rows
-
-
-
-Individual step scripts are not exposed — use `npm run setup` only.
-
-
-
-## Not SQL migrations
-
-
-
-These are **Baserow API scripts**, not Knex/Postgres migrations. They use JWT auth (`BASEROW_EMAIL` / `BASEROW_PASSWORD`) to create tables and fields.
-
+These are **Baserow API scripts** (JWT auth), not SQL migrations.

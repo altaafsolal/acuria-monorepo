@@ -10,11 +10,16 @@ export const queryKeys = {
     tenants: ['platform', 'tenants'] as const,
     tenant: (tenantId: string) => ['platform', 'tenant', tenantId] as const,
     tenantUsers: (tenantId: string) => ['platform', 'tenant', tenantId, 'users'] as const,
+    tenantUser: (tenantId: string, userId: string) => ['platform', 'tenant', tenantId, 'user', userId] as const,
     tenantClients: (tenantId: string) => ['platform', 'tenant', tenantId, 'clients'] as const,
   },
   tenant: {
     stats: ['tenant', 'stats'] as const,
     branding: ['tenant', 'branding'] as const,
+    logo: ['tenant', 'logo'] as const,
+  },
+  assets: {
+    tenantLogo: (tenantId: string) => ['assets', 'tenant-logo', tenantId] as const,
   },
   accueil: {
     data: ['accueil', 'data'] as const,

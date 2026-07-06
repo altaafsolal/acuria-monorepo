@@ -54,6 +54,12 @@ export interface TenantRecord {
   branding_name: string | null;
   branding_orias: string | null;
   branding_accent: string | null;
+  branding_logo: Array<{
+    name: string;
+    url: string;
+    visibleName: string | null;
+    size: number | null;
+  }>;
   created_on: string | null;
   updated_on: string | null;
 }
@@ -70,6 +76,8 @@ export interface PublicTenant {
   brandingName?: string | null;
   brandingOrias?: string | null;
   brandingAccent?: string | null;
+  hasBrandingLogo?: boolean;
+  brandingLogoDataUrl?: string | null;
   workspaceId?: string | null;
   databaseId?: string | null;
   databaseToken?: string | null;
@@ -342,6 +350,7 @@ export interface CreateUserInput {
 
 export interface UpdateUserInput {
   name?: string;
+  email?: string;
   role?: string;
   status?: string;
   password_hash?: string;
@@ -350,6 +359,38 @@ export interface UpdateUserInput {
   otp_hash?: string;
   otp_expires?: string;
   airtable_record_id?: string | null;
+}
+
+export interface GestionnaireUserInput {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  status?: string;
+  peutSignerDocusign?: boolean;
+  initiales?: string;
+  couleur?: string;
+}
+
+export interface CreateUserWithGestionnaireInput {
+  name: string;
+  email: string;
+  role: string;
+  gestionnaire?: GestionnaireUserInput;
+}
+
+export interface UpdateUserWithGestionnaireInput {
+  name?: string;
+  email?: string;
+  role?: string;
+  status?: string;
+  gestionnaire?: GestionnaireUserInput;
+}
+
+export interface UserWithGestionnaireResponse {
+  user: PublicUser;
+  gestionnaire?: PublicGestionnaire | null;
 }
 
 export interface CreateTenantFields {

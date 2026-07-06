@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { baserow, passwordResetService } from '../../services/index.js';
+import { baserow, passwordResetService, userGestionnaireService } from '../../services/index.js';
 import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
-import type { Role } from '../../types/domain.js';
+import type { GestionnaireUserInput, Role } from '../../types/domain.js';
 import { isManageableUser, MANAGEABLE_ROLES } from './helpers.js';
 
 const { usersRepo } = baserow;
@@ -17,6 +17,7 @@ router.post('/', asyncHandler(async (req, res) => {
     name?: string;
     email?: string;
     role?: string;
+    gestionnaire?: GestionnaireUserInput;
   };
 
   if (!body?.name?.trim()) {
@@ -29,22 +30,24 @@ router.post('/', asyncHandler(async (req, res) => {
     throw new HttpError(400, 'Role must be tenant_admin or standard_user');
   }
 
-  if (await usersRepo.userExists(body.email)) {
-    throw new HttpError(409, 'A user with this email already exists');
+  try {
+    const result = await userGestionnaireService.createManagedUser(tenantId, {
+      name: body.name,
+      email: body.email,
+      role: body.role,
+      gestionnaire: body.gestionnaire,
+    });
+    res.status(201).json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to create user';
+    if (message === 'A user with this email already exists') {
+      throw new HttpError(409, message);
+    }
+    if (message === 'Email is required') {
+      throw new HttpError(400, message);
+    }
+    throw error;
   }
-
-  const user = await usersRepo.createUser({
-    email: body.email.trim().toLowerCase(),
-    password_hash: '',
-    name: body.name.trim(),
-    role: body.role,
-    tenant_id: tenantId,
-    status: 'pending',
-  });
-
-  await passwordResetService.issueSetPasswordToken(user);
-
-  res.status(201).json({ user: usersRepo.toPublicUser(user) });
 }));
 
 router.post('/:id/reset-password', asyncHandler(async (req, res) => {
@@ -56,7 +59,11 @@ router.post('/:id/reset-password', asyncHandler(async (req, res) => {
     throw new HttpError(404, 'User not found');
   }
 
-  await passwordResetService.issueSetPasswordToken(existing);
+  if (!usersRepo.hasUserEmail(existing!)) {
+    throw new HttpError(400, 'User has no email address');
+  }
+
+  await passwordResetService.issueSetPasswordToken(existing!);
 
   res.json({ message: 'Password reset email sent' });
 }));

@@ -5,6 +5,8 @@ import { usersRepo } from './baserow/index.js';
 import { sendOtpEmail, sendPasswordSetEmail } from './make.js';
 import type { DbUser } from '../types/domain.js';
 
+const { hasUserEmail } = usersRepo;
+
 const SET_PASSWORD_TTL_MS = 72 * 60 * 60 * 1000;
 const OTP_TTL_MS = 10 * 60 * 1000;
 const MIN_PASSWORD_LENGTH = 8;
@@ -48,6 +50,10 @@ export function validatePasswordPair(password: string, passwordConfirm: string):
 }
 
 export async function issueSetPasswordToken(user: Pick<DbUser, 'id' | 'email' | 'name'>): Promise<void> {
+  if (!hasUserEmail(user)) {
+    throw new Error('User has no email address');
+  }
+
   const token = randomToken();
   const hash = sha256(token);
   const expires = new Date(Date.now() + SET_PASSWORD_TTL_MS).toISOString();

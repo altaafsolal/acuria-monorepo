@@ -113,4 +113,6 @@ export interface TenantBranding {
   name: string;
   orias: string | null;
   accent: string;
+  hasLogo?: boolean;
+  logoDataUrl?: string | null;
 }

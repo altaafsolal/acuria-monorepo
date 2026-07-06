@@ -11,7 +11,7 @@ export interface UpsertGestionnaireInput {
   name: string;
   firstName?: string | null;
   lastName?: string | null;
-  email: string;
+  email?: string | null;
   phone?: string | null;
   role?: string | null;
   peutSignerDocusign?: boolean;
@@ -28,7 +28,7 @@ function mapRow(row: BaserowRow): DbGestionnaire {
     name: String(row[F.name] || ''),
     first_name: pickTextValue(row[F.firstName]),
     last_name: pickTextValue(row[F.lastName]),
-    email: String(row[F.email] || ''),
+    email: pickTextValue(row[F.email]) ?? '',
     phone: pickTextValue(row[F.phone]),
     role: pickTextValue(row[F.role]),
     peut_signer_docusign: Boolean(row[F.peutSignerDocusign]),
@@ -41,11 +41,10 @@ function mapRow(row: BaserowRow): DbGestionnaire {
 }
 
 function buildPayload(data: UpsertGestionnaireInput): Record<string, unknown> {
-  return {
+  const payload: Record<string, unknown> = {
     [F.name]: data.name,
     [F.firstName]: data.firstName || '',
     [F.lastName]: data.lastName || '',
-    [F.email]: data.email,
     [F.phone]: data.phone || '',
     [F.role]: data.role || '',
     [F.peutSignerDocusign]: data.peutSignerDocusign ?? false,
@@ -55,6 +54,12 @@ function buildPayload(data: UpsertGestionnaireInput): Record<string, unknown> {
     [F.userId]: data.userId || '',
     [F.airtableRecordId]: data.airtableRecordId || '',
   };
+  if (data.email) {
+    payload[F.email] = data.email;
+  } else {
+    payload[F.email] = null;
+  }
+  return payload;
 }
 
 export function toPublicGestionnaire(g: DbGestionnaire): PublicGestionnaire {
@@ -83,6 +88,39 @@ export async function listGestionnaires(tenantId: string): Promise<PublicGestion
     .map(toPublicGestionnaire);
 }
 
+export async function listAllGestionnaires(tenantId: string): Promise<DbGestionnaire[]> {
+  const ctx = await resolveTenantDbContext(tenantId);
+  const tableId = await resolveTenantTableId(tenantId, 'gestionnaires');
+  return (await listAllRows(tableId, {}, ctx)).map(mapRow);
+}
+
+export async function findGestionnaireByUserId(
+  tenantId: string,
+  userId: string,
+): Promise<DbGestionnaire | null> {
+  const rows = await listAllGestionnaires(tenantId);
+  return rows.find((g) => g.user_id === String(userId)) ?? null;
+}
+
+function findExistingGestionnaireRow(
+  rows: BaserowRow[],
+  data: UpsertGestionnaireInput,
+): BaserowRow | undefined {
+  if (data.userId) {
+    const byUser = rows.find((r) => pickTextValue(r[F.userId]) === String(data.userId));
+    if (byUser) return byUser;
+  }
+  if (data.airtableRecordId) {
+    const byAirtable = rows.find((r) => pickTextValue(r[F.airtableRecordId]) === data.airtableRecordId);
+    if (byAirtable) return byAirtable;
+  }
+  if (data.email) {
+    const normalized = data.email.trim().toLowerCase();
+    return rows.find((r) => String(r[F.email] || '').trim().toLowerCase() === normalized);
+  }
+  return undefined;
+}
+
 export async function upsertGestionnaire(
   tenantId: string,
   data: UpsertGestionnaireInput,
@@ -90,9 +128,7 @@ export async function upsertGestionnaire(
   const ctx = await resolveTenantDbContext(tenantId);
   const tableId = await resolveTenantTableId(tenantId, 'gestionnaires');
   const rows = await listAllRows(tableId, {}, ctx);
-  const existing = data.airtableRecordId
-    ? rows.find((r) => pickTextValue(r[F.airtableRecordId]) === data.airtableRecordId)
-    : rows.find((r) => String(r[F.email] || '').toLowerCase() === data.email.toLowerCase());
+  const existing = findExistingGestionnaireRow(rows, data);
 
   const payload = buildPayload(data);
 
@@ -102,6 +138,18 @@ export async function upsertGestionnaire(
   }
   const row = await createRow(tableId, payload, ctx);
   return mapRow(row);
+}
+
+export async function clearGestionnaireUserLink(
+  tenantId: string,
+  userId: string,
+): Promise<void> {
+  const gestionnaire = await findGestionnaireByUserId(tenantId, userId);
+  if (!gestionnaire) return;
+
+  const ctx = await resolveTenantDbContext(tenantId);
+  const tableId = await resolveTenantTableId(tenantId, 'gestionnaires');
+  await updateRow(tableId, gestionnaire.id, { [F.userId]: '' }, ctx);
 }
 
 export async function listGestionnaireAirtableNameMap(tenantId: string): Promise<Map<string, string>> {

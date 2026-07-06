@@ -541,26 +541,22 @@ async function main() {
       gestionnaireNames.set(rec.id, mapped.name);
 
       let userId: string | null = null;
-      if (mapped.email) {
-        const user = await usersRepo.upsertStandardUserFromGestionnaire({
-          email: mapped.email,
-          name: mapped.name,
-          tenantId,
-          status: mapped.status,
-          airtableRecordId: rec.id,
-        });
-        if (user) {
-          userId = user.id;
-          usersLinked += 1;
-        }
-      } else {
-        console.warn(`  ⚠ Gestionnaire ${rec.id} (${mapped.name}): no email — platform user skipped`);
+      const user = await usersRepo.upsertStandardUserFromGestionnaire({
+        email: mapped.email || null,
+        name: mapped.name,
+        tenantId,
+        status: mapped.status,
+        airtableRecordId: rec.id,
+      });
+      userId = user.id;
+      usersLinked += 1;
+      if (!mapped.email) {
+        console.log(`  · Gestionnaire ${rec.id} (${mapped.name}): no email — user created without login email`);
       }
 
-      const gestionnaireEmail = mapped.email || `${rec.id}@placeholder.local`;
       await gestionnairesRepo.upsertGestionnaire(tenantId, {
         ...mapped,
-        email: gestionnaireEmail,
+        email: mapped.email || null,
         userId,
       });
     }

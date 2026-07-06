@@ -9,23 +9,23 @@ const baserowDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 const STEPS = [
   {
-    title: 'Main database schema (users + tenants tables)',
-    detail: 'Creates missing tables/fields only — never drops or changes existing schema',
+    title: 'Main database schema',
+    detail: 'tenants, users, audit_logs',
     run: () => runScriptsFromDir(path.join(baserowDir, 'migrations'), 'migration'),
   },
   {
-    title: 'Bootstrap data (super admin + NM Prime)',
-    detail: 'Inserts missing rows only — never updates passwords or existing records',
+    title: 'Bootstrap data',
+    detail: 'super admin + NM Prime tenant',
     run: () => runScriptsFromDir(path.join(baserowDir, 'seeds'), 'seed'),
   },
   {
-    title: 'Per-tenant database tables (clients, kyc_documents, notes, tasks, audit_logs)',
-    detail: 'Creates tables in each tenant\'s dedicated Baserow database — never touches existing rows',
+    title: 'Tenant database tables',
+    detail: 'clients, gestionnaires, kyc_documents, notes, relations, tasks, audit_logs',
     run: () => provisionAllTenants(),
   },
   {
     title: 'Remove blank placeholder rows',
-    detail: 'Deletes only rows where every field is empty — real data is never removed',
+    detail: 'Baserow auto-created empty rows only',
     run: () => cleanupAllRows(),
   },
 ];
@@ -34,7 +34,7 @@ export async function setupDatabase() {
   console.log('╔══════════════════════════════════════════╗');
   console.log('║       Acuria — full database setup       ║');
   console.log('╚══════════════════════════════════════════╝');
-  console.log('\nIdempotent: safe to re-run. Existing tables, fields, and data are preserved.\n');
+  console.log('\nIdempotent: safe to re-run on an empty or partially provisioned workspace.\n');
 
   for (let i = 0; i < STEPS.length; i += 1) {
     const step = STEPS[i];

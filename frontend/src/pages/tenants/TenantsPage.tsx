@@ -1,11 +1,13 @@
-import { Fragment, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   FiBriefcase,
   FiChevronDown,
   FiChevronUp,
   FiEdit2,
   FiPlus,
+  FiTrash2,
   FiUsers,
 } from "react-icons/fi";
 import {
@@ -13,7 +15,11 @@ import {
   useTenants,
   useUpdateTenantBranding,
 } from "../../hooks";
+import api from "../../api";
+import { queryKeys } from "../../api/queryKeys";
 import { useConfirm } from "../../context/ConfirmContext";
+import AuthenticatedImage from "../../components/ui/AuthenticatedImage";
+import { fetchAuthenticatedBlob } from "../../lib/authenticatedBlob";
 import LoadingPopup from "../../components/ui/LoadingPopup";
 import PageLoading from "../../components/ui/PageLoading";
 import Select from "../../components/ui/Select";
@@ -27,6 +33,8 @@ import { TENANT_STATUS, TENANT_STATUS_LABELS } from "../../constants/roles";
 import type { Tenant } from "../../types";
 
 const DEFAULT_ACCENT = "#BE845C";
+const LOGO_ACCEPT = "image/png,image/jpeg,image/webp,image/svg+xml";
+const MAX_LOGO_SIZE = 2 * 1024 * 1024;
 
 type EditableTenantStatus = "active" | "inactive";
 
@@ -51,6 +59,7 @@ function brandingFormFromTenant(tenant: Tenant): BrandingFormState {
 }
 
 export default function TenantsPage() {
+  const queryClient = useQueryClient();
   const { data: tenants = [], isLoading, isError, error } = useTenants();
   const createTenant = useCreateTenant();
   const updateBranding = useUpdateTenantBranding();
@@ -64,6 +73,9 @@ export default function TenantsPage() {
     status: TENANT_STATUS.ACTIVE,
   });
   const [brandingError, setBrandingError] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -103,13 +115,55 @@ export default function TenantsPage() {
   const openBrandingForm = (tenant: Tenant) => {
     setShowForm(false);
     setBrandingError(null);
+    setLogoFile(null);
+    setRemoveLogo(false);
     setEditingTenant(tenant);
     setBrandingForm(brandingFormFromTenant(tenant));
+
+    if (tenant.hasBrandingLogo && !tenant.brandingLogoDataUrl) {
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.assets.tenantLogo(tenant.id),
+        queryFn: () => fetchAuthenticatedBlob(api.platformTenantLogo(tenant.id)),
+        staleTime: 24 * 60 * 60 * 1000,
+      });
+    }
   };
 
   const closeBrandingForm = () => {
     setEditingTenant(null);
     setBrandingError(null);
+    setLogoFile(null);
+    setRemoveLogo(false);
+  };
+
+  useEffect(() => {
+    if (!logoFile) {
+      setLogoPreviewUrl(null);
+      return undefined;
+    }
+
+    const previewUrl = URL.createObjectURL(logoFile);
+    setLogoPreviewUrl(previewUrl);
+
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [logoFile]);
+
+  const handleLogoChange = (file: File | null) => {
+    if (!file) {
+      setLogoFile(null);
+      return;
+    }
+
+    if (file.size > MAX_LOGO_SIZE) {
+      setBrandingError("Le logo ne doit pas dépasser 2 Mo.");
+      return;
+    }
+
+    setBrandingError(null);
+    setRemoveLogo(false);
+    setLogoFile(file);
   };
 
   const toggleProvisioningDetails = (tenantId: string) => {
@@ -167,6 +221,8 @@ export default function TenantsPage() {
         brandingOrias: brandingForm.brandingOrias.trim() || undefined,
         brandingAccent: accent,
         status: brandingForm.status,
+        logo: logoFile ?? undefined,
+        removeBrandingLogo: removeLogo || undefined,
       },
       { onSuccess: () => closeBrandingForm() },
     );
@@ -294,13 +350,13 @@ export default function TenantsPage() {
           <form className="tenant-form" onSubmit={handleBrandingSubmit}>
             <h2 className="tenant-form__title">Personnaliser le tenant</h2>
             <p className="tenant-form__hint">
-            Tenant : <strong>{editingTenant.name}</strong> (
+              Tenant : <strong>{editingTenant.name}</strong> (
               <code className="code-pill">{editingTenant.slug}</code>)
             </p>
 
             <div className="tenant-form__fields">
-              <label className="field">
-                <span>Nom du tenant</span>
+              <label className="field field--full">
+                <span>Nom de marque</span>
                 <div className="field-input">
                   <input
                     type="text"
@@ -317,66 +373,121 @@ export default function TenantsPage() {
                 </div>
               </label>
 
-              <label className="field">
-                <span>Numéro ORIAS</span>
-                <div className="field-input">
-                  <input
-                    type="text"
-                    value={brandingForm.brandingOrias}
+              <div className="tenant-form__row-3">
+                <label className="field">
+                  <span>Numéro ORIAS</span>
+                  <div className="field-input">
+                    <input
+                      type="text"
+                      value={brandingForm.brandingOrias}
+                      onChange={(e) =>
+                        setBrandingForm((prev) => ({
+                          ...prev,
+                          brandingOrias: e.target.value,
+                        }))
+                      }
+                      placeholder="ORIAS 11063702"
+                    />
+                  </div>
+                </label>
+
+                <label className="field">
+                  <span>Statut</span>
+                  <Select
+                    value={brandingForm.status}
                     onChange={(e) =>
                       setBrandingForm((prev) => ({
                         ...prev,
-                        brandingOrias: e.target.value,
+                        status: e.target.value as EditableTenantStatus,
                       }))
                     }
-                    placeholder="ORIAS 11063702"
-                  />
-                </div>
-              </label>
+                  >
+                    <option value={TENANT_STATUS.ACTIVE}>
+                      {TENANT_STATUS_LABELS.active}
+                    </option>
+                    <option value={TENANT_STATUS.INACTIVE}>
+                      {TENANT_STATUS_LABELS.inactive}
+                    </option>
+                  </Select>
+                </label>
 
-              <label className="field">
-                <span>Statut</span>
-                <Select
-                  value={brandingForm.status}
-                  onChange={(e) =>
-                    setBrandingForm((prev) => ({
-                      ...prev,
-                      status: e.target.value as EditableTenantStatus,
-                    }))
-                  }
-                >
-                  <option value={TENANT_STATUS.ACTIVE}>
-                    {TENANT_STATUS_LABELS.active}
-                  </option>
-                  <option value={TENANT_STATUS.INACTIVE}>
-                    {TENANT_STATUS_LABELS.inactive}
-                  </option>
-                </Select>
-              </label>
+                <label className="field">
+                  <span>Couleur d&apos;accent</span>
+                  <div className="field-color field-color--compact">
+                    <input
+                      type="color"
+                      className="field-color__picker"
+                      value={
+                        normalizeHexColor(brandingForm.brandingAccent) ??
+                        DEFAULT_ACCENT
+                      }
+                      onChange={(e) => handleAccentPickerChange(e.target.value)}
+                      aria-label="Choisir la couleur d'accent"
+                    />
+                    <input
+                      type="text"
+                      className="field-color__hex"
+                      value={brandingForm.brandingAccent}
+                      onChange={(e) => handleAccentTextChange(e.target.value)}
+                      placeholder="#BE845C"
+                      pattern="^#[0-9a-fA-F]{6}$"
+                      title="Code couleur hexadécimal (ex. #BE845C)"
+                      required
+                    />
+                  </div>
+                </label>
+              </div>
 
-              <label className="field">
-                <span>Couleur d&apos;accent</span>
-                <div className="field-color">
-                  <input
-                    type="color"
-                    className="field-color__picker"
-                    value={
-                      normalizeHexColor(brandingForm.brandingAccent) ??
-                      DEFAULT_ACCENT
-                    }
-                    onChange={(e) => handleAccentPickerChange(e.target.value)}
-                    aria-label="Choisir la couleur d'accent"
-                  />
-                  <input
-                    type="text"
-                    className="field-color__hex"
-                    value={brandingForm.brandingAccent}
-                    onChange={(e) => handleAccentTextChange(e.target.value)}
-                    placeholder="#BE845C"
-                    pattern="^#[0-9a-fA-F]{6}$"
-                    title="Code couleur hexadécimal (ex. #BE845C)"
-                    required
-                  />
+              <label className="field field--full">
+                <span>Logo</span>
+                <div className="tenant-logo-field tenant-logo-field--compact">
+                  {(logoPreviewUrl
+                    || (editingTenant.hasBrandingLogo && !removeLogo && !logoFile)) && (
+                    <div className="tenant-logo-preview">
+                      <div className="tenant-logo-preview__content">
+                        {logoPreviewUrl ? (
+                          <img
+                            src={logoPreviewUrl}
+                            alt="Aperçu du logo"
+                            className="tenant-logo-preview__image"
+                          />
+                        ) : (
+                          <AuthenticatedImage
+                            dataUrl={
+                              removeLogo ? null : editingTenant.brandingLogoDataUrl
+                            }
+                            src={api.platformTenantLogo(editingTenant.id)}
+                            queryKey={queryKeys.assets.tenantLogo(editingTenant.id)}
+                            alt="Logo actuel"
+                            className="tenant-logo-preview__image"
+                          />
+                        )}
+                      </div>
+                      {(editingTenant.hasBrandingLogo || logoFile) && !removeLogo && (
+                        <button
+                          type="button"
+                          className="tenant-logo-preview__delete"
+                          aria-label="Supprimer le logo"
+                          onClick={() => {
+                            setLogoFile(null);
+                            setRemoveLogo(true);
+                          }}
+                        >
+                          <FiTrash2 aria-hidden="true" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="field-input">
+                    <input
+                      type="file"
+                      accept={LOGO_ACCEPT}
+                      onChange={(e) => handleLogoChange(e.target.files?.[0] ?? null)}
+                    />
+                  </div>
+                  <p className="tenant-form__hint tenant-logo-field__hint">
+                    PNG, JPG, WebP ou SVG — 2 Mo max. Affiché dans la barre latérale à la place du nom de marque.
+                  </p>
                 </div>
               </label>
             </div>

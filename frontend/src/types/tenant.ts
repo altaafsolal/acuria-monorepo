@@ -12,6 +12,8 @@ export interface Tenant {
   brandingName?: string | null;
   brandingOrias?: string | null;
   brandingAccent?: string | null;
+  hasBrandingLogo?: boolean;
+  brandingLogoDataUrl?: string | null;
   workspaceId?: string | null;
   databaseId?: string | null;
   databaseToken?: string | null;
@@ -35,6 +37,8 @@ export interface UpdateTenantBrandingInput {
   brandingOrias?: string;
   brandingAccent?: string;
   status?: 'active' | 'inactive';
+  logo?: File;
+  removeBrandingLogo?: boolean;
 }
 
 export interface PlatformStats {

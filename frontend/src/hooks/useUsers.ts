@@ -20,10 +20,9 @@ export function useUsers() {
 }
 
 export function useUser(userId: string | undefined) {
-  return useGet<UserResponse, User>({
+  return useGet<UserResponse>({
     path: api.userById(userId ?? ''),
     queryKey: queryKeys.users.detail(userId ?? ''),
-    select: (data) => data.user,
     enabled: Boolean(userId),
   });
 }
@@ -32,6 +31,7 @@ function invalidateUserQueries(queryClient: ReturnType<typeof useQueryClient>, u
   const invalidations = [
     queryClient.invalidateQueries({ queryKey: queryKeys.users.list }),
     queryClient.invalidateQueries({ queryKey: queryKeys.tenant.stats }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.gestionnaires.list }),
   ];
   if (userId) {
     invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(userId) }));

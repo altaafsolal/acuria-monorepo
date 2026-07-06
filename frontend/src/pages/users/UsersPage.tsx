@@ -8,6 +8,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import PageLoading from '../../components/ui/PageLoading';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { ROLE_LABELS } from '../../constants/roles';
+import { hasUserEmail } from '../../types';
 import { filterBySearch } from '../../utils';
 
 export default function UsersPage() {
@@ -128,7 +129,7 @@ export default function UsersPage() {
                 filtered.map((user) => (
                   <tr key={user.id}>
                     <td><strong>{user.name}</strong></td>
-                    <td>{user.email}</td>
+                    <td>{user.email?.trim() || "—"}</td>
                     <td>
                       <span className="role-pill">
                         {ROLE_LABELS[user.role] || user.role}
@@ -144,15 +145,17 @@ export default function UsersPage() {
                           <FiEdit2 />
                           Modifier
                         </Link>
-                        <button
-                          type="button"
-                          className="btn-secondary btn-secondary--sm"
-                          onClick={() => handleResetPassword(user.id, user.name)}
-                          disabled={resetPassword.isPending}
-                        >
-                          <FiKey />
-                          Réinitialiser le MDP
-                        </button>
+                        {hasUserEmail(user.email) && (
+                          <button
+                            type="button"
+                            className="btn-secondary btn-secondary--sm"
+                            onClick={() => handleResetPassword(user.id, user.name)}
+                            disabled={resetPassword.isPending}
+                          >
+                            <FiKey />
+                            Réinitialiser le MDP
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn-secondary btn-secondary--sm"

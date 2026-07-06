@@ -36,6 +36,14 @@ export function mapUserRow(row: BaserowRow): DbUser {
   };
 }
 
+export function normalizeUserEmail(email: string | null | undefined): string {
+  return String(email ?? '').trim().toLowerCase();
+}
+
+export function hasUserEmail(user: Pick<DbUser, 'email'>): boolean {
+  return normalizeUserEmail(user.email).length > 0;
+}
+
 export function toPublicUser(user: DbUser): PublicUser {
   return {
     id: user.id,
@@ -89,8 +97,9 @@ export async function listUsersByTenantId(tenantId: string): Promise<DbUser[]> {
 
 export async function createUser(fields: CreateUserInput): Promise<DbUser> {
   const tableId = await getUsersTableId();
+  const email = normalizeUserEmail(fields.email);
   const row = await createRow(tableId, {
-    [F.email]: fields.email.trim().toLowerCase(),
+    [F.email]: email || null,
     [F.passwordHash]: fields.password_hash ?? '',
     [F.name]: fields.name,
     [F.role]: fields.role,
@@ -102,7 +111,9 @@ export async function createUser(fields: CreateUserInput): Promise<DbUser> {
 }
 
 export async function userExists(email: string): Promise<boolean> {
-  return Boolean(await findUserByEmail(email));
+  const normalized = normalizeUserEmail(email);
+  if (!normalized) return false;
+  return Boolean(await findUserByEmail(normalized));
 }
 
 export async function updateUser(id: string, fields: UpdateUserInput): Promise<DbUser> {
@@ -110,6 +121,10 @@ export async function updateUser(id: string, fields: UpdateUserInput): Promise<D
   const payload: Record<string, unknown> = {};
 
   if (fields.name !== undefined) payload[F.name] = fields.name;
+  if (fields.email !== undefined) {
+    const email = normalizeUserEmail(fields.email);
+    payload[F.email] = email || null;
+  }
   if (fields.role !== undefined) payload[F.role] = fields.role;
   if (fields.status !== undefined) payload[F.status] = fields.status;
   if (fields.password_hash !== undefined) payload[F.passwordHash] = fields.password_hash;
@@ -124,7 +139,7 @@ export async function updateUser(id: string, fields: UpdateUserInput): Promise<D
 }
 
 export interface UpsertStandardUserInput {
-  email: string;
+  email?: string | null;
   name: string;
   tenantId: string;
   status?: string;
@@ -134,14 +149,14 @@ export interface UpsertStandardUserInput {
 /** Creates or updates a tenant standard_user from an Airtable gestionnaire row. */
 export async function upsertStandardUserFromGestionnaire(
   input: UpsertStandardUserInput,
-): Promise<DbUser | null> {
-  const email = input.email.trim().toLowerCase();
-  if (!email || !email.includes('@')) return null;
-
+): Promise<DbUser> {
+  const email = normalizeUserEmail(input.email);
   const userStatus = input.status === 'Inactif' ? 'inactive' : 'active';
-  const existing =
-    (await findUserByAirtableRecordId(input.airtableRecordId))
-    ?? (await findUserByEmail(email));
+
+  let existing = await findUserByAirtableRecordId(input.airtableRecordId);
+  if (!existing && email) {
+    existing = await findUserByEmail(email);
+  }
 
   if (existing) {
     if (existing.role === SUPER_ADMIN_ROLE) return existing;
@@ -149,6 +164,7 @@ export async function upsertStandardUserFromGestionnaire(
       name: input.name,
       status: userStatus,
       airtable_record_id: input.airtableRecordId,
+      ...(email ? { email } : {}),
     });
   }
 

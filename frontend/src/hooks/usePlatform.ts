@@ -4,6 +4,11 @@ import { queryKeys } from '../api/queryKeys';
 import { useApp } from '../context/AppContext';
 import { useDelete, useGet, usePost, usePut } from '../lib/api';
 import { post, put } from '../lib/http';
+import {
+  getBlobObjectUrlCacheKey,
+  getOrCreateBlobObjectUrl,
+  revokeBlobObjectUrls,
+} from '../lib/blobObjectUrlCache';
 import type {
   Client,
   ClientsResponse,
@@ -59,12 +64,55 @@ export function useUpdateTenantBranding() {
 
   return usePut<TenantResponse, UpdateTenantBrandingInput & { id: string }>({
     path: ({ id }) => api.tenantById(id),
-    mutationFn: ({ id, ...input }) => put<TenantResponse>(api.tenantById(id), input),
-    onSuccess: async (_, { id }) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenants }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenant(id) }),
-      ]);
+    mutationFn: ({ id, logo, removeBrandingLogo, ...input }) => {
+      const useMultipart = Boolean(logo || removeBrandingLogo);
+
+      if (!useMultipart) {
+        return put<TenantResponse>(api.tenantById(id), input);
+      }
+
+      const formData = new FormData();
+      if (input.brandingName !== undefined) formData.append('brandingName', input.brandingName);
+      if (input.brandingOrias !== undefined) formData.append('brandingOrias', input.brandingOrias);
+      if (input.brandingAccent !== undefined) formData.append('brandingAccent', input.brandingAccent);
+      if (input.status !== undefined) formData.append('status', input.status);
+      if (logo) formData.append('logo', logo);
+      if (removeBrandingLogo) formData.append('removeBrandingLogo', 'true');
+
+      return put<TenantResponse>(api.tenantById(id), formData);
+    },
+    onSuccess: async (data, { id, logo, removeBrandingLogo }) => {
+      queryClient.setQueryData<TenantsResponse>(queryKeys.platform.tenants, (old) => {
+        if (!old) return old;
+        return {
+          tenants: old.tenants.map((tenant) => (
+            tenant.id === id ? { ...tenant, ...data.tenant } : tenant
+          )),
+        };
+      });
+
+      queryClient.setQueryData<TenantResponse>(queryKeys.platform.tenant(id), data);
+
+      if (removeBrandingLogo || logo) {
+        const logoQueryKeys = [
+          queryKeys.assets.tenantLogo(id),
+          queryKeys.tenant.logo,
+        ] as const;
+
+        revokeBlobObjectUrls(logoQueryKeys);
+        queryClient.removeQueries({ queryKey: queryKeys.assets.tenantLogo(id) });
+        queryClient.removeQueries({ queryKey: queryKeys.tenant.logo });
+
+        if (logo) {
+          queryClient.setQueryData(queryKeys.assets.tenantLogo(id), logo);
+          getOrCreateBlobObjectUrl(
+            getBlobObjectUrlCacheKey(queryKeys.assets.tenantLogo(id)),
+            logo,
+          );
+        }
+      }
+
+      await queryClient.invalidateQueries({ queryKey: queryKeys.tenant.branding });
     },
   });
 }
@@ -99,12 +147,28 @@ export function useTenantClients(tenantId: string | undefined) {
 function invalidateTenantUserQueries(
   queryClient: ReturnType<typeof useQueryClient>,
   tenantId: string,
+  userId?: string,
 ) {
-  return Promise.all([
+  const invalidations = [
     queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenantUsers(tenantId) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenants }),
     queryClient.invalidateQueries({ queryKey: queryKeys.platform.stats }),
-  ]);
+    queryClient.invalidateQueries({ queryKey: queryKeys.gestionnaires.list }),
+  ];
+  if (userId) {
+    invalidations.push(
+      queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenantUser(tenantId, userId) }),
+    );
+  }
+  return Promise.all(invalidations);
+}
+
+export function useTenantUser(tenantId: string | undefined, userId: string | undefined) {
+  return useGet<UserResponse>({
+    path: api.tenantUserById(tenantId ?? '', userId ?? ''),
+    queryKey: queryKeys.platform.tenantUser(tenantId ?? '', userId ?? ''),
+    enabled: Boolean(tenantId && userId),
+  });
 }
 
 export function useCreateTenantUser(tenantId: string | undefined) {
@@ -129,9 +193,9 @@ export function useUpdateTenantUser(tenantId: string | undefined) {
       api.tenantUserById(tenantId ?? '', id),
       input,
     ),
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       if (tenantId) {
-        await invalidateTenantUserQueries(queryClient, tenantId);
+        await invalidateTenantUserQueries(queryClient, tenantId, variables.id);
       }
     },
   });

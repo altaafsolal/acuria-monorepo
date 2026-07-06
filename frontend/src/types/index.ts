@@ -6,6 +6,13 @@ export type {
   UserResponse,
   CreateUserInput,
   UpdateUserInput,
+  GestionnaireUserInput,
+} from './user';
+export {
+  EMPTY_GESTIONNAIRE_FORM,
+  gestionnaireFromResponse,
+  buildUserNameFromGestionnaire,
+  hasUserEmail,
 } from './user';
 export type {
   Tenant,
