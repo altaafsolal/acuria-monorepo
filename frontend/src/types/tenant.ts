@@ -17,6 +17,7 @@ export interface Tenant {
   workspaceId?: string | null;
   databaseId?: string | null;
   databaseToken?: string | null;
+  email?: string | null;
 }
 
 export interface TenantsResponse {
@@ -39,6 +40,7 @@ export interface UpdateTenantBrandingInput {
   status?: 'active' | 'inactive';
   logo?: File;
   removeBrandingLogo?: boolean;
+  email?: string;
 }
 
 export interface PlatformStats {

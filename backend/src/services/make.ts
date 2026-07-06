@@ -5,19 +5,14 @@ export const NM_SIGNATAIRES = {
   'Jean du Boisdulier': { name: 'Jean du Boisdulier', email: 'jeanduboisdulier@nm-prime.com', titre: 'Directeur Général Délégué' },
 } as const;
 
-const LDM_TEMPLATE_IDS: Record<string, string> = {
-  PP_SANS: '1lLPYgqKiHx2xLwM3n-ueXrItKBRi-0ATOyx3JGLvFM4',
-  PP_AVEC: '1ceNCQr5rYJQbpRCusIVEaUwO-AMKKiFkkzcPCVoHSAM',
-  PM_SANS: '1wUsDiO5O3l4j9ceQ2ShptbgalKSElpwqz-yBlJ3VlxY',
-  PM_AVEC: '1p2Jxj7hEilQgku0lNCz3KpNr64suLUtlP08sdlDecf4',
-};
-
-const DER_TEMPLATE_ID = '1KeYAOkL1SQjNTInREr6RXPeXStdsKxFD2ByTc9BjbZ8';
-
-const FCC_FORM_URLS = {
-  PP: 'https://nm-prime-pp.netlify.app',
-  PM: 'https://nm-prime-pm.netlify.app',
-};
+function getLdmTemplateIds(): Record<string, string> {
+  return {
+    PP_SANS: env.kyc.ldmTemplatePpSans,
+    PP_AVEC: env.kyc.ldmTemplatePpAvec,
+    PM_SANS: env.kyc.ldmTemplatePmSans,
+    PM_AVEC: env.kyc.ldmTemplatePmAvec,
+  };
+}
 
 export interface KycWebhookVars {
   record_id: string;
@@ -98,10 +93,11 @@ export function buildKycVars(
   const nomFile = nomClient.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
   const nmTitre = options.signataireName === 'Baptiste Money' ? 'Président' : 'Directeur Général Délégué';
 
+  const ldmTemplateIds = getLdmTemplateIds();
   return {
     record_id: client.id,
-    ldm_template_id: type ? LDM_TEMPLATE_IDS[type] : undefined,
-    der_template_id: DER_TEMPLATE_ID,
+    ldm_template_id: type ? ldmTemplateIds[type] : undefined,
+    der_template_id: env.kyc.derTemplateId,
     type_ldm: type || undefined,
     ldm_filename: type ? `${nomFile}_LDM_${today}` : undefined,
     der_filename: `${nomFile}_DER_${today}`,
@@ -127,13 +123,15 @@ export function buildKycVars(
     rcs_ville: !isPP ? (client.city || '') : '',
     siren: !isPP ? (client.siren || '') : '',
     representant_nom: !isPP ? (client.legal_rep_name || '') : '',
-    dropbox_path_ldm: `/GHISLAIN LAGASSE/1 BIS - MAURICE/2 - ACURIA PARTNERS LTD/1 - CLIENTS/NM PRIME/Documents Réglementaires/${nomFile}_LDM_${today}.pdf`,
-    dropbox_path_der: `/GHISLAIN LAGASSE/1 BIS - MAURICE/2 - ACURIA PARTNERS LTD/1 - CLIENTS/NM PRIME/Documents Réglementaires/${nomFile}_DER_${today}.pdf`,
+    dropbox_path_ldm: env.kyc.dropboxPathBase ? `${env.kyc.dropboxPathBase}/${nomFile}_LDM_${today}.pdf` : '',
+    dropbox_path_der: env.kyc.dropboxPathBase ? `${env.kyc.dropboxPathBase}/${nomFile}_DER_${today}.pdf` : '',
   };
 }
 
 export function buildFccPrefillLink(client: import('../types/domain.js').DbClient): { link: string; type: 'PP' | 'PM' } {
   const type = client.client_type === 'PM' ? 'PM' : 'PP';
+  const baseUrl = type === 'PP' ? env.kyc.fccFormUrlPp : env.kyc.fccFormUrlPm;
+  if (!baseUrl) throw new Error(`FCC form URL not configured for type ${type} — set FCC_FORM_URL_${type} in .env`);
   const prefillData = type === 'PP'
     ? {
       civilite: client.civilite || '',
@@ -174,8 +172,7 @@ export function buildFccPrefillLink(client: import('../types/domain.js').DbClien
     };
 
   const encoded = Buffer.from(JSON.stringify(prefillData), 'utf8').toString('base64');
-  const base = FCC_FORM_URLS[type];
-  return { link: `${base}/?data=${encoded}`, type };
+  return { link: `${baseUrl}/?data=${encoded}`, type };
 }
 
 export async function sendDerEmail(vars: KycWebhookVars): Promise<void> {
@@ -200,11 +197,19 @@ export async function previewLdm(vars: KycWebhookVars): Promise<Buffer> {
   return Buffer.from(arrayBuffer);
 }
 
-export async function sendFccEmail(clientName: string, clientEmail: string, link: string): Promise<void> {
+export async function sendFccEmail(
+  clientName: string,
+  clientEmail: string,
+  link: string,
+  tenantName: string,
+  tenantEmail: string,
+): Promise<void> {
   await postWebhook(webhookUrl('webhookFcc'), {
     client_email: clientEmail,
     client_name: clientName,
     lien_prefill: link,
+    tenant_name: tenantName,
+    tenant_email: tenantEmail,
   });
 }
 
@@ -245,4 +250,3 @@ export function derIsSent(statut: string | null | undefined): boolean {
   return statut === 'Envoyé' || statut === 'Signé';
 }
 
-export { DER_TEMPLATE_ID, LDM_TEMPLATE_IDS };

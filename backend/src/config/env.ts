@@ -35,6 +35,16 @@ export interface Env {
     webhookPasswordSet: string;
     webhookOtp: string;
   };
+  kyc: {
+    derTemplateId: string;
+    ldmTemplatePpSans: string;
+    ldmTemplatePpAvec: string;
+    ldmTemplatePmSans: string;
+    ldmTemplatePmAvec: string;
+    fccFormUrlPp: string;
+    fccFormUrlPm: string;
+    dropboxPathBase: string;
+  };
   airtable: {
     pat: string;
     baseId: string;
@@ -88,17 +98,28 @@ export const env: Env = {
   },
 
   make: {
-    webhookDer: process.env.MAKE_WEBHOOK_DER || 'https://hook.eu1.make.com/6cnprecwsm5gsljga1r826jtfvbtyohh',
-    webhookLdm: process.env.MAKE_WEBHOOK_LDM || 'https://hook.eu1.make.com/u3btpbbetbrfvazqpgs5xwh2baoh4lyc',
-    webhookPreview: process.env.MAKE_WEBHOOK_PREVIEW || 'https://hook.eu1.make.com/cn4pcd3pjprf8mzezpgp60lpp72tg0n0',
-    webhookFcc: process.env.MAKE_WEBHOOK_FCC || 'https://hook.eu1.make.com/noydem1a5c5z4d4vmql35183hw2kyjvv',
+    webhookDer: process.env.MAKE_WEBHOOK_DER || '',
+    webhookLdm: process.env.MAKE_WEBHOOK_LDM || '',
+    webhookPreview: process.env.MAKE_WEBHOOK_PREVIEW || '',
+    webhookFcc: process.env.MAKE_WEBHOOK_FCC || '',
     webhookPasswordSet: process.env.MAKE_WEBHOOK_PASSWORD_SET || '',
     webhookOtp: process.env.MAKE_WEBHOOK_OTP || '',
   },
 
+  kyc: {
+    derTemplateId: process.env.GOOGLE_DOC_DER_ID || '',
+    ldmTemplatePpSans: process.env.GOOGLE_DOC_LDM_PP_SANS || '',
+    ldmTemplatePpAvec: process.env.GOOGLE_DOC_LDM_PP_AVEC || '',
+    ldmTemplatePmSans: process.env.GOOGLE_DOC_LDM_PM_SANS || '',
+    ldmTemplatePmAvec: process.env.GOOGLE_DOC_LDM_PM_AVEC || '',
+    fccFormUrlPp: process.env.FCC_FORM_URL_PP || '',
+    fccFormUrlPm: process.env.FCC_FORM_URL_PM || '',
+    dropboxPathBase: process.env.DROPBOX_PATH_BASE || '',
+  },
+
   airtable: {
     pat: process.env.AIRTABLE_PAT || '',
-    baseId: process.env.AIRTABLE_BASE_ID || 'appDfjYwgxa6eTrRD',
+    baseId: process.env.AIRTABLE_BASE_ID || '',
     tableClients: process.env.AIRTABLE_TABLE_CLIENTS || 'NM - Clients',
     tableRelations: process.env.AIRTABLE_TABLE_RELATIONS || 'NM - Relation clients',
     tableKycDocs: process.env.AIRTABLE_TABLE_KYC_DOCS || 'NM - Documents KYC',

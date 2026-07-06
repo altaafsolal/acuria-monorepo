@@ -41,6 +41,7 @@ export const BASEROW_FIELDS = {
     brandingOrias: 'branding_orias',
     brandingAccent: 'branding_accent',
     brandingLogo: 'branding_logo',
+    email: 'email',
     createdOn: 'created_on',
     updatedOn: 'updated_on',
   },

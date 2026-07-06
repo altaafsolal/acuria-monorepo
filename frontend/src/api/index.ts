@@ -59,6 +59,7 @@ const api = {
   kycFcc: (filter = '') => `${baseUrl}/kyc/fcc${filter ? `?filter=${encodeURIComponent(filter)}` : ''}`,
   kycDerSend: `${baseUrl}/kyc/der/send`,
   kycLdmSend: `${baseUrl}/kyc/ldm/send`,
+  kycLdmPreview: `${baseUrl}/kyc/ldm/preview`,
   kycFccSend: `${baseUrl}/kyc/fcc/send`,
 
   // Gestionnaires

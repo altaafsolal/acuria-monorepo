@@ -30,6 +30,7 @@ function mapTenantRow(row: BaserowRow): TenantRecord {
     branding_orias: String(row[F.brandingOrias] || '').trim() || null,
     branding_accent: String(row[F.brandingAccent] || '').trim() || null,
     branding_logo: pickFileValues(row[F.brandingLogo]),
+    email: String(row[F.email] || '').trim() || null,
     created_on: pickFieldValue(row[F.createdOn]),
     updated_on: pickFieldValue(row[F.updatedOn]),
   };
@@ -74,6 +75,7 @@ export function toPublicTenant(
     workspaceId: tenant.workspace_id,
     databaseId: tenant.database_id,
     databaseToken: tenant.database_token,
+    email: tenant.email,
   };
 }
 
@@ -121,6 +123,7 @@ export async function patchTenantBranding(
     brandingAccent?: string;
     brandingLogo?: { buffer: Buffer; originalName: string; mimeType?: string };
     removeBrandingLogo?: boolean;
+    email?: string;
   },
 ): Promise<TenantRecord | null> {
   const existing = await findTenantById(tenantId);
@@ -135,6 +138,7 @@ export async function patchTenantBranding(
   if (branding.brandingName !== undefined) payload[F.brandingName] = branding.brandingName;
   if (branding.brandingOrias !== undefined) payload[F.brandingOrias] = branding.brandingOrias;
   if (branding.brandingAccent !== undefined) payload[F.brandingAccent] = branding.brandingAccent;
+  if (branding.email !== undefined) payload[F.email] = branding.email;
 
   if (branding.removeBrandingLogo) {
     payload[F.brandingLogo] = [];

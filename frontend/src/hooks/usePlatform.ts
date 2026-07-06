@@ -76,6 +76,7 @@ export function useUpdateTenantBranding() {
       if (input.brandingOrias !== undefined) formData.append('brandingOrias', input.brandingOrias);
       if (input.brandingAccent !== undefined) formData.append('brandingAccent', input.brandingAccent);
       if (input.status !== undefined) formData.append('status', input.status);
+      if (input.email !== undefined) formData.append('email', input.email);
       if (logo) formData.append('logo', logo);
       if (removeBrandingLogo) formData.append('removeBrandingLogo', 'true');
 

@@ -60,6 +60,7 @@ export interface TenantRecord {
     visibleName: string | null;
     size: number | null;
   }>;
+  email: string | null;
   created_on: string | null;
   updated_on: string | null;
 }
@@ -81,6 +82,7 @@ export interface PublicTenant {
   workspaceId?: string | null;
   databaseId?: string | null;
   databaseToken?: string | null;
+  email?: string | null;
 }
 
 export interface BeneficiaryFields {

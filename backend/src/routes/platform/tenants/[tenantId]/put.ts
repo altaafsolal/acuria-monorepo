@@ -34,6 +34,7 @@ router.put('/', upload.single('logo'), asyncHandler(async (req, res) => {
     brandingAccent?: string;
     status?: string;
     removeBrandingLogo?: string;
+    email?: string;
   };
 
   if (body.brandingAccent !== undefined && body.brandingAccent !== '' && !HEX_COLOR.test(body.brandingAccent)) {
@@ -52,6 +53,7 @@ router.put('/', upload.single('logo'), asyncHandler(async (req, res) => {
     brandingOrias: body.brandingOrias,
     brandingAccent: body.brandingAccent,
     status: body.status,
+    email: body.email,
     removeBrandingLogo: removeBrandingLogo || undefined,
     brandingLogo: logoFile
       ? {

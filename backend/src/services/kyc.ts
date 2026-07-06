@@ -1,4 +1,4 @@
-import { clientsRepo, notesRepo, tasksRepo, clientMapper } from './baserow/index.js';
+import { clientsRepo, notesRepo, tasksRepo, clientMapper, tenantsRepo } from './baserow/index.js';
 import { filterTasksForUser } from './task-access.js';
 import {
   buildFccPrefillLink,
@@ -93,14 +93,19 @@ export async function previewLdmPdf(tenantId: string, input: SendLdmInput): Prom
 }
 
 export async function sendFcc(tenantId: string, clientId: string): Promise<{ client: PublicClient; link: string }> {
-  const client = await clientsRepo.getClientById(tenantId, clientId);
+  const [client, tenant] = await Promise.all([
+    clientsRepo.getClientById(tenantId, clientId),
+    tenantsRepo.findTenantById(tenantId),
+  ]);
   if (!client) throw new Error('Client not found');
 
   const { link } = buildFccPrefillLink(client);
   const name = resolveClientDisplayName(client);
+  const tenantName = tenant?.branding_name || tenant?.name || '';
+  const tenantEmail = tenant?.email || '';
 
   if (client.email) {
-    await sendFccEmail(name, client.email, link);
+    await sendFccEmail(name, client.email, link, tenantName, tenantEmail);
     const updated = await clientsRepo.patchClientKycFields(tenantId, client.id, {
       fcc_statut: 'Envoyé',
       fcc_date: new Date().toISOString().split('T')[0],

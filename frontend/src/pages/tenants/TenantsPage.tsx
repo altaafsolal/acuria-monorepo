@@ -43,6 +43,7 @@ interface BrandingFormState {
   brandingOrias: string;
   brandingAccent: string;
   status: EditableTenantStatus;
+  email: string;
 }
 
 function editableStatusFromTenant(tenant: Tenant): EditableTenantStatus {
@@ -55,6 +56,7 @@ function brandingFormFromTenant(tenant: Tenant): BrandingFormState {
     brandingOrias: tenant.brandingOrias?.trim() || "",
     brandingAccent: tenant.brandingAccent?.trim() || DEFAULT_ACCENT,
     status: editableStatusFromTenant(tenant),
+    email: tenant.email?.trim() || "",
   };
 }
 
@@ -71,6 +73,7 @@ export default function TenantsPage() {
     brandingOrias: "",
     brandingAccent: DEFAULT_ACCENT,
     status: TENANT_STATUS.ACTIVE,
+    email: "",
   });
   const [brandingError, setBrandingError] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -221,6 +224,7 @@ export default function TenantsPage() {
         brandingOrias: brandingForm.brandingOrias.trim() || undefined,
         brandingAccent: accent,
         status: brandingForm.status,
+        email: brandingForm.email.trim() || undefined,
         logo: logoFile ?? undefined,
         removeBrandingLogo: removeLogo || undefined,
       },
@@ -369,6 +373,23 @@ export default function TenantsPage() {
                     }
                     placeholder="NM Prime"
                     required
+                  />
+                </div>
+              </label>
+
+              <label className="field field--full">
+                <span>Email du tenant</span>
+                <div className="field-input">
+                  <input
+                    type="email"
+                    value={brandingForm.email}
+                    onChange={(e) =>
+                      setBrandingForm((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    placeholder="contact@nm-prime.com"
                   />
                 </div>
               </label>

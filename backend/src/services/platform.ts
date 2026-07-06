@@ -142,13 +142,15 @@ export async function updateTenantBranding(
     status?: string;
     brandingLogo?: { buffer: Buffer; originalName: string; mimeType?: string };
     removeBrandingLogo?: boolean;
+    email?: string;
   },
 ): Promise<PublicTenant | null> {
   const hasBrandingFields = branding.brandingName !== undefined
     || branding.brandingOrias !== undefined
     || branding.brandingAccent !== undefined
     || branding.brandingLogo !== undefined
-    || branding.removeBrandingLogo === true;
+    || branding.removeBrandingLogo === true
+    || branding.email !== undefined;
 
   let record = hasBrandingFields
     ? await tenantsRepo.patchTenantBranding(tenantId, branding)
