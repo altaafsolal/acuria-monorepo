@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
 import { baserow } from '../../services/index.js';
-import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
+import { asyncHandler, HttpError, requireTenant } from '../../utils/index.js';
 import type { CreateClientInput } from '../../types/domain.js';
 
 const { clientsRepo } = baserow;
@@ -34,18 +34,6 @@ router.post('/', asyncHandler(async (req, res) => {
     email: body.email?.trim() ?? '',
   });
   res.status(201).json({ client: clientsRepo.toPublicClient(client) });
-}));
-
-router.post('/:id/archive', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
-  const client = await clientsRepo.updateClient(tenantId, reqParam(req, 'id'), {
-    statutClient: 'Archivé',
-    status: 'archived',
-  });
-  if (!client) {
-    throw new HttpError(404, 'Client not found');
-  }
-  res.json({ client: clientsRepo.toPublicClient(client) });
 }));
 
 export default router;

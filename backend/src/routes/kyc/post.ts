@@ -42,25 +42,6 @@ router.post('/ldm/send', asyncHandler(async (req, res) => {
   }
 }));
 
-router.post('/ldm/preview', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
-  const body = req.body as SendLdmInput;
-
-  if (!body?.clientId || !body?.ldmType) {
-    throw new HttpError(400, 'clientId and ldmType are required');
-  }
-
-  try {
-    const pdf = await kycService.previewLdmPdf(tenantId, body);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="preview-ldm.pdf"');
-    res.send(pdf);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to preview LdM';
-    throw new HttpError(400, message);
-  }
-}));
-
 router.post('/fcc/send', asyncHandler(async (req, res) => {
   const tenantId = requireTenant(req);
   const { clientId } = req.body as { clientId?: string };
