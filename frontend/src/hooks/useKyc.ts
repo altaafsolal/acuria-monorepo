@@ -68,6 +68,14 @@ export function useSendFcc() {
   });
 }
 
+export function useSendFccDocuSign() {
+  const queryClient = useQueryClient();
+  return usePost<ClientResponse, { clientId: string }>({
+    path: api.kycFccDocusignSend,
+    onSuccess: () => invalidateKycQueries(queryClient),
+  });
+}
+
 export function useTenantBranding(enabled = true) {
   const queryClient = useQueryClient();
   const query = useGet<{ branding: import('../types').TenantBranding }>({

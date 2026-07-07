@@ -54,6 +54,7 @@ export function buildKycVars(
     signataireName: string;
     signataireEmail: string;
     montantForfait?: string;
+    dropboxPathBase?: string;
   },
 ): KycWebhookVars {
   const isPP = client.client_type === 'PP';
@@ -95,17 +96,23 @@ export function buildKycVars(
     rcs_ville: !isPP ? (client.city || '') : '',
     siren: !isPP ? (client.siren || '') : '',
     representant_nom: !isPP ? (client.legal_rep_name || '') : '',
-    dropbox_path_ldm: env.kyc.dropboxPathBase ? `${env.kyc.dropboxPathBase}/${nomFile}_LDM_${today}.pdf` : '',
-    dropbox_path_der: env.kyc.dropboxPathBase ? `${env.kyc.dropboxPathBase}/${nomFile}_DER_${today}.pdf` : '',
+    dropbox_path_ldm: options.dropboxPathBase ? `${options.dropboxPathBase}/${nomFile}_LDM_${today}.pdf` : '',
+    dropbox_path_der: options.dropboxPathBase ? `${options.dropboxPathBase}/${nomFile}_DER_${today}.pdf` : '',
   };
 }
 
-export function buildFccPrefillLink(client: DbClient): { link: string; type: 'PP' | 'PM' } {
+export function buildFccPrefillLink(
+  client: DbClient,
+  tenant?: { name: string; orias?: string | null; email?: string | null },
+): { link: string; type: 'PP' | 'PM' } {
   const type = client.client_type === 'PM' ? 'PM' : 'PP';
-  const baseUrl = type === 'PP' ? env.kyc.fccFormUrlPp : env.kyc.fccFormUrlPm;
-  if (!baseUrl) throw new Error(`FCC form URL not configured for type ${type} — set FCC_FORM_URL_${type} in .env`);
+  const baseUrl = type === 'PP' ? `${env.appUrl}/fcc/pp` : `${env.appUrl}/fcc/pm`;
+  const tenantMeta = tenant
+    ? { _tenant_name: tenant.name, _tenant_orias: tenant.orias || '', _tenant_email: tenant.email || '' }
+    : {};
   const prefillData = type === 'PP'
     ? {
+      ...tenantMeta,
       civilite: client.civilite || '',
       nom: (client.last_name || '').toUpperCase(),
       prenom: client.first_name || '',
@@ -131,6 +138,7 @@ export function buildFccPrefillLink(client: DbClient): { link: string; type: 'PP
       pat_autres: client.patrimoine_autres || '',
     }
     : {
+      ...tenantMeta,
       denomination: client.trade_name || client.name || '',
       siren: client.siren || '',
       naf: client.naf_code || '',
@@ -144,7 +152,7 @@ export function buildFccPrefillLink(client: DbClient): { link: string; type: 'PP
     };
 
   const encoded = Buffer.from(JSON.stringify(prefillData), 'utf8').toString('base64');
-  return { link: `${baseUrl}/?data=${encoded}`, type };
+  return { link: `${baseUrl}?data=${encoded}`, type };
 }
 
 export async function sendDerEmail(
@@ -169,11 +177,15 @@ export async function sendLdmDocuSign(
   vars: KycWebhookVars,
   tenantName: string,
   tenantEmail: string,
+  tenantDropbox: string,
+  clientsTableId: string,
 ): Promise<void> {
   await postWebhook(webhookUrl('webhookLdm'), {
     ...vars,
     tenant_name: tenantName,
     tenant_email: tenantEmail,
+    tenant_dropbox: tenantDropbox,
+    baserow_table_id: clientsTableId,
   });
 }
 
@@ -194,6 +206,24 @@ export async function sendFccEmail(
     client_email: clientEmail,
     client_name: clientName,
     lien_prefill: link,
+    tenant_name: tenantName,
+    tenant_email: tenantEmail,
+  });
+}
+
+export async function sendFccDocuSign(
+  clientId: string,
+  clientName: string,
+  clientEmail: string,
+  formType: 'PP' | 'PM',
+  tenantName: string,
+  tenantEmail: string,
+): Promise<void> {
+  await postWebhook(webhookUrl('webhookFccDocusign'), {
+    record_id: clientId,
+    client_email: clientEmail,
+    client_name: clientName,
+    form_type: formType,
     tenant_name: tenantName,
     tenant_email: tenantEmail,
   });

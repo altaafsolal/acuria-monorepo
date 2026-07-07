@@ -35,7 +35,7 @@ function timingSafeEqualHex(a: string, b: string): boolean {
 }
 
 export function buildSetPasswordLink(uid: string, token: string): string {
-  const base = env.appUrl.replace(/\/$/, '');
+  const base = env.appUrl;
   const params = new URLSearchParams({ uid, token });
   return `${base}/set-password?${params.toString()}`;
 }

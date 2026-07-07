@@ -12,7 +12,7 @@ import {
   TENANT_TABLE_BASES,
 } from '../schema.js';
 import { ensureField, ensureTable, ensureTextFields } from '../lib/schema-helpers.js';
-import { listDatabaseTables, listTableFieldsWithJwt } from '../../src/services/baserow/api.js';
+import { ensureSelectOptions, listDatabaseTables, listTableFieldsWithJwt } from '../../src/services/baserow/api.js';
 import type { TenantRecord } from '../../src/types/domain.js';
 
 const tableIdCache = new Map<string, string>();
@@ -76,6 +76,8 @@ async function ensureClientsFields(tableId: string | number): Promise<void> {
       { name: field, type: 'single_select', select_options: [...CRM_DOC_STATUS_OPTIONS] },
       existing,
     );
+    // Always sync options so new values (e.g. 'DocuSign envoyé') are added to existing fields
+    await ensureSelectOptions(tableId, field, CRM_DOC_STATUS_OPTIONS);
   }
 }
 
@@ -139,7 +141,7 @@ async function ensureNotesFields(tableId: string | number, clientsTableId: strin
     existing,
   );
   await ensureTextFields(tableId, [F.auteur, F.contenu, F.source, F.airtableRecordId], existing);
-  await ensureField(tableId, { name: F.piecesJointes, type: 'file' }, existing);
+  await ensureField(tableId, { name: F.piecesJointes, type: 'long_text' }, existing);
 }
 
 async function ensureRelationsFields(tableId: string | number, clientsTableId: string): Promise<void> {

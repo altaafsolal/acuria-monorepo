@@ -41,6 +41,7 @@ export const BASEROW_FIELDS = {
     brandingOrias: 'branding_orias',
     brandingAccent: 'branding_accent',
     brandingLogo: 'branding_logo',
+    dropboxPathBase: 'dropbox_path_base',
     email: 'email',
     createdOn: 'created_on',
     updatedOn: 'updated_on',
@@ -259,6 +260,7 @@ export const STATUT_CLIENT_OPTIONS = [
 export const CRM_DOC_STATUS_OPTIONS = [
   { value: 'Non envoyé', color: 'dark-gray' },
   { value: 'Envoyé', color: 'dark-blue' },
+  { value: 'DocuSign envoyé', color: 'dark-purple' },
   { value: 'Signé', color: 'dark-green' },
   { value: 'À renouveler', color: 'dark-orange' },
 ] as const;

@@ -2,7 +2,6 @@ import { BASEROW_FIELDS } from '../../../baserow/schema.js';
 import {
   normalizeDateTimeForBaserow,
   pickFieldValue,
-  pickFileValues,
   pickLinkRowId,
   pickTextValue,
 } from '../../utils/baserow.js';
@@ -13,6 +12,19 @@ import type { BaserowRow, DbNote, NoteAttachment, PublicNote } from '../../types
 
 const F = BASEROW_FIELDS.notes;
 
+function parseNoteAttachments(value: unknown): NoteAttachment[] {
+  if (!value || typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is NoteAttachment =>
+      Boolean(item) && typeof item.name === 'string' && typeof item.url === 'string',
+    );
+  } catch {
+    return [];
+  }
+}
+
 function mapRow(row: BaserowRow): DbNote {
   return {
     id: String(row.id),
@@ -22,7 +34,7 @@ function mapRow(row: BaserowRow): DbNote {
     note_type: pickFieldValue(row[F.noteType]) || 'Note interne',
     auteur: pickTextValue(row[F.auteur]),
     contenu: pickTextValue(row[F.contenu]),
-    pieces_jointes: pickFileValues(row[F.piecesJointes]),
+    pieces_jointes: parseNoteAttachments(row[F.piecesJointes]),
     source: pickTextValue(row[F.source]) || 'Manuel',
     airtable_record_id: pickTextValue(row[F.airtableRecordId]),
   };
@@ -57,7 +69,7 @@ export async function createNote(
     noteType: string;
     auteur: string;
     contenu: string;
-    piecesJointes?: Array<{ name: string; visibleName?: string }>;
+    piecesJointes?: Array<{ name: string; url: string }>;
   },
 ): Promise<PublicNote> {
   const ctx = await resolveTenantDbContext(tenantId);
@@ -73,10 +85,7 @@ export async function createNote(
   };
 
   if (input.piecesJointes && input.piecesJointes.length > 0) {
-    payload[F.piecesJointes] = input.piecesJointes.map((file) => ({
-      name: file.name,
-      ...(file.visibleName ? { visible_name: file.visibleName } : {}),
-    }));
+    payload[F.piecesJointes] = JSON.stringify(input.piecesJointes);
   }
 
   const row = await createRow(tableId, payload, ctx);

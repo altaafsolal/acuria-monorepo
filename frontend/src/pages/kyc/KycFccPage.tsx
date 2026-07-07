@@ -3,7 +3,7 @@ import { FiRefreshCw } from 'react-icons/fi';
 
 import ClientPanel from '../../components/clients/ClientPanel';
 import PageLoading from '../../components/ui/PageLoading';
-import { useAccueil, useKycFccClients, useSendFcc } from '../../hooks';
+import { useAccueil, useKycFccClients, useSendFcc, useSendFccDocuSign } from '../../hooks';
 import { queryKeys } from '../../api/queryKeys';
 import { useQueryClient } from '@tanstack/react-query';
 import { useConfirm } from '../../context/ConfirmContext';
@@ -31,6 +31,7 @@ export default function KycFccPage() {
   const { data: accueil } = useAccueil();
   const { data: clients = [], isLoading, isError, error, refetch, isFetching } = useKycFccClients(filter);
   const sendFcc = useSendFcc();
+  const sendFccDocuSign = useSendFccDocuSign();
   const confirm = useConfirm();
 
   const fccStats = accueil?.stats.fcc;
@@ -52,6 +53,16 @@ export default function KycFccPage() {
         if (result.link) window.open(result.link, '_blank');
       },
     });
+  };
+
+  const handleDocuSign = async (clientId: string, clientName: string) => {
+    const confirmed = await confirm({
+      title: 'Envoyer vers DocuSign',
+      message: `Envoyer la FCC de « ${clientName} » vers DocuSign pour signature électronique ?`,
+      confirmLabel: 'Envoyer DocuSign',
+    });
+    if (!confirmed) return;
+    sendFccDocuSign.mutate({ clientId });
   };
 
   return (
@@ -152,15 +163,26 @@ export default function KycFccPage() {
                           </span>
                         </td>
                         <td className="text-muted">{formatDateFr(client.fccDate)}</td>
-                        <td>
+                        <td style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                           <button
                             type="button"
                             className="btn-secondary btn-sm"
                             onClick={() => handleSendFcc(client.id, client.name)}
-                            disabled={sendFcc.isPending}
+                            disabled={sendFcc.isPending || sendFccDocuSign.isPending}
                           >
                             FCC
                           </button>
+                          {client.fccStatut === 'Envoyé' && (
+                            <button
+                              type="button"
+                              className="btn-secondary btn-sm"
+                              onClick={() => handleDocuSign(client.id, client.name)}
+                              disabled={sendFcc.isPending || sendFccDocuSign.isPending}
+                              title="Envoyer vers DocuSign pour signature"
+                            >
+                              ✍️ DocuSign
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );

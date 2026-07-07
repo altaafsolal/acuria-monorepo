@@ -32,6 +32,7 @@ export interface Env {
     webhookLdm: string;
     webhookPreview: string;
     webhookFcc: string;
+    webhookFccDocusign: string;
     webhookPasswordSet: string;
     webhookOtp: string;
   };
@@ -41,9 +42,6 @@ export interface Env {
     ldmTemplatePpAvec: string;
     ldmTemplatePmSans: string;
     ldmTemplatePmAvec: string;
-    fccFormUrlPp: string;
-    fccFormUrlPm: string;
-    dropboxPathBase: string;
   };
   airtable: {
     pat: string;
@@ -55,6 +53,12 @@ export interface Env {
     tableNotes: string;
     tableTasks: string;
   };
+  sharepoint: {
+    siteUrl: string;
+    username: string;
+    password: string;
+    folder: string;
+  };
 }
 
 export const env: Env = {
@@ -62,9 +66,11 @@ export const env: Env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
 
-  appUrl: process.env.APP_URL
+  appUrl: (
+    process.env.APP_URL
     || (process.env.CORS_ORIGINS || 'http://localhost:4001').split(',')[0]?.trim()
-    || 'http://localhost:4001',
+    || 'http://localhost:4001'
+  ).replace(/\/$/, ''),
 
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret',
@@ -102,6 +108,7 @@ export const env: Env = {
     webhookLdm: process.env.MAKE_WEBHOOK_LDM || '',
     webhookPreview: process.env.MAKE_WEBHOOK_PREVIEW || '',
     webhookFcc: process.env.MAKE_WEBHOOK_FCC || '',
+    webhookFccDocusign: process.env.MAKE_WEBHOOK_FCC_DOCUSIGN || '',
     webhookPasswordSet: process.env.MAKE_WEBHOOK_PASSWORD_SET || '',
     webhookOtp: process.env.MAKE_WEBHOOK_OTP || '',
   },
@@ -112,9 +119,6 @@ export const env: Env = {
     ldmTemplatePpAvec: process.env.GOOGLE_DOC_LDM_PP_AVEC || '',
     ldmTemplatePmSans: process.env.GOOGLE_DOC_LDM_PM_SANS || '',
     ldmTemplatePmAvec: process.env.GOOGLE_DOC_LDM_PM_AVEC || '',
-    fccFormUrlPp: process.env.FCC_FORM_URL_PP || '',
-    fccFormUrlPm: process.env.FCC_FORM_URL_PM || '',
-    dropboxPathBase: process.env.DROPBOX_PATH_BASE || '',
   },
 
   airtable: {
@@ -126,6 +130,13 @@ export const env: Env = {
     tableGestionnaires: process.env.AIRTABLE_TABLE_GESTIONNAIRES || 'tblatPVdokDBqRUjh',
     tableNotes: process.env.AIRTABLE_TABLE_NOTES || 'tblHFssvCt0EMZfsa',
     tableTasks: process.env.AIRTABLE_TABLE_TASKS || 'tblknqykhXNfQzT9P',
+  },
+
+  sharepoint: {
+    siteUrl: (process.env.SP_SITE_URL || '').replace(/\/$/, ''),
+    username: process.env.SP_USERNAME || '',
+    password: process.env.SP_PASSWORD || '',
+    folder: process.env.SP_FOLDER || 'Documents/Notes',
   },
 };
 

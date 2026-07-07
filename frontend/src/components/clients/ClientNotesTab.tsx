@@ -16,10 +16,10 @@ import {
   FiTrash2,
   FiUser,
 } from "react-icons/fi";
-import type { ClientNote, Gestionnaire, NoteAttachment } from "../../types";
+import type { ClientNote, Gestionnaire } from "../../types";
 import {
   attachmentDisplayName,
-  downloadAttachment,
+  openAttachment,
 } from "../../utils/attachments";
 import { filterBySearch } from "../../utils";
 import { formatDateTimeFr } from "../../utils/kyc";
@@ -88,8 +88,6 @@ export default function ClientNotesTab({
   onDeleteNote,
 }: ClientNotesTabProps) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
-  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
 
@@ -111,20 +109,6 @@ export default function ClientNotesTab({
   const clearFilters = () => {
     setSearch("");
     setTypeFilter("");
-  };
-
-  const handleDownload = async (fileKey: string, file: NoteAttachment) => {
-    setDownloadingKey(fileKey);
-    setDownloadError(null);
-    try {
-      await downloadAttachment(file);
-    } catch {
-      setDownloadError(
-        "Le téléchargement a échoué. Réessayez dans un instant.",
-      );
-    } finally {
-      setDownloadingKey(null);
-    }
   };
 
   const handleSubmit = (input: AddNoteInput) => {
@@ -173,12 +157,6 @@ export default function ClientNotesTab({
           Nouvelle note
         </button>
       </div>
-
-      {downloadError && (
-        <p className="cp-notes-download-error" role="alert">
-          {downloadError}
-        </p>
-      )}
 
       {notes.length === 0 ? (
         <div className="cp-notes-empty">
@@ -252,22 +230,18 @@ export default function ClientNotesTab({
                   )}
                   {attachments.length > 0 && (
                     <div className="cp-note-files">
-                      {attachments.map((file, fileIndex) => {
+                      {attachments.map((file) => {
                         const displayName = attachmentDisplayName(file);
-                        const fileKey = `${note.id}-${fileIndex}-${file.name}`;
                         return (
                           <button
-                            key={fileKey}
+                            key={`${note.id}-${file.url}`}
                             type="button"
                             className="cp-note-file-chip"
                             title={displayName}
-                            disabled={downloadingKey === fileKey}
-                            onClick={() => handleDownload(fileKey, file)}
+                            onClick={() => openAttachment(file)}
                           >
                             <FiPaperclip aria-hidden="true" />
-                            {downloadingKey === fileKey
-                              ? "Téléchargement…"
-                              : displayName}
+                            {displayName}
                           </button>
                         );
                       })}

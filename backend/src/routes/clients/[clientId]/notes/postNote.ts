@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { authenticate, requireRole } from '../../../../middleware/index.js';
 import { baserow } from '../../../../services/index.js';
-import { uploadUserFile } from '../../../../services/baserow/api.js';
+import { uploadToSharePoint } from '../../../../services/sharepoint.js';
 import { asyncHandler, HttpError, requireTenant, reqParam } from '../../../../utils/index.js';
 
 const { notesRepo } = baserow;
@@ -50,7 +50,7 @@ router.post('/', upload.array('files', 10), asyncHandler(async (req, res) => {
 
   const files = (req.files as Express.Multer.File[] | undefined) ?? [];
   const uploaded = await Promise.all(
-    files.map((file) => uploadUserFile(file.buffer, file.originalname, file.mimetype)),
+    files.map((file) => uploadToSharePoint(file.originalname, file.buffer, file.mimetype)),
   );
 
   const note = await notesRepo.createNote(tenantId, {
@@ -59,10 +59,7 @@ router.post('/', upload.array('files', 10), asyncHandler(async (req, res) => {
     auteur: auteur!.trim(),
     contenu: contenu!.trim(),
     date: date!.trim(),
-    piecesJointes: uploaded.map((file, index) => ({
-      name: file.name,
-      visibleName: files[index]?.originalname || file.original_name || file.name,
-    })),
+    piecesJointes: uploaded,
   });
 
   res.status(201).json({ note });

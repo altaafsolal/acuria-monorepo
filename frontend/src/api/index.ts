@@ -61,6 +61,7 @@ const api = {
   kycLdmSend: `${baseUrl}/kyc/ldm/send`,
   kycLdmPreview: `${baseUrl}/kyc/ldm/preview`,
   kycFccSend: `${baseUrl}/kyc/fcc/send`,
+  kycFccDocusignSend: `${baseUrl}/kyc/fcc/docusign`,
 
   // Gestionnaires
   gestionnaires: `${baseUrl}/gestionnaires`,

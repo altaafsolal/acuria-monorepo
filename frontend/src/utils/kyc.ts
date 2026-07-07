@@ -30,6 +30,7 @@ export function formatDateTimeFr(value: string | null | undefined): string {
 export function docBadgeClass(statut: string | null | undefined): string {
   if (!statut || statut === 'Non envoyé') return 'badge-doc-non';
   if (statut === 'Envoyé') return 'badge-doc-envoye';
+  if (statut === 'DocuSign envoyé') return 'badge-doc-envoye';
   if (statut === 'Signé') return 'badge-doc-signe';
   if (statut === 'À renouveler') return 'badge-doc-renouveler';
   return 'badge-doc-non';
@@ -38,6 +39,7 @@ export function docBadgeClass(statut: string | null | undefined): string {
 export function docBadgeLabel(statut: string | null | undefined): string {
   if (!statut || statut === 'Non envoyé') return '—';
   if (statut === 'Envoyé') return 'Envoyé';
+  if (statut === 'DocuSign envoyé') return '✍️ DocuSign';
   if (statut === 'Signé') return '✓ Signé';
   if (statut === 'À renouveler') return '↺ Renouveler';
   return statut;

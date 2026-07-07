@@ -51,6 +51,7 @@ export async function updateTenantBranding(
     status?: string;
     brandingLogo?: { buffer: Buffer; originalName: string; mimeType?: string };
     removeBrandingLogo?: boolean;
+    dropboxPathBase?: string;
     email?: string;
   },
 ): Promise<PublicTenant | null> {
@@ -59,10 +60,19 @@ export async function updateTenantBranding(
     || branding.brandingAccent !== undefined
     || branding.brandingLogo !== undefined
     || branding.removeBrandingLogo === true
+    || branding.dropboxPathBase !== undefined
     || branding.email !== undefined;
 
   let record = hasBrandingFields
-    ? await tenantsRepo.patchTenantBranding(tenantId, branding)
+    ? await tenantsRepo.patchTenantBranding(tenantId, {
+      brandingName: branding.brandingName,
+      brandingOrias: branding.brandingOrias,
+      brandingAccent: branding.brandingAccent,
+      brandingLogo: branding.brandingLogo,
+      removeBrandingLogo: branding.removeBrandingLogo,
+      dropboxPathBase: branding.dropboxPathBase,
+      email: branding.email,
+    })
     : await tenantsRepo.findTenantById(tenantId);
 
   if (!record) return null;

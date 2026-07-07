@@ -1,5 +1,6 @@
 import {
   Children,
+  Fragment,
   isValidElement,
   useEffect,
   useId,
@@ -41,6 +42,13 @@ function parseOptions(children: ReactNode): SelectOption[] {
       disabled?: boolean;
       children?: ReactNode;
     }>;
+
+    // Recurse into fragments (<> </> or <React.Fragment>)
+    if (element.type === Fragment) {
+      options.push(...parseOptions(element.props.children));
+      return;
+    }
+
     if (element.type !== 'option') return;
 
     const label = typeof element.props.children === 'string'

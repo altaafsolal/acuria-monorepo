@@ -1,4 +1,4 @@
-import { clientsRepo, notesRepo, tasksRepo, clientMapper, tenantsRepo } from './baserow/index.js';
+import { clientsRepo, notesRepo, tasksRepo, clientMapper, tenantsRepo, tenantTables } from './baserow/index.js';
 import { filterTasksForUser } from './lib/task-access.js';
 import {
   buildFccPrefillLink,
@@ -8,6 +8,7 @@ import {
   ldmIsUnlocked,
   previewLdm,
   sendDerEmail,
+  sendFccDocuSign,
   sendFccEmail,
   sendLdmDocuSign,
 } from './make/index.js';
@@ -39,6 +40,7 @@ export async function sendDer(tenantId: string, input: SendDerInput): Promise<Pu
     signataireEmail: input.signataireEmail,
     ldmType: input.ldmType,
     montantForfait: input.montantForfait,
+    dropboxPathBase: tenant?.dropbox_path_base || '',
   });
 
   const tenantName = tenant?.branding_name || tenant?.name || '';
@@ -56,9 +58,10 @@ export async function sendDer(tenantId: string, input: SendDerInput): Promise<Pu
 }
 
 export async function sendLdm(tenantId: string, input: SendLdmInput): Promise<PublicClient> {
-  const [client, tenant] = await Promise.all([
+  const [client, tenant, clientsTableId] = await Promise.all([
     clientsRepo.getClientById(tenantId, input.clientId),
     tenantsRepo.findTenantById(tenantId),
+    tenantTables.resolveTenantTableId(tenantId, 'clients'),
   ]);
   if (!client) throw new Error('Client not found');
   if (!derIsSent(client.der_statut)) throw new Error('La DER doit être envoyée avant la LdM');
@@ -73,11 +76,13 @@ export async function sendLdm(tenantId: string, input: SendLdmInput): Promise<Pu
     signataireEmail: input.signataireEmail,
     ldmType: input.ldmType,
     montantForfait: input.montantForfait,
+    dropboxPathBase: tenant?.dropbox_path_base || '',
   });
 
   const tenantName = tenant?.branding_name || tenant?.name || '';
   const tenantEmail = tenant?.email || '';
-  await sendLdmDocuSign(vars, tenantName, tenantEmail);
+  const tenantDropbox = tenant?.dropbox_path_base || '';
+  await sendLdmDocuSign(vars, tenantName, tenantEmail, tenantDropbox, clientsTableId);
 
   const updated = await clientsRepo.patchClientKycFields(tenantId, client.id, {
     ldm_statut: 'Envoyé',
@@ -88,7 +93,10 @@ export async function sendLdm(tenantId: string, input: SendLdmInput): Promise<Pu
 }
 
 export async function previewLdmPdf(tenantId: string, input: SendLdmInput): Promise<Buffer> {
-  const client = await clientsRepo.getClientById(tenantId, input.clientId);
+  const [client, tenant] = await Promise.all([
+    clientsRepo.getClientById(tenantId, input.clientId),
+    tenantsRepo.findTenantById(tenantId),
+  ]);
   if (!client) throw new Error('Client not found');
   if (!input.ldmType) throw new Error('Type de lettre de mission requis');
 
@@ -97,9 +105,33 @@ export async function previewLdmPdf(tenantId: string, input: SendLdmInput): Prom
     signataireEmail: input.signataireEmail,
     ldmType: input.ldmType,
     montantForfait: input.montantForfait,
+    dropboxPathBase: tenant?.dropbox_path_base || '',
   });
 
   return previewLdm(vars);
+}
+
+export async function sendFccDocusign(tenantId: string, clientId: string): Promise<PublicClient> {
+  const [client, tenant] = await Promise.all([
+    clientsRepo.getClientById(tenantId, clientId),
+    tenantsRepo.findTenantById(tenantId),
+  ]);
+  if (!client) throw new Error('Client not found');
+  if (!client.email) throw new Error('Email client manquant');
+
+  const name = resolveClientDisplayName(client);
+  const formType = client.client_type === 'PM' ? 'PM' : 'PP';
+  const tenantName = tenant?.branding_name || tenant?.name || '';
+  const tenantEmail = tenant?.email || '';
+
+  await sendFccDocuSign(client.id, name, client.email, formType, tenantName, tenantEmail);
+
+  const updated = await clientsRepo.patchClientKycFields(tenantId, client.id, {
+    fcc_statut: 'DocuSign envoyé',
+    fcc_date: client.fcc_date || new Date().toISOString().split('T')[0],
+  });
+
+  return toPublicClient(updated!);
 }
 
 export async function sendFcc(tenantId: string, clientId: string): Promise<{ client: PublicClient; link: string }> {
@@ -109,7 +141,10 @@ export async function sendFcc(tenantId: string, clientId: string): Promise<{ cli
   ]);
   if (!client) throw new Error('Client not found');
 
-  const { link } = buildFccPrefillLink(client);
+  const tenantBranding = tenant
+    ? { name: tenant.branding_name || tenant.name, orias: tenant.branding_orias, email: tenant.email }
+    : undefined;
+  const { link } = buildFccPrefillLink(client, tenantBranding);
   const name = resolveClientDisplayName(client);
   const tenantName = tenant?.branding_name || tenant?.name || '';
   const tenantEmail = tenant?.email || '';

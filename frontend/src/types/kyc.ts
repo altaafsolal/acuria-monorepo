@@ -44,8 +44,6 @@ export interface KycDocument {
 export interface NoteAttachment {
   name: string;
   url: string;
-  visibleName: string | null;
-  size: number | null;
 }
 
 export interface ClientNote {

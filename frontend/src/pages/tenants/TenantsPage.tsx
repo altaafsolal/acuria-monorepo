@@ -43,6 +43,7 @@ interface BrandingFormState {
   brandingOrias: string;
   brandingAccent: string;
   status: EditableTenantStatus;
+  dropboxPathBase: string;
   email: string;
 }
 
@@ -56,6 +57,7 @@ function brandingFormFromTenant(tenant: Tenant): BrandingFormState {
     brandingOrias: tenant.brandingOrias?.trim() || "",
     brandingAccent: tenant.brandingAccent?.trim() || DEFAULT_ACCENT,
     status: editableStatusFromTenant(tenant),
+    dropboxPathBase: tenant.dropboxPathBase?.trim() || "",
     email: tenant.email?.trim() || "",
   };
 }
@@ -73,6 +75,7 @@ export default function TenantsPage() {
     brandingOrias: "",
     brandingAccent: DEFAULT_ACCENT,
     status: TENANT_STATUS.ACTIVE,
+    dropboxPathBase: "",
     email: "",
   });
   const [brandingError, setBrandingError] = useState<string | null>(null);
@@ -224,6 +227,7 @@ export default function TenantsPage() {
         brandingOrias: brandingForm.brandingOrias.trim() || undefined,
         brandingAccent: accent,
         status: brandingForm.status,
+        dropboxPathBase: brandingForm.dropboxPathBase.trim() || undefined,
         email: brandingForm.email.trim() || undefined,
         logo: logoFile ?? undefined,
         removeBrandingLogo: removeLogo || undefined,
@@ -390,6 +394,23 @@ export default function TenantsPage() {
                       }))
                     }
                     placeholder="contact@nm-prime.com"
+                  />
+                </div>
+              </label>
+
+              <label className="field field--full">
+                <span>Chemin Dropbox</span>
+                <div className="field-input">
+                  <input
+                    type="text"
+                    value={brandingForm.dropboxPathBase}
+                    onChange={(e) =>
+                      setBrandingForm((prev) => ({
+                        ...prev,
+                        dropboxPathBase: e.target.value,
+                      }))
+                    }
+                    placeholder="/NOM GÉRANT/STRUCTURE/CABINET CONSEIL/1 - CLIENTS/MON CABINET/Documents Réglementaires"
                   />
                 </div>
               </label>

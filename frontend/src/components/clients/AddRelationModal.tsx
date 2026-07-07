@@ -101,7 +101,9 @@ export default function AddRelationModal({
         aria-labelledby="add-relation-modal-title"
       >
         <header className="modal-card__header">
-          <h2 id="add-relation-modal-title" className="modal-card__title">Nouvelle relation</h2>
+          <h2 id="add-relation-modal-title" className="modal-card__title">
+            Nouvelle relation
+          </h2>
           <button
             type="button"
             className="modal-card__close"
@@ -114,12 +116,15 @@ export default function AddRelationModal({
 
         <div className="modal-card__body">
           <p className="m-0 text-[0.84rem] text-[var(--color-muted)] leading-[1.45]">
-            Liez ce client à un autre client du cabinet (conjoint, associé, bénéficiaire effectif…).
+            Liez ce client à un autre client du cabinet (conjoint, associé,
+            bénéficiaire effectif…).
           </p>
 
           <div className="flex flex-col gap-[var(--form-fields-gap)]">
             <label className="cp-field cp-field-full">
-              <span>Client lié <span className="field-required">*</span></span>
+              <span>
+                Client lié <span className="field-required">*</span>
+              </span>
               <Select
                 value={relationClientId}
                 searchPlaceholder="Rechercher par nom, e-mail…"
@@ -131,7 +136,8 @@ export default function AddRelationModal({
                 <option value="">Choisir un client…</option>
                 {allClients.map((client) => (
                   <option key={client.id} value={client.id}>
-                    {client.name} ({client.clientType}){client.email ? ` — ${client.email}` : ''}
+                    {client.name} ({client.clientType})
+                    {client.email ? ` — ${client.email}` : ""}
                   </option>
                 ))}
               </Select>
@@ -145,7 +151,9 @@ export default function AddRelationModal({
             <fieldset className="cp-role-fieldset">
               <legend className="cp-role-fieldset__legend">
                 Rôle(s) dans la relation
-                <span className="cp-role-fieldset__hint">(plusieurs possibles)</span>
+                <span className="cp-role-fieldset__hint">
+                  (plusieurs possibles)
+                </span>
               </legend>
               <div className="cp-role-grid">
                 {RELATION_ROLE_OPTIONS.map((role) => {
@@ -153,7 +161,7 @@ export default function AddRelationModal({
                   return (
                     <label
                       key={role.value}
-                      className={`cp-role-checkbox${checked ? ' cp-role-checkbox--checked' : ''}`}
+                      className={`cp-role-checkbox${checked ? " cp-role-checkbox--checked" : ""}`}
                     >
                       <input
                         type="checkbox"
@@ -181,29 +189,44 @@ export default function AddRelationModal({
               </label>
 
               <label className="cp-field">
-                <span>Précision libre (optionnel)</span>
+                <span>Note</span>
                 <input
                   type="text"
                   value={relationNote}
                   onChange={(e) => setRelationNote(e.target.value)}
-                  placeholder="Note complémentaire…"
+                  placeholder="Précision libre…"
                 />
               </label>
             </div>
           </div>
 
           {error && (
-            <p className="m-0 py-[0.55rem] px-[0.7rem] rounded-lg bg-[#fef2f2] text-[#b91c1c] text-[0.84rem]" role="alert">{error}</p>
+            <p
+              className="m-0 py-[0.55rem] px-[0.7rem] rounded-lg bg-[#fef2f2] text-[#b91c1c] text-[0.84rem]"
+              role="alert"
+            >
+              {error}
+            </p>
           )}
         </div>
 
         <footer className="modal-card__footer">
           <div className="modal-card__actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isSaving}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={onClose}
+              disabled={isSaving}
+            >
               Annuler
             </button>
-            <button type="button" className="btn-bronze" onClick={handleSubmit} disabled={isSaving}>
-              {isSaving ? 'Enregistrement…' : 'Enregistrer'}
+            <button
+              type="button"
+              className="btn-bronze"
+              onClick={handleSubmit}
+              disabled={isSaving}
+            >
+              {isSaving ? "Enregistrement…" : "Enregistrer"}
             </button>
           </div>
         </footer>

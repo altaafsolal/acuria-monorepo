@@ -16,7 +16,7 @@ export function filterFccClients(clients: DbClient[], filter: string): DbClient[
   const active = excludeArchived(clients);
   if (!filter || filter === 'all') return active;
   if (filter === 'non_envoye') return active.filter((c) => !c.fcc_statut || c.fcc_statut === 'Non envoyé');
-  if (filter === 'envoye') return active.filter((c) => c.fcc_statut === 'Envoyé');
+  if (filter === 'envoye') return active.filter((c) => c.fcc_statut === 'Envoyé' || c.fcc_statut === 'DocuSign envoyé');
   if (filter === 'signe') return active.filter((c) => c.fcc_statut === 'Signé');
   if (filter === 'renouveler') return active.filter((c) => c.fcc_statut === 'À renouveler');
   return active;

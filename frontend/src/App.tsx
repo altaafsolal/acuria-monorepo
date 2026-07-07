@@ -26,6 +26,8 @@ const PlatformAuditPage = lazy(() => import('./pages/audit/PlatformAuditPage'));
 const TenantAuditPage = lazy(() => import('./pages/audit/TenantAuditPage'));
 const MarchesPage = lazy(() => import('./pages/outils/MarchesPage'));
 const SimulateursPage = lazy(() => import('./pages/outils/SimulateursPage'));
+const FccPpPage = lazy(() => import('./pages/fcc/FccPpPage'));
+const FccPmPage = lazy(() => import('./pages/fcc/FccPmPage'));
 
 function PageLoader() {
   return <PageLoading fullScreen />;
@@ -47,6 +49,10 @@ export default function App() {
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+
+        {/* Public FCC forms — no auth required (filled by clients) */}
+        <Route path="fcc/pp" element={<FccPpPage />} />
+        <Route path="fcc/pm" element={<FccPmPage />} />
 
         <Route
           element={(

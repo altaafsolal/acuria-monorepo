@@ -25,6 +25,7 @@ export {
   useSendDer,
   useSendLdm,
   useSendFcc,
+  useSendFccDocuSign,
   useTenantBranding,
 } from './useKyc';
 export { useGestionnaires } from './useGestionnaires';
