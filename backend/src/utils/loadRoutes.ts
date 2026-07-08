@@ -6,7 +6,7 @@ import { Router as createRouter } from 'express';
 
 const VERB_PREFIXES = ['delete', 'patch', 'post', 'put', 'get'] as const;
 
-const VERB_FILE_RE = /^(get|post|put|patch|delete)(\.ts$|[A-Z].*\.ts$)/;
+const VERB_FILE_RE = /^(get|post|put|patch|delete)(\.(ts|js)$|[A-Z].*\.(ts|js)$)/;
 
 async function walkDirs(dir: string): Promise<string[]> {
   const dirs: string[] = [dir];
