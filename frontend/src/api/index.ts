@@ -58,6 +58,7 @@ const api = {
   kycDer: (filter = '') => `${baseUrl}/kyc/der${filter ? `?filter=${encodeURIComponent(filter)}` : ''}`,
   kycFcc: (filter = '') => `${baseUrl}/kyc/fcc${filter ? `?filter=${encodeURIComponent(filter)}` : ''}`,
   kycDerSend: `${baseUrl}/kyc/der/send`,
+  kycDerDocusignSend: `${baseUrl}/kyc/der/docusign`,
   kycLdmSend: `${baseUrl}/kyc/ldm/send`,
   kycLdmPreview: `${baseUrl}/kyc/ldm/preview`,
   kycFccSend: `${baseUrl}/kyc/fcc/send`,

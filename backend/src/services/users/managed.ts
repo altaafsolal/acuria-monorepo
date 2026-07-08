@@ -75,7 +75,10 @@ export async function createManagedUser(
     status: 'pending',
   });
 
-  await passwordResetService.issueSetPasswordToken(user);
+  await passwordResetService.issueSetPasswordToken(user, {
+    name: tenant.branding_name || tenant.name,
+    email: tenant.email || '',
+  });
 
   let gestionnaire: PublicGestionnaire | null = null;
   if (input.role === 'standard_user') {

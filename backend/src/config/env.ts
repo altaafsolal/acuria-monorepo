@@ -30,7 +30,7 @@ export interface Env {
   make: {
     webhookDer: string;           // Scénario 6 — DER → Google Docs PDF → email
     webhookLdm: string;           // Scénario 7 — LdM → Dropbox → DocuSign
-    webhookLdmDocusign: string;   // Scénario 5 — LdM/DocuSign combo (MAKE_WEBHOOK_DOCUSIGN)
+    webhookDerDocusign: string;   // Scénario 5 — DER → DocuSign (MAKE_WEBHOOK_DER_DOCUSIGN)
     webhookPreview: string;       // LdM preview (returns PDF blob)
     webhookFccSend: string;       // Send FCC prefill link by email (MAKE_WH4 / noydem1a…)
     webhookFccSubmit: string;     // FCC form data → Make (MAKE_WEBHOOK_URL in DemoFinance form)
@@ -62,6 +62,7 @@ export interface Env {
     password: string;
     folder: string;
   };
+  webhookSecret: string; // Shared secret for inbound webhooks from Make (Authorization header)
 }
 
 export const env: Env = {
@@ -109,7 +110,7 @@ export const env: Env = {
   make: {
     webhookDer: process.env.MAKE_WEBHOOK_DER || '',
     webhookLdm: process.env.MAKE_WEBHOOK_LDM || '',
-    webhookLdmDocusign: process.env.MAKE_WEBHOOK_LDM_DOCUSIGN || '',
+    webhookDerDocusign: process.env.MAKE_WEBHOOK_DER_DOCUSIGN || '',
     webhookPreview: process.env.MAKE_WEBHOOK_PREVIEW || '',
     webhookFccSend: process.env.MAKE_WEBHOOK_FCC_SEND || '',
     webhookFccSubmit: process.env.MAKE_WEBHOOK_FCC_SUBMIT || '',
@@ -144,6 +145,8 @@ export const env: Env = {
     password: process.env.SP_PASSWORD || '',
     folder: process.env.SP_FOLDER || 'Documents/Notes',
   },
+
+  webhookSecret: process.env.WEBHOOK_SECRET || '',
 };
 
 export function isBaserowConfigured(): boolean {

@@ -54,6 +54,14 @@ export function useSendDer() {
   });
 }
 
+export function useSendDerDocuSign() {
+  const queryClient = useQueryClient();
+  return usePost<ClientResponse, SendDerInput>({
+    path: api.kycDerDocusignSend,
+    onSuccess: () => invalidateKycQueries(queryClient),
+  });
+}
+
 export function useSendLdm() {
   const queryClient = useQueryClient();
   return usePost<ClientResponse, SendLdmInput>({

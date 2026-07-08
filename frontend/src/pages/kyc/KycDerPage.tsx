@@ -10,6 +10,7 @@ import {
   useKycDerClients,
   useKycSignataires,
   useSendDer,
+  useSendDerDocuSign,
   useSendLdm,
 } from "../../hooks";
 import { queryKeys } from "../../api/queryKeys";
@@ -65,6 +66,7 @@ export default function KycDerPage() {
   } = useKycDerClients(filter);
   const { data: signataires = [] } = useKycSignataires();
   const sendDer = useSendDer();
+  const sendDerDocuSign = useSendDerDocuSign();
   const sendLdm = useSendLdm();
 
   const stats = accueil?.stats.der;
@@ -154,6 +156,32 @@ export default function KycDerPage() {
           setStatusMsg({
             type: "success",
             text: "DER envoyée par email ! LdM disponible dans 48h.",
+          }),
+        onError: (e) =>
+          setStatusMsg({
+            type: "error",
+            text: e instanceof Error ? e.message : "Échec de l'envoi",
+          }),
+      },
+    );
+  };
+
+  const handleSendDerDocuSign = () => {
+    if (!modalClient) return;
+    setStatusMsg(null);
+    sendDerDocuSign.mutate(
+      {
+        clientId: modalClient.id,
+        signataireName,
+        signataireEmail,
+        ldmType,
+        montantForfait: montantForfait || undefined,
+      },
+      {
+        onSuccess: () =>
+          setStatusMsg({
+            type: "success",
+            text: "DER envoyée via DocuSign ! LdM disponible dans 48h.",
           }),
         onError: (e) =>
           setStatusMsg({
@@ -486,6 +514,16 @@ export default function KycDerPage() {
                     {sendDer.isPending
                       ? "⏳ Envoi…"
                       : "Envoyer la DER par email"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={handleSendDerDocuSign}
+                    disabled={sendDerDocuSign.isPending}
+                  >
+                    {sendDerDocuSign.isPending
+                      ? "⏳ Envoi…"
+                      : "✍️ Envoyer la DER via DocuSign"}
                   </button>
                 </div>
               </div>

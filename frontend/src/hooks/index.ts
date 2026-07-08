@@ -23,6 +23,7 @@ export {
   useKycDerClients,
   useKycFccClients,
   useSendDer,
+  useSendDerDocuSign,
   useSendLdm,
   useSendFcc,
   useSendFccDocuSign,

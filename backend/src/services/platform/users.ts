@@ -23,7 +23,7 @@ export async function listTenantUsers(tenantId: string): Promise<PublicUser[]> {
 }
 
 export async function resetTenantUserPassword(tenantId: string, userId: string): Promise<void> {
-  await requireTenantRecord(tenantId);
+  const tenant = await requireTenantRecord(tenantId);
 
   const existing = await usersRepo.findUserById(userId);
   if (!isTenantMember(existing, tenantId)) {
@@ -34,7 +34,10 @@ export async function resetTenantUserPassword(tenantId: string, userId: string):
     throw new Error('User has no email address');
   }
 
-  await passwordResetService.issueSetPasswordToken(existing);
+  await passwordResetService.issueSetPasswordToken(existing, {
+    name: tenant.branding_name || tenant.name,
+    email: tenant.email || '',
+  });
 }
 
 export async function deleteTenantUser(tenantId: string, userId: string): Promise<void> {

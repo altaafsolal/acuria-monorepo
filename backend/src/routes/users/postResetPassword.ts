@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { usersRepo } from '../../services/baserow/index.js';
+import { usersRepo, tenantsRepo } from '../../services/baserow/index.js';
 import { issueSetPasswordToken } from '../../services/password-reset.js';
 import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
 import { isManageableUser } from './helpers.js';
@@ -13,7 +13,11 @@ router.post('/:id/reset-password', asyncHandler(async (req, res) => {
   const tenantId = requireTenant(req);
   const userId = reqParam(req, 'id');
 
-  const existing = await usersRepo.findUserById(userId);
+  const [existing, tenant] = await Promise.all([
+    usersRepo.findUserById(userId),
+    tenantsRepo.findTenantById(tenantId),
+  ]);
+
   if (!isManageableUser(existing, tenantId)) {
     throw new HttpError(404, 'User not found');
   }
@@ -22,7 +26,10 @@ router.post('/:id/reset-password', asyncHandler(async (req, res) => {
     throw new HttpError(400, 'User has no email address');
   }
 
-  await issueSetPasswordToken(existing!);
+  await issueSetPasswordToken(existing!, tenant ? {
+    name: tenant.branding_name || tenant.name,
+    email: tenant.email || '',
+  } : undefined);
 
   res.json({ message: 'Password reset email sent' });
 }));

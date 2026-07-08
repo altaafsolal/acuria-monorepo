@@ -25,7 +25,10 @@ router.post('/:userId/reset-password', asyncHandler(async (req, res) => {
       throw new Error('User has no email address');
     }
 
-    await issueSetPasswordToken(existing);
+    await issueSetPasswordToken(existing, {
+      name: tenant.branding_name || tenant.name,
+      email: tenant.email || '',
+    });
     res.json({ message: 'Password reset email sent' });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to reset password';
