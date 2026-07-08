@@ -8,11 +8,7 @@ import { errorHandler, loadRoutes } from './utils/index.js';
 import { auditLogger, requestLogger } from './middleware/index.js';
 
 const app = express();
-// ROUTES_DIR is set in vercel.json — Vercel bundles app.js so import.meta.url
-// points to the bundle, not the compiled file. Falls back to local dev behaviour.
-const routesDir = process.env.ROUTES_DIR
-  ? path.join(process.cwd(), process.env.ROUTES_DIR)
-  : path.join(path.dirname(fileURLToPath(import.meta.url)), 'routes');
+const routesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'routes');
 
 app.use(requestLogger);
 app.use(auditLogger);
