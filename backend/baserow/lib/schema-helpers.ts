@@ -1,4 +1,4 @@
-import { createField, createTable } from '../../src/services/baserow/api.js';
+import { createField, createTable, updateField } from '../../src/services/baserow/api.js';
 import type { BaserowTable } from '../types/baserow.js';
 import type { FieldDef } from '../types/baserow.js';
 
@@ -29,6 +29,32 @@ export async function ensureTable(
     console.log(`  · table "${tableName}" already exists (id: ${table.id})`);
   }
   return table;
+}
+
+/** Renames a field if `oldName` exists and `newName` does not. Idempotent. */
+export async function renameField(
+  tableId: string | number,
+  oldName: string,
+  newName: string,
+  existingNames: Set<string>,
+): Promise<void> {
+  if (existingNames.has(newName)) {
+    console.log(`    · field "${oldName}" already renamed to "${newName}"`);
+    return;
+  }
+  if (!existingNames.has(oldName)) {
+    console.log(`    · field "${oldName}" not found, skipping rename`);
+    return;
+  }
+  // Need the field id — re-fetch fields to get it.
+  const { listTableFieldsWithJwt } = await import('../../src/services/baserow/api.js');
+  const fields = await listTableFieldsWithJwt(tableId);
+  const field = fields.find((f) => f.name === oldName);
+  if (!field) return;
+  await updateField(field.id, { name: newName });
+  existingNames.delete(oldName);
+  existingNames.add(newName);
+  console.log(`    ✓ renamed field "${oldName}" → "${newName}"`);
 }
 
 export async function ensureTextFields(
