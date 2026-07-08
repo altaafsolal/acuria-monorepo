@@ -12,6 +12,7 @@ export const TENANT_TABLE_BASES = [
   'relations',
   'tasks',
   'audit_logs',
+  'fcc_submissions',
 ] as const;
 
 export const BASEROW_FIELDS = {
@@ -209,6 +210,20 @@ export const BASEROW_FIELDS = {
     entityId: 'entity_id',
     details: 'details',
   },
+  fccSubmissions: {
+    name: 'Name',
+    clientId: 'client_id',
+    submittedAt: 'submitted_at',
+    formType: 'form_type',
+    profilRisque: 'profil_risque',
+    profilConnaissance: 'profil_connaissance',
+    scoreConnaissance: 'score_connaissance',
+    scoreRisque: 'score_risque',
+    statut: 'statut',
+    rawData: 'raw_data',
+    docusignEnvelopeId: 'docusign_envelope_id',
+    airtableRecordId: 'airtable_record_id',
+  },
 } as const;
 
 export const TENANT_STATUS_OPTIONS = [
@@ -293,4 +308,11 @@ export const NOTE_TYPE_OPTIONS = [
 export const GESTIONNAIRE_STATUS_OPTIONS = [
   { value: 'Actif', color: 'dark-green' },
   { value: 'Inactif', color: 'dark-gray' },
+] as const;
+
+export const FCC_SUBMISSION_STATUS_OPTIONS = [
+  { value: 'Soumis', color: 'dark-blue' },
+  { value: 'Validé', color: 'dark-green' },
+  { value: 'Signé', color: 'dark-green' },
+  { value: 'Expiré', color: 'dark-orange' },
 ] as const;

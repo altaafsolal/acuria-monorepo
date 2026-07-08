@@ -643,3 +643,32 @@ export interface AuditListParams {
   page?: number;
   size?: number;
 }
+
+export interface DbFccSubmission {
+  id: string;
+  name: string;
+  client_id: string | null;
+  submitted_at: string | null;
+  form_type: string;
+  profil_risque: string | null;
+  profil_connaissance: string | null;
+  score_connaissance: number | null;
+  score_risque: number | null;
+  statut: string;
+  raw_data: string | null;
+  docusign_envelope_id: string | null;
+  airtable_record_id: string | null;
+}
+
+export interface PublicFccSubmission {
+  id: string;
+  clientId: string | null;
+  submittedAt: string | null;
+  formType: string;
+  profilRisque: string | null;
+  profilConnaissance: string | null;
+  scoreConnaissance: number | null;
+  scoreRisque: number | null;
+  statut: string;
+  docusignEnvelopeId: string | null;
+}

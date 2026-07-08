@@ -1,9 +1,0 @@
-export * as authService from './auth.js';
-export * as accueilService from './accueil.js';
-export * as kycService from './kyc.js';
-export * as makeService from './make/index.js';
-export * as platformService from './platform/index.js';
-export * as auditService from './audit.js';
-export * as passwordResetService from './password-reset.js';
-export * as userGestionnaireService from './users/index.js';
-export * as baserow from './baserow/index.js';

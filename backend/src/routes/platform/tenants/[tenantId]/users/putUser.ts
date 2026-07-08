@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../../../../middleware/index.js';
-import { userGestionnaireService } from '../../../../../services/index.js';
+import { updateManagedUser } from '../../../../../services/users/managed.js';
 import { asyncHandler, HttpError, reqParam } from '../../../../../utils/index.js';
 import type { GestionnaireUserInput, Role } from '../../../../../types/domain.js';
 
@@ -26,7 +26,7 @@ router.put('/:userId', asyncHandler(async (req, res) => {
   }
 
   try {
-    const result = await userGestionnaireService.updateManagedUser(tenantId, userId, body);
+    const result = await updateManagedUser(tenantId, userId, body);
     res.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to update user';

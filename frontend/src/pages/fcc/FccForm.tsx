@@ -102,6 +102,8 @@ export default function FccForm({ type }: FccFormProps) {
   const timestampRef = useRef(new Date().toISOString());
   const sigDataRef = useRef<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const recordIdRef = useRef<string>('');
+  const tenantIdRef = useRef<string>('');
 
   // ── Prefill from URL ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -154,6 +156,8 @@ export default function FccForm({ type }: FccFormProps) {
       if (d._tenant_name) {
         setTenant({ name: d._tenant_name, orias: d._tenant_orias || '', email: d._tenant_email || '' });
       }
+      if (d._record_id) recordIdRef.current = String(d._record_id);
+      if (d._tenant_id) tenantIdRef.current = String(d._tenant_id);
       setPrefilled(true);
     } catch { /* ignore decode errors */ }
     setParsed(true);
@@ -347,6 +351,8 @@ export default function FccForm({ type }: FccFormProps) {
     const payload: Record<string, unknown> = {
       form_id: formIdRef.current,
       form_type: type,
+      record_id: recordIdRef.current || undefined,
+      tenant_id: tenantIdRef.current || undefined,
       timestamp_soumission: new Date().toISOString(),
       objectifs_resume: objResume,
       score_connaissance: connScore,

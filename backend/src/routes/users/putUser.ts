@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { baserow, userGestionnaireService } from '../../services/index.js';
+import { usersRepo } from '../../services/baserow/index.js';
+import { updateManagedUser } from '../../services/users/managed.js';
 import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
 import type { GestionnaireUserInput, Role } from '../../types/domain.js';
 import { isManageableUser, MANAGEABLE_ROLES } from './helpers.js';
@@ -35,13 +36,13 @@ router.put('/:id', asyncHandler(async (req, res) => {
     throw new HttpError(400, 'You cannot change your own role or status');
   }
 
-  const existing = await baserow.usersRepo.findUserById(userId);
+  const existing = await usersRepo.findUserById(userId);
   if (!isManageableUser(existing, tenantId)) {
     throw new HttpError(404, 'User not found');
   }
 
   try {
-    const result = await userGestionnaireService.updateManagedUser(
+    const result = await updateManagedUser(
       tenantId,
       userId,
       body,

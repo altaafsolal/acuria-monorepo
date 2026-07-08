@@ -28,6 +28,8 @@ export const queryKeys = {
     der: (filter: string) => ['kyc', 'der', filter] as const,
     fcc: (filter: string) => ['kyc', 'fcc', filter] as const,
     signataires: ['kyc', 'signataires'] as const,
+    fccHistory: (clientId?: string) => ['fcc', 'history', clientId ?? ''] as const,
+    fccDossiers: ['fcc', 'dossiers'] as const,
   },
   gestionnaires: {
     list: ['gestionnaires', 'list'] as const,

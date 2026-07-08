@@ -1,11 +1,8 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { baserow } from '../../services/index.js';
+import { clientsRepo, clientMapper } from '../../services/baserow/index.js';
 import { asyncHandler, HttpError, requireTenant } from '../../utils/index.js';
 import type { CreateClientInput } from '../../types/domain.js';
-
-const { clientsRepo } = baserow;
-const { resolveClientDisplayName } = clientsRepo;
 
 const router = Router({ mergeParams: true });
 
@@ -15,7 +12,7 @@ router.post('/', asyncHandler(async (req, res) => {
   const tenantId = requireTenant(req);
   const body = req.body as CreateClientInput;
 
-  const name = body.name?.trim() || resolveClientDisplayName({
+  const name = body.name?.trim() || clientMapper.resolveClientDisplayName({
     name: '',
     client_type: body.clientType || 'PP',
     first_name: body.firstName ?? null,

@@ -1,5 +1,5 @@
 import * as tenantsRepo from '../../src/services/baserow/tenants.js';
-import { ensureTenantProvisioned } from '../../src/services/platform/index.js';
+import { ensureTenantProvisioned } from '../../src/services/platform/tenants.js';
 import { isBaserowMigrateConfigured } from '../../src/config/env.js';
 
 export async function provisionAllTenants() {

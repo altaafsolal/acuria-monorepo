@@ -1,7 +1,5 @@
 import type { DbUser, Role } from '../../types/domain.js';
-import { baserow } from '../../services/index.js';
-
-const { usersRepo } = baserow;
+import { usersRepo } from '../../services/baserow/index.js';
 
 export const MANAGEABLE_ROLES: Role[] = ['tenant_admin', 'standard_user'];
 

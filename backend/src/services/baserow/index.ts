@@ -13,3 +13,4 @@ export * as notesRepo from './notes.js';
 export * as relationsRepo from './relations.js';
 export * as tasksRepo from './tasks.js';
 export * as auditLogsRepo from './audit-logs.js';
+export * as fccSubmissionsRepo from './fcc-submissions.js';

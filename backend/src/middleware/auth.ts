@@ -1,9 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from '../utils/index.js';
-import { authService } from '../services/index.js';
+import { usersRepo } from '../services/baserow/index.js';
 import type { DbUser } from '../types/domain.js';
-
-const { findUserById } = authService;
 
 const USER_CACHE_TTL_MS = 30_000;
 interface CachedUser { user: DbUser; expiresAt: number; }
@@ -12,7 +10,7 @@ const userCache = new Map<string, CachedUser>();
 async function getCachedUser(userId: string): Promise<DbUser | null> {
   const cached = userCache.get(userId);
   if (cached && Date.now() < cached.expiresAt) return cached.user;
-  const user = await findUserById(userId);
+  const user = await usersRepo.findUserById(userId);
   if (user) userCache.set(userId, { user, expiresAt: Date.now() + USER_CACHE_TTL_MS });
   return user;
 }

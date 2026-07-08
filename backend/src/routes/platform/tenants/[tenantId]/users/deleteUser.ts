@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../../../../middleware/index.js';
-import { platformService } from '../../../../../services/index.js';
+import { tenantsRepo, usersRepo } from '../../../../../services/baserow/index.js';
 import { asyncHandler, HttpError, reqParam } from '../../../../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -12,7 +12,15 @@ router.delete('/:userId', asyncHandler(async (req, res) => {
   const userId = reqParam(req, 'userId');
 
   try {
-    await platformService.deleteTenantUser(tenantId, userId);
+    const tenant = await tenantsRepo.findTenantById(tenantId);
+    if (!tenant) throw new Error('Tenant not found');
+
+    const existing = await usersRepo.findUserById(userId);
+    if (!existing || usersRepo.isSuperAdmin(existing) || existing.tenant_id !== tenantId) {
+      throw new Error('User not found');
+    }
+
+    await usersRepo.deleteUser(userId);
     res.status(204).send();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to delete user';

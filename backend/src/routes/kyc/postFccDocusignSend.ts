@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { kycService } from '../../services/index.js';
+import { clientsRepo, tenantsRepo, clientMapper } from '../../services/baserow/index.js';
+import { sendFccDocuSign } from '../../services/make/index.js';
 import { asyncHandler, HttpError, requireTenant } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -16,8 +17,23 @@ router.post('/fcc/docusign', asyncHandler(async (req, res) => {
   }
 
   try {
-    const client = await kycService.sendFccDocusign(tenantId, clientId);
-    res.json({ client });
+    const [client, tenant] = await Promise.all([
+      clientsRepo.getClientById(tenantId, clientId),
+      tenantsRepo.findTenantById(tenantId),
+    ]);
+    if (!client) throw new Error('Client not found');
+    if (!client.email) throw new Error('Email client manquant');
+
+    const name = clientMapper.resolveClientDisplayName(client);
+    const formType = client.client_type === 'PM' ? 'PM' : 'PP';
+    await sendFccDocuSign(client.id, name, client.email, formType, tenant?.branding_name || tenant?.name || '', tenant?.email || '', tenant?.id);
+
+    const updated = await clientsRepo.patchClientKycFields(tenantId, client.id, {
+      fcc_statut: 'DocuSign envoyé',
+      fcc_date: client.fcc_date || new Date().toISOString().split('T')[0],
+    });
+
+    res.json({ client: clientsRepo.toPublicClient(updated!) });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to send FCC to DocuSign';
     throw new HttpError(400, message);

@@ -24,6 +24,7 @@ import { join, resolve } from 'node:path';
 import 'dotenv/config';
 import { env, isBaserowConfigured } from '../src/config/env.js';
 import * as clientsRepo from '../src/services/baserow/clients.js';
+import * as fccSubmissionsRepo from '../src/services/baserow/fcc-submissions.js';
 import * as gestionnairesRepo from '../src/services/baserow/gestionnaires.js';
 import * as kycDocsRepo from '../src/services/baserow/kyc-documents.js';
 import * as notesRepo from '../src/services/baserow/notes.js';
@@ -44,7 +45,8 @@ type MigrationStep =
   | 'relations'
   | 'kyc-docs'
   | 'notes'
-  | 'tasks';
+  | 'tasks'
+  | 'fcc-submissions';
 
 const ALL_STEPS: MigrationStep[] = [
   'gestionnaires',
@@ -53,6 +55,7 @@ const ALL_STEPS: MigrationStep[] = [
   'kyc-docs',
   'notes',
   'tasks',
+  'fcc-submissions',
 ];
 
 const EXPORT_FILE_ALIASES: Record<MigrationStep, string[]> = {
@@ -62,6 +65,7 @@ const EXPORT_FILE_ALIASES: Record<MigrationStep, string[]> = {
   'kyc-docs': ['kyc-docs.csv', 'kyc-docs.json', 'kyc_documents.json', 'NM - Documents KYC.csv', 'NM - Documents KYC.json'],
   notes: ['notes.csv', 'notes.json', 'Notes.csv', 'Notes.json'],
   tasks: ['tasks.csv', 'tasks.json', 'Taches.csv', 'Taches.json', 'taches.json'],
+  'fcc-submissions': ['fcc-submissions.csv', 'fcc-submissions.json', 'FCC_Clients.csv', 'FCC_Clients.json', 'fcc_clients.json'],
 };
 
 const RECORD_ID_COLUMNS = [
@@ -703,6 +707,31 @@ async function main() {
       imported++;
     }
     console.log(`✓ Tasks: ${imported}/${taskRecords.length}`);
+  }
+
+  if (steps.includes('fcc-submissions')) {
+    const fccRecords = await loadRecords('fcc-submissions', exportDir, env.airtable.tableFccClients);
+    let imported = 0;
+    let orphans = 0;
+    for (const rec of fccRecords) {
+      const f = rec.fields;
+      const atClientId = resolveClientAirtableId(f, clientDisplayMap);
+      const clientId = atClientId ? clientIdMap.get(atClientId) : undefined;
+      if (!clientId) orphans++;
+      await fccSubmissionsRepo.upsertSubmissionFromAirtable(tenantId, {
+        clientId: clientId ?? null,
+        submittedAt: str(f.date_soumission) || str(f['Date soumission']) || str(f.created_time) || null,
+        formType: str(f.type_client) || str(f.form_type) || str(f['Type']) || 'PP',
+        profilRisque: str(f.profil_risque) || str(f['Profil risque']) || null,
+        profilConnaissance: str(f.profil_connaissance) || str(f['Profil connaissance']) || null,
+        scoreConnaissance: num(f.score_connaissance) ?? num(f['Score connaissance']),
+        scoreRisque: num(f.score_risque) ?? num(f['Score risque']),
+        statut: str(f.statut) || str(f.Statut) || 'Soumis',
+        airtableRecordId: rec.id,
+      });
+      imported++;
+    }
+    console.log(`✓ FCC submissions: ${imported}/${fccRecords.length}${orphans ? ` (${orphans} without resolved client)` : ''}`);
   }
 
   console.log('\nMigration complete.');

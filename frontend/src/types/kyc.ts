@@ -115,3 +115,20 @@ export interface TenantBranding {
   hasLogo?: boolean;
   logoDataUrl?: string | null;
 }
+
+export interface FccSubmission {
+  id: string;
+  clientId: string | null;
+  submittedAt: string | null;
+  formType: string;
+  profilRisque: string | null;
+  profilConnaissance: string | null;
+  scoreConnaissance: number | null;
+  scoreRisque: number | null;
+  statut: string;
+  docusignEnvelopeId: string | null;
+}
+
+export interface FccHistoryResponse {
+  submissions: FccSubmission[];
+}

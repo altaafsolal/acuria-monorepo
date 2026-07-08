@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../../../../middleware/index.js';
-import { userGestionnaireService } from '../../../../../services/index.js';
+import { createManagedUser } from '../../../../../services/users/managed.js';
 import { asyncHandler, HttpError, reqParam } from '../../../../../utils/index.js';
 import type { GestionnaireUserInput, Role } from '../../../../../types/domain.js';
 
@@ -30,7 +30,7 @@ router.post('/', asyncHandler(async (req, res) => {
   }
 
   try {
-    const result = await userGestionnaireService.createManagedUser(tenantId, {
+    const result = await createManagedUser(tenantId, {
       name: body.name,
       email: body.email,
       role: body.role,

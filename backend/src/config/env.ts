@@ -28,11 +28,13 @@ export interface Env {
     password: string;
   };
   make: {
-    webhookDer: string;
-    webhookLdm: string;
-    webhookPreview: string;
-    webhookFcc: string;
-    webhookFccDocusign: string;
+    webhookDer: string;           // Scénario 6 — DER → Google Docs PDF → email
+    webhookLdm: string;           // Scénario 7 — LdM → Dropbox → DocuSign
+    webhookLdmDocusign: string;   // Scénario 5 — LdM/DocuSign combo (MAKE_WEBHOOK_DOCUSIGN)
+    webhookPreview: string;       // LdM preview (returns PDF blob)
+    webhookFccSend: string;       // Send FCC prefill link by email (MAKE_WH4 / noydem1a…)
+    webhookFccSubmit: string;     // FCC form data → Make (MAKE_WEBHOOK_URL in DemoFinance form)
+    webhookFccDocusign: string;   // Send FCC PDF to DocuSign (DOCUSIGN_WEBHOOK / c7nl9jij…)
     webhookPasswordSet: string;
     webhookOtp: string;
   };
@@ -52,6 +54,7 @@ export interface Env {
     tableGestionnaires: string;
     tableNotes: string;
     tableTasks: string;
+    tableFccClients: string;
   };
   sharepoint: {
     siteUrl: string;
@@ -106,8 +109,10 @@ export const env: Env = {
   make: {
     webhookDer: process.env.MAKE_WEBHOOK_DER || '',
     webhookLdm: process.env.MAKE_WEBHOOK_LDM || '',
+    webhookLdmDocusign: process.env.MAKE_WEBHOOK_LDM_DOCUSIGN || '',
     webhookPreview: process.env.MAKE_WEBHOOK_PREVIEW || '',
-    webhookFcc: process.env.MAKE_WEBHOOK_FCC || '',
+    webhookFccSend: process.env.MAKE_WEBHOOK_FCC_SEND || '',
+    webhookFccSubmit: process.env.MAKE_WEBHOOK_FCC_SUBMIT || '',
     webhookFccDocusign: process.env.MAKE_WEBHOOK_FCC_DOCUSIGN || '',
     webhookPasswordSet: process.env.MAKE_WEBHOOK_PASSWORD_SET || '',
     webhookOtp: process.env.MAKE_WEBHOOK_OTP || '',
@@ -130,6 +135,7 @@ export const env: Env = {
     tableGestionnaires: process.env.AIRTABLE_TABLE_GESTIONNAIRES || 'tblatPVdokDBqRUjh',
     tableNotes: process.env.AIRTABLE_TABLE_NOTES || 'tblHFssvCt0EMZfsa',
     tableTasks: process.env.AIRTABLE_TABLE_TASKS || 'tblknqykhXNfQzT9P',
+    tableFccClients: process.env.AIRTABLE_TABLE_FCC_CLIENTS || 'FCC_Clients',
   },
 
   sharepoint: {

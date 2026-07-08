@@ -1,8 +1,6 @@
 import { Router } from 'express';
-import { baserow } from '../../services/index.js';
+import { api } from '../../services/baserow/index.js';
 import { asyncHandler, toIsoString } from '../../utils/index.js';
-
-const { api } = baserow;
 
 const router = Router({ mergeParams: true });
 

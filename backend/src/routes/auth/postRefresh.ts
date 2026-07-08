@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { auditService } from '../../services/index.js';
+import { auditLogsRepo } from '../../services/baserow/index.js';
 import {
   signAccessToken,
   verifyRefreshToken,
@@ -24,13 +24,20 @@ router.post('/refresh', (req, res) => {
       role: payload.role,
     });
     res.json({ accessToken });
-    void auditService.recordAuthEvent({
-      id: payload.user_id,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
-      tenantId: null,
-    }, 'auth.refresh', req, res).catch((error) => {
+    void auditLogsRepo.createAuditLog({
+      user_id: payload.user_id,
+      user_email: payload.email,
+      user_name: payload.name,
+      user_role: payload.role,
+      tenant_id: null,
+      action: 'auth.refresh',
+      method: req.method,
+      path: req.originalUrl.split('?')[0] ?? req.originalUrl,
+      status_code: res.statusCode,
+      entity_type: 'auth',
+      entity_id: payload.user_id,
+      details: null,
+    }).catch((error) => {
       console.error('Audit log write failed:', error);
     });
   } catch {

@@ -103,15 +103,21 @@ export function buildKycVars(
 
 export function buildFccPrefillLink(
   client: DbClient,
-  tenant?: { name: string; orias?: string | null; email?: string | null },
+  tenant?: { id?: string; name: string; orias?: string | null; email?: string | null },
 ): { link: string; type: 'PP' | 'PM' } {
   const type = client.client_type === 'PM' ? 'PM' : 'PP';
   const baseUrl = type === 'PP' ? `${env.appUrl}/fcc/pp` : `${env.appUrl}/fcc/pm`;
   const tenantMeta = tenant
-    ? { _tenant_name: tenant.name, _tenant_orias: tenant.orias || '', _tenant_email: tenant.email || '' }
+    ? {
+        _tenant_id: tenant.id || '',
+        _tenant_name: tenant.name,
+        _tenant_orias: tenant.orias || '',
+        _tenant_email: tenant.email || '',
+      }
     : {};
   const prefillData = type === 'PP'
     ? {
+      _record_id: client.id,
       ...tenantMeta,
       civilite: client.civilite || '',
       nom: (client.last_name || '').toUpperCase(),
@@ -138,6 +144,7 @@ export function buildFccPrefillLink(
       pat_autres: client.patrimoine_autres || '',
     }
     : {
+      _record_id: client.id,
       ...tenantMeta,
       denomination: client.trade_name || client.name || '',
       siren: client.siren || '',
@@ -202,7 +209,7 @@ export async function sendFccEmail(
   tenantName: string,
   tenantEmail: string,
 ): Promise<void> {
-  await postWebhook(webhookUrl('webhookFcc'), {
+  await postWebhook(webhookUrl('webhookFccSend'), {
     client_email: clientEmail,
     client_name: clientName,
     lien_prefill: link,
@@ -218,12 +225,14 @@ export async function sendFccDocuSign(
   formType: 'PP' | 'PM',
   tenantName: string,
   tenantEmail: string,
+  tenantId?: string,
 ): Promise<void> {
   await postWebhook(webhookUrl('webhookFccDocusign'), {
     record_id: clientId,
     client_email: clientEmail,
     client_name: clientName,
     form_type: formType,
+    tenant_id: tenantId || '',
     tenant_name: tenantName,
     tenant_email: tenantEmail,
   });

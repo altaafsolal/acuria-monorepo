@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { kycService } from '../../services/index.js';
+import { clientsRepo, tenantsRepo, clientMapper } from '../../services/baserow/index.js';
+import { buildFccPrefillLink, sendFccEmail } from '../../services/make/index.js';
 import { asyncHandler, HttpError, requireTenant } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -16,8 +17,31 @@ router.post('/fcc/send', asyncHandler(async (req, res) => {
   }
 
   try {
-    const result = await kycService.sendFcc(tenantId, clientId);
-    res.json(result);
+    const [client, tenant] = await Promise.all([
+      clientsRepo.getClientById(tenantId, clientId),
+      tenantsRepo.findTenantById(tenantId),
+    ]);
+    if (!client) throw new Error('Client not found');
+
+    const tenantBranding = tenant
+      ? { id: tenant.id, name: tenant.branding_name || tenant.name, orias: tenant.branding_orias, email: tenant.email }
+      : undefined;
+    const { link } = buildFccPrefillLink(client, tenantBranding);
+    const name = clientMapper.resolveClientDisplayName(client);
+    const tenantName = tenant?.branding_name || tenant?.name || '';
+    const tenantEmail = tenant?.email || '';
+
+    if (client.email) {
+      await sendFccEmail(name, client.email, link, tenantName, tenantEmail);
+      const updated = await clientsRepo.patchClientKycFields(tenantId, client.id, {
+        fcc_statut: 'Envoyé',
+        fcc_date: new Date().toISOString().split('T')[0],
+      });
+      res.json({ client: clientsRepo.toPublicClient(updated!), link });
+      return;
+    }
+
+    res.json({ client: clientsRepo.toPublicClient(client), link });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to send FCC';
     throw new HttpError(400, message);

@@ -3,7 +3,7 @@ import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import type { Server } from 'http';
 import { verifyAccessToken } from '../utils/jwt.js';
-import { authService } from '../services/index.js';
+import { usersRepo } from '../services/baserow/index.js';
 
 const clients = new Set<WebSocket>();
 
@@ -28,7 +28,7 @@ async function authenticateUpgrade(request: IncomingMessage): Promise<boolean> {
 
   try {
     const payload = verifyAccessToken(token);
-    const user = await authService.findUserById(payload.user_id);
+    const user = await usersRepo.findUserById(payload.user_id);
     return Boolean(user && user.role === 'super_admin');
   } catch {
     return false;

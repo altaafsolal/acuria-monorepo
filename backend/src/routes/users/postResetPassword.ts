@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { baserow, passwordResetService } from '../../services/index.js';
+import { usersRepo } from '../../services/baserow/index.js';
+import { issueSetPasswordToken } from '../../services/password-reset.js';
 import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
 import { isManageableUser } from './helpers.js';
-
-const { usersRepo } = baserow;
 
 const router = Router({ mergeParams: true });
 
@@ -23,7 +22,7 @@ router.post('/:id/reset-password', asyncHandler(async (req, res) => {
     throw new HttpError(400, 'User has no email address');
   }
 
-  await passwordResetService.issueSetPasswordToken(existing!);
+  await issueSetPasswordToken(existing!);
 
   res.json({ message: 'Password reset email sent' });
 }));

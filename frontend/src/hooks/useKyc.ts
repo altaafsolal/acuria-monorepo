@@ -8,6 +8,8 @@ import type {
   Client,
   ClientResponse,
   ClientsListResponse,
+  FccHistoryResponse,
+  FccSubmission,
   SendDerInput,
   SendFccResult,
   SendLdmInput,
@@ -73,6 +75,33 @@ export function useSendFccDocuSign() {
   return usePost<ClientResponse, { clientId: string }>({
     path: api.kycFccDocusignSend,
     onSuccess: () => invalidateKycQueries(queryClient),
+  });
+}
+
+export function useFccHistory(clientId?: string) {
+  return useGet<FccHistoryResponse, FccSubmission[]>({
+    path: api.fccHistory(clientId),
+    queryKey: queryKeys.kyc.fccHistory(clientId),
+    select: (data) => data.submissions,
+  });
+}
+
+export function useFccDossiers() {
+  return useGet<FccHistoryResponse, FccSubmission[]>({
+    path: api.fccHistory(),
+    queryKey: queryKeys.kyc.fccDossiers,
+    select: (data) => data.submissions,
+  });
+}
+
+export function useQuickValidateFcc() {
+  const queryClient = useQueryClient();
+  return usePost<ClientResponse, { clientId?: string; submissionId?: string }>({
+    path: api.fccQuickValidate,
+    onSuccess: () => {
+      invalidateKycQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: ['fcc'] });
+    },
   });
 }
 

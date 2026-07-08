@@ -1,9 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { baserow } from '../../services/index.js';
+import { gestionnairesRepo } from '../../services/baserow/index.js';
 import { asyncHandler, requireTenant } from '../../utils/index.js';
-
-const { gestionnairesRepo } = baserow;
 
 const router = Router({ mergeParams: true });
 

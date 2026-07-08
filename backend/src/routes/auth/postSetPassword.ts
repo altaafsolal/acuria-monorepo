@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { auditService, passwordResetService } from '../../services/index.js';
+import { auditLogsRepo } from '../../services/baserow/index.js';
+import { validatePasswordPair, verifySetPasswordToken, finalizeNewPassword } from '../../services/password-reset.js';
 import { asyncHandler } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -18,12 +19,25 @@ router.post('/set-password', asyncHandler(async (req, res) => {
   }
 
   try {
-    passwordResetService.validatePasswordPair(password, passwordConfirm);
-    await passwordResetService.verifySetPasswordToken(uid, token);
-    const user = await passwordResetService.finalizeNewPassword(uid, password);
+    validatePasswordPair(password, passwordConfirm);
+    await verifySetPasswordToken(uid, token);
+    const user = await finalizeNewPassword(uid, password);
 
     res.json({ message: 'Password set successfully' });
-    void auditService.recordAuthEvent(user, 'auth.password_set', req, res).catch((error) => {
+    void auditLogsRepo.createAuditLog({
+      user_id: user.id,
+      user_email: user.email,
+      user_name: user.name,
+      user_role: user.role,
+      tenant_id: user.tenant_id,
+      action: 'auth.password_set',
+      method: req.method,
+      path: req.originalUrl.split('?')[0] ?? req.originalUrl,
+      status_code: res.statusCode,
+      entity_type: 'auth',
+      entity_id: user.id,
+      details: null,
+    }).catch((error) => {
       console.error('Audit log write failed:', error);
     });
   } catch (error) {

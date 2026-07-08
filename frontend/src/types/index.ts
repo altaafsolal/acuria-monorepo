@@ -54,6 +54,8 @@ export type {
   SendLdmInput,
   SendFccResult,
   TenantBranding,
+  FccSubmission,
+  FccHistoryResponse,
 } from './kyc';
 export type {
   AuditLog,

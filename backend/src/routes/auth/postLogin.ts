@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { authService, auditService } from '../../services/index.js';
+import { usersRepo, auditLogsRepo } from '../../services/baserow/index.js';
 import {
   asyncHandler,
   signAccessToken,
@@ -9,8 +9,6 @@ import {
   refreshCookieOptions,
   buildTokenPayload,
 } from '../../utils/index.js';
-
-const { findUserByEmail, toPublicUser } = authService;
 
 const router = Router({ mergeParams: true });
 
@@ -22,7 +20,7 @@ router.post('/login', asyncHandler(async (req, res) => {
     return;
   }
 
-  const user = await findUserByEmail(email);
+  const user = await usersRepo.findUserByEmail(email);
   if (!user) {
     res.status(401).json({ error: 'Invalid email or password' });
     return;
@@ -61,9 +59,22 @@ router.post('/login', asyncHandler(async (req, res) => {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions());
   res.json({
     accessToken,
-    user: toPublicUser(user),
+    user: usersRepo.toPublicUser(user),
   });
-  void auditService.recordAuthEvent(user, 'auth.login', req, res).catch((error) => {
+  void auditLogsRepo.createAuditLog({
+    user_id: user.id,
+    user_email: user.email,
+    user_name: user.name,
+    user_role: user.role,
+    tenant_id: user.tenant_id,
+    action: 'auth.login',
+    method: req.method,
+    path: req.originalUrl.split('?')[0] ?? req.originalUrl,
+    status_code: res.statusCode,
+    entity_type: 'auth',
+    entity_id: user.id,
+    details: null,
+  }).catch((error) => {
     console.error('Audit log write failed:', error);
   });
 }));

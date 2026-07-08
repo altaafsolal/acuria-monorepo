@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { platformService } from '../../services/index.js';
+import { createTenant, finishTenantProvisioning } from '../../services/platform/tenants.js';
 import { asyncHandler, HttpError } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -14,8 +14,8 @@ router.post('/tenants', asyncHandler(async (req, res) => {
     throw new HttpError(400, 'Name and slug are required');
   }
 
-  const { tenant, record } = await platformService.createTenant({ name, slug });
-  void platformService.finishTenantProvisioning(record);
+  const { tenant, record } = await createTenant({ name, slug });
+  void finishTenantProvisioning(record);
   res.status(202).json({ tenant });
 }));
 

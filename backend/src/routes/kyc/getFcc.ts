@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { kycService } from '../../services/index.js';
+import { clientsRepo, clientMapper } from '../../services/baserow/index.js';
 import { asyncHandler, requireTenant } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -10,8 +10,17 @@ router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
 router.get('/fcc', asyncHandler(async (req, res) => {
   const tenantId = requireTenant(req);
   const filter = String(req.query.filter || '');
-  const clients = await kycService.listFccClients(tenantId, filter);
-  res.json({ clients });
+
+  const all = clientMapper.excludeArchived(await clientsRepo.listClientsByTenantId(tenantId));
+  let clients = all;
+  if (filter && filter !== 'all') {
+    if (filter === 'non_envoye') clients = all.filter((c) => !c.fcc_statut || c.fcc_statut === 'Non envoyé');
+    else if (filter === 'envoye') clients = all.filter((c) => c.fcc_statut === 'Envoyé' || c.fcc_statut === 'DocuSign envoyé');
+    else if (filter === 'signe') clients = all.filter((c) => c.fcc_statut === 'Signé');
+    else if (filter === 'renouveler') clients = all.filter((c) => c.fcc_statut === 'À renouveler');
+  }
+
+  res.json({ clients: clients.map(clientMapper.toPublicClient) });
 }));
 
 export default router;

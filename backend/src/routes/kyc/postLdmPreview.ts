@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { kycService } from '../../services/index.js';
+import { clientsRepo, tenantsRepo } from '../../services/baserow/index.js';
+import { buildKycVars, previewLdm } from '../../services/make/index.js';
 import { asyncHandler, HttpError, requireTenant } from '../../utils/index.js';
 import type { SendLdmInput } from '../../types/domain.js';
 
@@ -17,7 +18,21 @@ router.post('/ldm/preview', asyncHandler(async (req, res) => {
   }
 
   try {
-    const pdfBuffer = await kycService.previewLdmPdf(tenantId, body);
+    const [client, tenant] = await Promise.all([
+      clientsRepo.getClientById(tenantId, body.clientId),
+      tenantsRepo.findTenantById(tenantId),
+    ]);
+    if (!client) throw new Error('Client not found');
+
+    const vars = buildKycVars(client, {
+      signataireName: body.signataireName,
+      signataireEmail: body.signataireEmail,
+      ldmType: body.ldmType,
+      montantForfait: body.montantForfait,
+      dropboxPathBase: tenant?.dropbox_path_base || '',
+    });
+
+    const pdfBuffer = await previewLdm(vars);
     res.set('Content-Type', 'application/pdf');
     res.send(pdfBuffer);
   } catch (error) {

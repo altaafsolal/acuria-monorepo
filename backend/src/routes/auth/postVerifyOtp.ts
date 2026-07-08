@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { passwordResetService } from '../../services/index.js';
+import { verifyOtp } from '../../services/password-reset.js';
 import { asyncHandler } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -13,7 +13,7 @@ router.post('/verify-otp', asyncHandler(async (req, res) => {
   }
 
   try {
-    const result = await passwordResetService.verifyOtp(email.trim(), otp.trim());
+    const result = await verifyOtp(email.trim(), otp.trim());
     res.json(result);
   } catch {
     res.status(400).json({ error: 'Invalid or expired OTP' });

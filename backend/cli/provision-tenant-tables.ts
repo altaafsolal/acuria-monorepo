@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { isBaserowConfigured, isBaserowMigrateConfigured } from '../src/config/env.js';
 import { formatCliError } from '../baserow/lib/run-scripts.js';
 import { clearTenantDbContextCache } from '../src/services/baserow/tenant-context.js';
-import { ensureTenantProvisioned } from '../src/services/platform/index.js';
+import { ensureTenantProvisioned } from '../src/services/platform/tenants.js';
 import * as tenantsRepo from '../src/services/baserow/tenants.js';
 
 function parseArg(name: string): string | undefined {

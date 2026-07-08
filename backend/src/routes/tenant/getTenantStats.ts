@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { platformService } from '../../services/index.js';
+import { getTenantStats } from '../../services/platform/stats.js';
 import { asyncHandler, HttpError } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -14,7 +14,7 @@ router.get('/stats', requireRole('tenant_admin'), asyncHandler(async (req, res) 
     throw new HttpError(403, 'No tenant assigned to this account');
   }
 
-  const stats = await platformService.getTenantStats(tenantId);
+  const stats = await getTenantStats(tenantId);
   if (!stats) {
     throw new HttpError(404, 'Tenant not found');
   }

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { passwordResetService } from '../../services/index.js';
+import { requestPasswordResetOtp } from '../../services/password-reset.js';
 import { asyncHandler } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -12,7 +12,7 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
   }
 
   try {
-    await passwordResetService.requestPasswordResetOtp(email.trim());
+    await requestPasswordResetOtp(email.trim());
   } catch (error) {
     console.error('Forgot password OTP failed:', error);
   }

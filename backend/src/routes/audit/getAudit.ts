@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { auditService } from '../../services/index.js';
+import { auditLogsRepo } from '../../services/baserow/index.js';
 import { asyncHandler, requireTenant } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -14,12 +14,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const userId = typeof req.query.userId === 'string' ? req.query.userId : undefined;
   const search = typeof req.query.search === 'string' ? req.query.search : undefined;
 
-  const result = await auditService.listTenantAudit(tenantId, {
-    page,
-    size,
-    userId: userId || undefined,
-    search,
-  });
+  const result = await auditLogsRepo.listAuditLogs({ tenantId, page, size, userId: userId || undefined, search });
 
   res.json(result);
 }));

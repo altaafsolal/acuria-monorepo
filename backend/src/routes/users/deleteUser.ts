@@ -1,10 +1,8 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/index.js';
-import { baserow } from '../../services/index.js';
+import { usersRepo } from '../../services/baserow/index.js';
 import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
 import { isManageableUser } from './helpers.js';
-
-const { usersRepo } = baserow;
 
 const router = Router({ mergeParams: true });
 

@@ -63,6 +63,11 @@ const api = {
   kycFccSend: `${baseUrl}/kyc/fcc/send`,
   kycFccDocusignSend: `${baseUrl}/kyc/fcc/docusign`,
 
+  // FCC Submissions / Dossiers
+  fccHistory: (clientId?: string) =>
+    `${baseUrl}/fcc/history${clientId ? `?clientId=${encodeURIComponent(clientId)}` : ''}`,
+  fccQuickValidate: `${baseUrl}/fcc/quick-validate`,
+
   // Gestionnaires
   gestionnaires: `${baseUrl}/gestionnaires`,
 

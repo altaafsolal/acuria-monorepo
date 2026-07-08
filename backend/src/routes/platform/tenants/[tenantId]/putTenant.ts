@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { authenticate, requireRole } from '../../../../middleware/index.js';
-import { platformService } from '../../../../services/index.js';
+import { updateTenantBranding } from '../../../../services/platform/tenants.js';
 import { asyncHandler, HttpError, reqParam } from '../../../../utils/index.js';
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
@@ -49,7 +49,7 @@ router.put('/', upload.single('logo'), asyncHandler(async (req, res) => {
   const logoFile = req.file;
   const removeBrandingLogo = body.removeBrandingLogo === 'true' || body.removeBrandingLogo === '1';
 
-  const tenant = await platformService.updateTenantBranding(tenantId, {
+  const tenant = await updateTenantBranding(tenantId, {
     brandingName: body.brandingName,
     brandingOrias: body.brandingOrias,
     brandingAccent: body.brandingAccent,

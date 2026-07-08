@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../../../../middleware/index.js';
-import { platformService } from '../../../../../services/index.js';
+import { tenantsRepo, usersRepo } from '../../../../../services/baserow/index.js';
+import { issueSetPasswordToken } from '../../../../../services/password-reset.js';
 import { asyncHandler, HttpError, reqParam } from '../../../../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -12,7 +13,19 @@ router.post('/:userId/reset-password', asyncHandler(async (req, res) => {
   const userId = reqParam(req, 'userId');
 
   try {
-    await platformService.resetTenantUserPassword(tenantId, userId);
+    const tenant = await tenantsRepo.findTenantById(tenantId);
+    if (!tenant) throw new Error('Tenant not found');
+
+    const existing = await usersRepo.findUserById(userId);
+    if (!existing || usersRepo.isSuperAdmin(existing) || existing.tenant_id !== tenantId) {
+      throw new Error('User not found');
+    }
+
+    if (!usersRepo.hasUserEmail(existing)) {
+      throw new Error('User has no email address');
+    }
+
+    await issueSetPasswordToken(existing);
     res.json({ message: 'Password reset email sent' });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to reset password';

@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  FiBriefcase,
   FiChevronDown,
   FiChevronUp,
   FiEdit2,
@@ -399,7 +398,7 @@ export default function TenantsPage() {
               </label>
 
               <label className="field field--full">
-                <span>Chemin Dropbox</span>
+                <span>Chemin Dropbox / Sharepoint</span>
                 <div className="field-input">
                   <input
                     type="text"
@@ -643,13 +642,6 @@ export default function TenantsPage() {
                               >
                                 <FiUsers />
                                 Gérer les utilisateurs
-                              </Link>
-                              <Link
-                                to={`/dashboard/tenants/${tenant.id}/clients`}
-                                className="btn-secondary btn-secondary--sm"
-                              >
-                                <FiBriefcase />
-                                Gérer les clients
                               </Link>
                             </>
                           ) : tenant.status === "provisioning" ? (
