@@ -12,6 +12,7 @@
     "provision:tenant-workspace": "tsx cli/provision-tenant-workspace.ts",
     "provision:tenant-tables": "tsx cli/provision-tenant-tables.ts",
     "provision:tenant": "tsx cli/provision-tenant-tables.ts",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "kill-port": "kill-port 3001"
   },
