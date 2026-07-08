@@ -162,38 +162,6 @@ export function buildFccPrefillLink(
   return { link: `${baseUrl}?data=${encoded}`, type };
 }
 
-export interface DerEmailPayload {
-  record_id: string;
-  tenant_id: string;
-  client_email: string;
-  tenant_email: string;
-  nm_name: string;
-  nm_titre: string;
-  tenant_sharepoint: string;
-}
-
-export async function sendDerDocuSign(
-  vars: KycWebhookVars,
-  tenantName: string,
-  tenantEmail: string,
-  tenantDropbox: string,
-  clientsTableId: string,
-): Promise<void> {
-  const nowISO = new Date().toISOString();
-  const nowLocal = new Date().toLocaleString('fr-FR', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
-  await postWebhook(webhookUrl('webhookDerDocusign'), {
-    ...vars,
-    der_envoi_timestamp: nowISO,
-    der_envoi_local: nowLocal,
-    tenant_name: tenantName,
-    tenant_email: tenantEmail,
-    tenant_dropbox: tenantDropbox,
-    baserow_table_id: clientsTableId,
-  });
-}
-
 export async function sendLdmDocuSign(
   vars: KycWebhookVars,
   tenantName: string,
