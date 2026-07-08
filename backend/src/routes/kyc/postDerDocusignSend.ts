@@ -70,6 +70,8 @@ router.post('/der/docusign', asyncHandler(async (req, res) => {
           ? new Date(client.birth_date).toLocaleDateString("fr-FR")
           : "",
       lieu_naissance: isPP ? client.birth_place || "" : "",
+      nm_name: body.signataireName,
+      nm_email: body.signataireEmail,
       nm_signataire: body.signataireName,
       nm_titre: nmTitre,
       montant_forfait: ldmType.endsWith("AVEC")
