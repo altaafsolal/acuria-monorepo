@@ -26,7 +26,7 @@ async function ensureTenantsSchema(databaseId: string): Promise<number> {
     T.brandingName,
     T.brandingOrias,
     T.brandingAccent,
-    T.dropboxPathBase,
+    T.sharepointPathBase,
     T.email,
   ], fields);
   await ensureField(table.id, { name: T.databaseToken, type: 'long_text' }, fields);

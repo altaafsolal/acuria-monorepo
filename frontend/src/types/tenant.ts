@@ -17,7 +17,7 @@ export interface Tenant {
   workspaceId?: string | null;
   databaseId?: string | null;
   databaseToken?: string | null;
-  dropboxPathBase?: string | null;
+  sharepointPathBase?: string | null;
   email?: string | null;
 }
 
@@ -41,7 +41,7 @@ export interface UpdateTenantBrandingInput {
   status?: 'active' | 'inactive';
   logo?: File;
   removeBrandingLogo?: boolean;
-  dropboxPathBase?: string;
+  sharepointPathBase?: string;
   email?: string;
 }
 

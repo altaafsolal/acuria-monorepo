@@ -42,7 +42,7 @@ interface BrandingFormState {
   brandingOrias: string;
   brandingAccent: string;
   status: EditableTenantStatus;
-  dropboxPathBase: string;
+  sharepointPathBase: string;
   email: string;
 }
 
@@ -56,7 +56,7 @@ function brandingFormFromTenant(tenant: Tenant): BrandingFormState {
     brandingOrias: tenant.brandingOrias?.trim() || "",
     brandingAccent: tenant.brandingAccent?.trim() || DEFAULT_ACCENT,
     status: editableStatusFromTenant(tenant),
-    dropboxPathBase: tenant.dropboxPathBase?.trim() || "",
+    sharepointPathBase: tenant.sharepointPathBase?.trim() || "",
     email: tenant.email?.trim() || "",
   };
 }
@@ -74,7 +74,7 @@ export default function TenantsPage() {
     brandingOrias: "",
     brandingAccent: DEFAULT_ACCENT,
     status: TENANT_STATUS.ACTIVE,
-    dropboxPathBase: "",
+    sharepointPathBase: "",
     email: "",
   });
   const [brandingError, setBrandingError] = useState<string | null>(null);
@@ -226,7 +226,7 @@ export default function TenantsPage() {
         brandingOrias: brandingForm.brandingOrias.trim() || undefined,
         brandingAccent: accent,
         status: brandingForm.status,
-        dropboxPathBase: brandingForm.dropboxPathBase.trim() || undefined,
+        sharepointPathBase: brandingForm.sharepointPathBase.trim() || undefined,
         email: brandingForm.email.trim() || undefined,
         logo: logoFile ?? undefined,
         removeBrandingLogo: removeLogo || undefined,
@@ -398,15 +398,15 @@ export default function TenantsPage() {
               </label>
 
               <label className="field field--full">
-                <span>Chemin Dropbox / Sharepoint</span>
+                <span>Chemin SharePoint</span>
                 <div className="field-input">
                   <input
                     type="text"
-                    value={brandingForm.dropboxPathBase}
+                    value={brandingForm.sharepointPathBase}
                     onChange={(e) =>
                       setBrandingForm((prev) => ({
                         ...prev,
-                        dropboxPathBase: e.target.value,
+                        sharepointPathBase: e.target.value,
                       }))
                     }
                     placeholder="/NOM GÉRANT/STRUCTURE/CABINET CONSEIL/1 - CLIENTS/MON CABINET/Documents Réglementaires"

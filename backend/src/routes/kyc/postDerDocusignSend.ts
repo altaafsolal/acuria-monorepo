@@ -31,12 +31,12 @@ router.post('/der/docusign', asyncHandler(async (req, res) => {
       signataireEmail: body.signataireEmail,
       ldmType: body.ldmType,
       montantForfait: body.montantForfait,
-      dropboxPathBase: tenant?.dropbox_path_base || '',
+      dropboxPathBase: tenant?.sharepoint_path_base || '',
     });
 
     const tenantName = tenant?.branding_name || tenant?.name || '';
     const tenantEmail = tenant?.email || '';
-    await sendDerDocuSign(vars, tenantName, tenantEmail, tenant?.dropbox_path_base || '', clientsTableId);
+    await sendDerDocuSign(vars, tenantName, tenantEmail, tenant?.sharepoint_path_base || '', clientsTableId);
 
     const today = new Date().toISOString().split('T')[0];
     const updated = await clientsRepo.patchClientKycFields(tenantId, client.id, {

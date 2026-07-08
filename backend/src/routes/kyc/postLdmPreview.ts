@@ -29,7 +29,7 @@ router.post('/ldm/preview', asyncHandler(async (req, res) => {
       signataireEmail: body.signataireEmail,
       ldmType: body.ldmType,
       montantForfait: body.montantForfait,
-      dropboxPathBase: tenant?.dropbox_path_base || '',
+      dropboxPathBase: tenant?.sharepoint_path_base || '',
     });
 
     const pdfBuffer = await previewLdm(vars);

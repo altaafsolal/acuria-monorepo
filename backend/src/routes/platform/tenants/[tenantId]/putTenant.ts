@@ -34,7 +34,7 @@ router.put('/', upload.single('logo'), asyncHandler(async (req, res) => {
     brandingAccent?: string;
     status?: string;
     removeBrandingLogo?: string;
-    dropboxPathBase?: string;
+    sharepointPathBase?: string;
     email?: string;
   };
 
@@ -55,7 +55,7 @@ router.put('/', upload.single('logo'), asyncHandler(async (req, res) => {
     brandingAccent: body.brandingAccent,
     status: body.status,
     email: body.email,
-    dropboxPathBase: body.dropboxPathBase,
+    sharepointPathBase: body.sharepointPathBase,
     removeBrandingLogo: removeBrandingLogo || undefined,
     brandingLogo: logoFile
       ? {
