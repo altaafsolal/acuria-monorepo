@@ -211,8 +211,8 @@ export async function sendFccDocuSign(
   tenantName: string,
   tenantEmail: string,
   tenantId?: string,
-): Promise<void> {
-  await postWebhook(webhookUrl("webhookFccDocusign"), {
+): Promise<{ envelope_id?: string }> {
+  const res = await postWebhook(webhookUrl("webhookFccDocusign"), {
     record_id: clientId,
     client_email: clientEmail,
     client_name: clientName,
@@ -221,6 +221,8 @@ export async function sendFccDocuSign(
     tenant_name: tenantName,
     tenant_email: tenantEmail,
   });
+  const data = (await res.json()) as { envelope_id?: string };
+  return data;
 }
 
 export function ldmAvailableDate(derDate: string | null): Date | null {
