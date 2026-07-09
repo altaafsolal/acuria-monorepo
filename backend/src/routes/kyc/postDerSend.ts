@@ -36,8 +36,6 @@ router.post(
           : "Directeur Général Délégué";
 
       await postWebhook(webhookUrl("webhookDer"), {
-        record_id: client.id,
-        tenant_id: tenantId,
         client_email: client.email,
         tenant_email: tenant?.email || "",
         nm_name: body.signataireName,
@@ -45,8 +43,23 @@ router.post(
         tenant_sharepoint: tenant?.sharepoint_path_base || "",
       });
 
+      const today = new Date().toISOString().split("T")[0];
+      const updated = await clientsRepo.patchClientKycFields(
+        tenantId,
+        client.id,
+        {
+          der_statut: "Envoyé",
+          der_date: today,
+          der_envoi_timestamp: new Date().toISOString(),
+        },
+      );
+
       // Status update is deferred to /api/webhooks/kyc/der-complete (called by Make on completion).
-      res.json({ client: clientsRepo.toPublicClient(client) });
+      res.json({
+        client: updated
+          ? clientsRepo.toPublicClient(updated)
+          : clientsRepo.toPublicClient(client),
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to send DER";

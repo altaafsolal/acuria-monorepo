@@ -1,67 +1,142 @@
-import { Router } from 'express';
-import { asyncHandler } from '../../utils/index.js';
-import { webhookUrl, postOptionalWebhook } from '../../services/make/http.js';
-import * as fccSubmissionsRepo from '../../services/baserow/fcc-submissions.js';
-import * as clientsRepo from '../../services/baserow/clients.js';
+import { Router } from "express";
+import { asyncHandler } from "../../utils/index.js";
+import { webhookUrl, postWebhook } from "../../services/make/http.js";
+import * as fccSubmissionsRepo from "../../services/baserow/fcc-submissions.js";
+import * as clientsRepo from "../../services/baserow/clients.js";
 
 const router = Router({ mergeParams: true });
 
 // Public — no auth (clients fill this form without login)
-router.post('/submit', asyncHandler(async (req, res) => {
-  const payload = req.body as Record<string, unknown>;
+router.post(
+  "/submit",
+  asyncHandler(async (req, res) => {
+    const payload = req.body as Record<string, unknown>;
 
-  // Forward to Make webhook for PDF generation / Airtable sync
-  void postOptionalWebhook(webhookUrl('webhookFccSubmit'), payload, 'FCC form submission');
+    // Forward full payload to Make webhook — returns SharePoint file info
+    const makeResponse = await postWebhook(
+      webhookUrl("webhookFccSubmit"),
+      payload,
+    );
+    const makeData = (await makeResponse.json()) as {
+      success?: boolean;
+      sharepoint_url?: string;
+      sharepoint_file_id?: string;
+    };
 
-  // Save submission to Baserow if we have tenant context
-  const tenantId = typeof payload.tenant_id === 'string' && payload.tenant_id ? payload.tenant_id : null;
-  const recordId = typeof payload.record_id === 'string' && payload.record_id ? payload.record_id : null;
-  const formType = typeof payload.form_type === 'string' ? payload.form_type : 'PP';
-  const profilRisque = typeof payload.profil_risque === 'string' ? payload.profil_risque : null;
-  const profilConnaissance = typeof payload.profil_connaissance === 'string' ? payload.profil_connaissance : null;
-  const scoreConnaissance = typeof payload.score_connaissance === 'number' ? payload.score_connaissance : null;
-  const scoreRisque = typeof payload.score_risque === 'number' ? payload.score_risque : null;
+    // Resolve tenant and client
+    const tenantId =
+      typeof payload.tenant_id === "string" && payload.tenant_id
+        ? payload.tenant_id
+        : null;
+    const recordId =
+      typeof payload.record_id === "string" && payload.record_id
+        ? payload.record_id
+        : null;
+    const formType =
+      typeof payload.form_type === "string" ? payload.form_type : "PP";
 
-  if (tenantId) {
-    void (async () => {
-      try {
-        let clientId: string | null = null;
-        if (recordId) {
-          const client = await clientsRepo.getClientById(tenantId, recordId).catch(() => null);
-          if (client) clientId = client.id;
-        }
-        if (!clientId) {
-          const clientEmail = typeof payload.client_email === 'string' ? payload.client_email : null;
-          if (clientEmail) {
-            const all = await clientsRepo.listClientsByTenantId(tenantId).catch(() => []);
-            const match = all.find((c) => c.email?.toLowerCase() === clientEmail.toLowerCase());
-            if (match) clientId = match.id;
-          }
-        }
-
-        await fccSubmissionsRepo.createSubmission(tenantId, {
-          clientId,
-          formType,
-          profilRisque,
-          profilConnaissance,
-          scoreConnaissance,
-          scoreRisque,
-          rawData: JSON.stringify(payload),
-        });
-
-        if (clientId) {
-          await clientsRepo.patchClientKycFields(tenantId, clientId, {
-            fcc_statut: 'Soumis',
-            fcc_date: new Date().toISOString().split('T')[0],
-          }).catch(() => undefined);
-        }
-      } catch (err) {
-        console.error('FCC submission save error:', err instanceof Error ? err.message : err);
+    if (tenantId) {
+      let clientId: string | null = null;
+      if (recordId) {
+        const client = await clientsRepo
+          .getClientById(tenantId, recordId)
+          .catch(() => null);
+        if (client) clientId = client.id;
       }
-    })();
-  }
+      if (!clientId) {
+        const clientEmail =
+          typeof payload.client_email === "string" ? payload.client_email : null;
+        if (clientEmail) {
+          const all = await clientsRepo
+            .listClientsByTenantId(tenantId)
+            .catch(() => []);
+          const match = all.find(
+            (c) => c.email?.toLowerCase() === clientEmail.toLowerCase(),
+          );
+          if (match) clientId = match.id;
+        }
+      }
 
-  res.json({ ok: true });
-}));
+      const str = (key: string) => {
+        const v = payload[key];
+        return typeof v === "string" ? v : null;
+      };
+      const num = (key: string) => {
+        const v = payload[key];
+        return typeof v === "number" ? v : null;
+      };
+
+      await fccSubmissionsRepo.createSubmission(tenantId, {
+        clientId,
+        formType,
+        profilRisque: str("profil_risque"),
+        profilConnaissance: str("profil_connaissance"),
+        scoreConnaissance: num("score_connaissance"),
+        scoreRisque: num("score_risque"),
+        rawData: JSON.stringify(payload),
+        typeFormulaire: str("form_type"),
+        idFormulaire: str("form_id"),
+        dateSoumission: str("timestamp_soumission"),
+        statutDossier: "En attente",
+        client: str("client_nom_complet"),
+        email: str("client_email"),
+        telephone: str("client_tel"),
+        ville: str("client_ville"),
+        profession: str("client_profession"),
+        scoreTotal: num("score_total"),
+        sharepointFileUrl: makeData.sharepoint_url || null,
+        sharepointFileId: makeData.sharepoint_file_id || null,
+        ipClient: str("user_agent"),
+        pdfFilename: str("pdf_filename"),
+        prefillToken: str("prefill_token"),
+        boAgent: str("bo_agent"),
+        be1Nom: str("be1_nom"),
+        be1Ddn: str("be1_ddn"),
+        be1LieuNaissance: str("be1_lieu_naissance"),
+        be1Nationalite: str("be1_nationalite"),
+        be1ResidenceFiscale: str("be1_residence_fiscale"),
+        be1Adresse: str("be1_adresse"),
+        be1Detention: str("be1_detention"),
+        be2Nom: str("be2_nom"),
+        be2Ddn: str("be2_ddn"),
+        be2LieuNaissance: str("be2_lieu_naissance"),
+        be2Nationalite: str("be2_nationalite"),
+        be2ResidenceFiscale: str("be2_residence_fiscale"),
+        be2Adresse: str("be2_adresse"),
+        be2Detention: str("be2_detention"),
+        be3Nom: str("be3_nom"),
+        be3Ddn: str("be3_ddn"),
+        be3Nationalite: str("be3_nationalite"),
+        be3Detention: str("be3_detention"),
+        be4Nom: str("be4_nom"),
+        be4Ddn: str("be4_ddn"),
+        be4Nationalite: str("be4_nationalite"),
+        be4Detention: str("be4_detention"),
+        clientDenomination: str("client_denomination"),
+        clientRepresentantNom: str("client_representant_nom"),
+        clientRepresentantFonction: str("client_representant_fonction"),
+        clientSiren: str("client_siren"),
+        clientNaf: str("client_naf"),
+        clientActivite: str("client_activite"),
+        clientFormeJuridique: str("client_forme_juridique"),
+        clientCa: str("client_ca"),
+        clientBilan: str("client_bilan"),
+        clientFondsPropres: str("client_fonds_propres"),
+        clientFiscalite: str("client_fiscalite"),
+      });
+
+      if (clientId) {
+        await clientsRepo
+          .patchClientKycFields(tenantId, clientId, {
+            fcc_statut: "Soumis",
+            fcc_date: new Date().toISOString().split("T")[0],
+          })
+          .catch(() => undefined);
+      }
+    }
+
+    res.json({ ok: true });
+  }),
+);
 
 export default router;

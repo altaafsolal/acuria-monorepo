@@ -127,6 +127,21 @@ export interface FccSubmission {
   scoreRisque: number | null;
   statut: string;
   docusignEnvelopeId: string | null;
+  typeFormulaire: string | null;
+  idFormulaire: string | null;
+  dateSoumission: string | null;
+  statutDossier: string | null;
+  client: string | null;
+  email: string | null;
+  telephone: string | null;
+  ville: string | null;
+  profession: string | null;
+  scoreTotal: number | null;
+  sharepointFileUrl: string | null;
+  sharepointFileId: string | null;
+  ipClient: string | null;
+  pdfFilename: string | null;
+  boAgent: string | null;
 }
 
 export interface FccHistoryResponse {

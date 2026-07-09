@@ -3,6 +3,7 @@ import {
   CLIENT_STATUS_OPTIONS,
   CLIENT_TYPE_OPTIONS,
   CRM_DOC_STATUS_OPTIONS,
+  FCC_DOSSIER_STATUS_OPTIONS,
   FCC_SUBMISSION_STATUS_OPTIONS,
   KYC_STATUS_OPTIONS,
   GESTIONNAIRE_STATUS_OPTIONS,
@@ -216,6 +217,30 @@ async function ensureFccSubmissionsFields(tableId: string | number, clientsTable
   await ensureField(
     tableId,
     { name: F.statut, type: 'single_select', select_options: [...FCC_SUBMISSION_STATUS_OPTIONS] },
+    existing,
+  );
+  // New FCC fields
+  await ensureTextFields(
+    tableId,
+    [
+      F.typeFormulaire, F.idFormulaire, F.dateSoumission, F.client, F.email,
+      F.telephone, F.ville, F.profession,
+      F.sharepointFileUrl, F.sharepointFileId, F.ipClient, F.pdfFilename,
+      F.prefillToken, F.boAgent,
+      F.be1Nom, F.be1Ddn, F.be1LieuNaissance, F.be1Nationalite, F.be1ResidenceFiscale, F.be1Adresse, F.be1Detention,
+      F.be2Nom, F.be2Ddn, F.be2LieuNaissance, F.be2Nationalite, F.be2ResidenceFiscale, F.be2Adresse, F.be2Detention,
+      F.be3Nom, F.be3Ddn, F.be3Nationalite, F.be3Detention,
+      F.be4Nom, F.be4Ddn, F.be4Nationalite, F.be4Detention,
+      F.clientDenomination, F.clientRepresentantNom, F.clientRepresentantFonction,
+      F.clientSiren, F.clientNaf, F.clientActivite, F.clientFormeJuridique,
+      F.clientCa, F.clientBilan, F.clientFondsPropres, F.clientFiscalite,
+    ],
+    existing,
+  );
+  await ensureField(tableId, { name: F.scoreTotal, type: 'number' }, existing);
+  await ensureField(
+    tableId,
+    { name: F.statutDossier, type: 'single_select', select_options: [...FCC_DOSSIER_STATUS_OPTIONS] },
     existing,
   );
 }
