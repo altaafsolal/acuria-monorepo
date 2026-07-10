@@ -32,27 +32,28 @@ router.post(
       if (!client.email) throw new Error("Email client manquant");
 
       const name = clientMapper.resolveClientDisplayName(client);
+      const submissions = await fccSubmissionsRepo.listSubmissionsByClient(
+        tenantId,
+        client.id,
+      );
+      const latestSubmission = submissions[0] ?? null;
+
       const res2 = await postWebhook(webhookUrl("webhookFccDocusign"), {
         tenant_name: tenant?.branding_name || tenant?.name || "",
         client_email: client.email,
         client_name: name,
+        pdf_filename: latestSubmission?.pdfFilename || "",
       });
       const data = (await res2.json()) as { envelope_id?: string };
 
       // Update the latest FCC submission with the DocuSign envelope ID
-      if (data.envelope_id) {
-        const submissions = await fccSubmissionsRepo.listSubmissionsByClient(
+      if (data.envelope_id && latestSubmission) {
+        await fccSubmissionsRepo.updateSubmissionStatus(
           tenantId,
-          client.id,
+          latestSubmission.id,
+          latestSubmission.statut,
+          data.envelope_id,
         );
-        if (submissions.length > 0) {
-          await fccSubmissionsRepo.updateSubmissionStatus(
-            tenantId,
-            submissions[0].id,
-            submissions[0].statut,
-            data.envelope_id,
-          );
-        }
       }
 
       const updated = await clientsRepo.patchClientKycFields(
