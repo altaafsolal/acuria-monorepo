@@ -3,6 +3,7 @@ import { asyncHandler } from "../../utils/index.js";
 import { webhookUrl, postWebhook } from "../../services/make/http.js";
 import * as fccSubmissionsRepo from "../../services/baserow/fcc-submissions.js";
 import * as clientsRepo from "../../services/baserow/clients.js";
+import * as tenantsRepo from "../../services/baserow/tenants.js";
 
 const router = Router({ mergeParams: true });
 
@@ -12,15 +13,13 @@ router.post(
   asyncHandler(async (req, res) => {
     const payload = req.body as Record<string, unknown>;
 
-    // Forward full payload to Make webhook — returns SharePoint file info
-    const makeResponse = await postWebhook(
-      webhookUrl("webhookFccSubmit"),
-      payload,
-    );
-    const makeData = (await makeResponse.json()) as {
-      success?: boolean;
-      sharepoint_url?: string;
-      sharepoint_file_id?: string;
+    const str = (key: string) => {
+      const v = payload[key];
+      return typeof v === "string" ? v : null;
+    };
+    const num = (key: string) => {
+      const v = payload[key];
+      return typeof v === "number" ? v : null;
     };
 
     // Resolve tenant and client
@@ -34,6 +33,44 @@ router.post(
         : null;
     const formType =
       typeof payload.form_type === "string" ? payload.form_type : "PP";
+
+    // Lookup tenant for name and backoffice email
+    const tenant = tenantId
+      ? await tenantsRepo.findTenantById(tenantId).catch(() => null)
+      : null;
+    const tenantName = tenant?.branding_name || tenant?.name || "";
+    const tenantBackofficeEmail = tenant?.backoffice_email || "";
+
+    // Forward structured payload to Make webhook
+    const makeResponse = await postWebhook(
+      webhookUrl("webhookFccSubmit"),
+      {
+        tenant_name: tenantName,
+        xlsx_filename: str("xlsx_filename") || "",
+        xlsx_base64: str("xlsx_base64") || "",
+        pdf_filename: str("pdf_filename") || "",
+        pdf_base64: str("pdf_base64") || "",
+        client_name: str("client_nom_complet") || "",
+        form_type: formType,
+        client_nom_complet: str("client_nom_complet") || "",
+        client_email: str("client_email") || "",
+        client_tel: str("client_tel") || "",
+        client_ville: str("client_ville") || "",
+        client_profession: str("client_profession") || "",
+        profil_connaissance: str("profil_connaissance") || "",
+        profil_risque: str("profil_risque") || "",
+        score_total: num("score_total") ?? 0,
+        user_agent: str("user_agent") || "",
+        timestamp_soumission: str("timestamp_soumission") || "",
+        form_id: str("form_id") || "",
+        tenant_backoffice_email: tenantBackofficeEmail,
+      },
+    );
+    const makeData = (await makeResponse.json()) as {
+      success?: boolean;
+      sharepoint_url?: string;
+      sharepoint_file_id?: string;
+    };
 
     if (tenantId) {
       let clientId: string | null = null;
@@ -56,15 +93,6 @@ router.post(
           if (match) clientId = match.id;
         }
       }
-
-      const str = (key: string) => {
-        const v = payload[key];
-        return typeof v === "string" ? v : null;
-      };
-      const num = (key: string) => {
-        const v = payload[key];
-        return typeof v === "number" ? v : null;
-      };
 
       await fccSubmissionsRepo.createSubmission(tenantId, {
         clientId,

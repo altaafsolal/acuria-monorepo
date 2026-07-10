@@ -44,6 +44,7 @@ interface BrandingFormState {
   status: EditableTenantStatus;
   sharepointPathBase: string;
   email: string;
+  backofficeEmail: string;
 }
 
 function editableStatusFromTenant(tenant: Tenant): EditableTenantStatus {
@@ -58,6 +59,7 @@ function brandingFormFromTenant(tenant: Tenant): BrandingFormState {
     status: editableStatusFromTenant(tenant),
     sharepointPathBase: tenant.sharepointPathBase?.trim() || "",
     email: tenant.email?.trim() || "",
+    backofficeEmail: tenant.backofficeEmail?.trim() || "",
   };
 }
 
@@ -76,6 +78,7 @@ export default function TenantsPage() {
     status: TENANT_STATUS.ACTIVE,
     sharepointPathBase: "",
     email: "",
+    backofficeEmail: "",
   });
   const [brandingError, setBrandingError] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -228,6 +231,7 @@ export default function TenantsPage() {
         status: brandingForm.status,
         sharepointPathBase: brandingForm.sharepointPathBase.trim() || undefined,
         email: brandingForm.email.trim() || undefined,
+        backofficeEmail: brandingForm.backofficeEmail.trim() || undefined,
         logo: logoFile ?? undefined,
         removeBrandingLogo: removeLogo || undefined,
       },
@@ -393,6 +397,23 @@ export default function TenantsPage() {
                       }))
                     }
                     placeholder="contact@nm-prime.com"
+                  />
+                </div>
+              </label>
+
+              <label className="field field--full">
+                <span>Email backoffice</span>
+                <div className="field-input">
+                  <input
+                    type="email"
+                    value={brandingForm.backofficeEmail}
+                    onChange={(e) =>
+                      setBrandingForm((prev) => ({
+                        ...prev,
+                        backofficeEmail: e.target.value,
+                      }))
+                    }
+                    placeholder="backoffice@nm-prime.com"
                   />
                 </div>
               </label>

@@ -69,14 +69,7 @@ router.post(
       };
 
       await postWebhook(webhookUrl("webhookLdm"), {
-        record_id: client.id,
-        tenant_id: tenantId,
         ldm_template_id: ldmTemplateIds[ldmType] || "",
-        der_template_id: env.kyc.derTemplateId,
-        ldm_filename: `${nomFile}_LDM_${today}`,
-        der_filename: `${nomFile}_DER_${today}`,
-        client_name: nomClient,
-        email_client: client.email,
         civilite_nom_prenom: isPP
           ? [
               client.civilite,
@@ -86,18 +79,12 @@ router.post(
               .filter(Boolean)
               .join(" ")
           : "",
-        adresse_complete: isPP
-          ? [client.address, client.postal_code, client.city]
-              .filter(Boolean)
-              .join(", ")
-          : "",
         date_naissance:
           isPP && client.birth_date
             ? new Date(client.birth_date).toLocaleDateString("fr-FR")
             : "",
         lieu_naissance: isPP ? client.birth_place || "" : "",
-        nm_name: body.signataireName,
-        nm_email: body.signataireEmail,
+        email_client: client.email,
         nm_signataire: body.signataireName,
         nm_titre: nmTitre,
         montant_forfait: ldmType.endsWith("AVEC")
@@ -113,8 +100,17 @@ router.post(
         rcs_ville: !isPP ? client.city || "" : "",
         siren: !isPP ? client.siren || "" : "",
         representant_nom: !isPP ? client.legal_rep_name || "" : "",
-        tenant_sharepoint: tenant?.sharepoint_path_base || "",
+        client_name: nomClient,
         tenant_name: tenant?.branding_name || tenant?.name || "",
+        ldm_filename: `${nomFile}_LDM_${today}`,
+        nm_name: body.signataireName,
+        nm_email: body.signataireEmail,
+        der_filename: `${nomFile}_DER_${today}`,
+        adresse_complete: isPP
+          ? [client.address, client.postal_code, client.city]
+              .filter(Boolean)
+              .join(", ")
+          : "",
       });
 
       const updated = await clientsRepo.patchClientKycFields(

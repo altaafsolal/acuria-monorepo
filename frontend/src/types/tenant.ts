@@ -19,6 +19,7 @@ export interface Tenant {
   databaseToken?: string | null;
   sharepointPathBase?: string | null;
   email?: string | null;
+  backofficeEmail?: string | null;
 }
 
 export interface TenantsResponse {
@@ -43,6 +44,7 @@ export interface UpdateTenantBrandingInput {
   removeBrandingLogo?: boolean;
   sharepointPathBase?: string;
   email?: string;
+  backofficeEmail?: string;
 }
 
 export interface PlatformStats {

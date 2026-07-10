@@ -6,8 +6,8 @@ import {
   clientMapper,
   fccSubmissionsRepo,
 } from "../../services/baserow/index.js";
-import { sendFccDocuSign } from "../../services/make/index.js";
 import { asyncHandler, HttpError, requireTenant } from "../../utils/index.js";
+import { postWebhook, webhookUrl } from "../../services/make/http.js";
 
 const router = Router({ mergeParams: true });
 
@@ -32,19 +32,15 @@ router.post(
       if (!client.email) throw new Error("Email client manquant");
 
       const name = clientMapper.resolveClientDisplayName(client);
-      const formType = client.client_type === "PM" ? "PM" : "PP";
-      const makeResult = await sendFccDocuSign(
-        client.id,
-        name,
-        client.email,
-        formType,
-        tenant?.branding_name || tenant?.name || "",
-        tenant?.email || "",
-        tenant?.id,
-      );
+      const res2 = await postWebhook(webhookUrl("webhookFccDocusign"), {
+        tenant_name: tenant?.branding_name || tenant?.name || "",
+        client_email: client.email,
+        client_name: name,
+      });
+      const data = (await res2.json()) as { envelope_id?: string };
 
       // Update the latest FCC submission with the DocuSign envelope ID
-      if (makeResult.envelope_id) {
+      if (data.envelope_id) {
         const submissions = await fccSubmissionsRepo.listSubmissionsByClient(
           tenantId,
           client.id,
@@ -54,7 +50,7 @@ router.post(
             tenantId,
             submissions[0].id,
             submissions[0].statut,
-            makeResult.envelope_id,
+            data.envelope_id,
           );
         }
       }

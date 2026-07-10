@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { authenticate, requireRole } from '../../../../middleware/index.js';
-import { notesRepo } from '../../../../services/baserow/index.js';
-import { uploadToSharePoint } from '../../../../services/sharepoint.js';
+import { notesRepo, tenantsRepo } from '../../../../services/baserow/index.js';
+import { env } from '../../../../config/env.js';
 import { asyncHandler, HttpError, requireTenant, reqParam } from '../../../../utils/index.js';
 
 const router = Router({ mergeParams: true });
@@ -47,9 +47,36 @@ router.post('/', upload.array('files', 10), asyncHandler(async (req, res) => {
   }
 
   const files = (req.files as Express.Multer.File[] | undefined) ?? [];
-  const uploaded = await Promise.all(
-    files.map((file) => uploadToSharePoint(file.originalname, file.buffer, file.mimetype)),
-  );
+  const webhookUrl = env.make.webhookNoteUpload;
+  let uploaded: { name: string; url: string }[] = [];
+
+  if (files.length > 0) {
+    if (!webhookUrl) {
+      throw new HttpError(500, 'MAKE_WEBHOOK_NOTE_UPLOAD is not configured');
+    }
+    const tenant = await tenantsRepo.findTenantById(tenantId);
+    const tenantName = tenant?.branding_name || tenant?.name || '';
+    uploaded = await Promise.all(
+      files.map(async (file) => {
+        const res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.originalname,
+            content: file.buffer.toString('base64'),
+            mimeType: file.mimetype,
+            tenant_name: tenantName,
+          }),
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new HttpError(502, `Make upload failed (${res.status}): ${text}`);
+        }
+        const data = await res.json() as { name: string; url: string };
+        return { name: data.name, url: data.url };
+      }),
+    );
+  }
 
   const note = await notesRepo.createNote(tenantId, {
     clientId,

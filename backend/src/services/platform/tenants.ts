@@ -53,6 +53,7 @@ export async function updateTenantBranding(
     removeBrandingLogo?: boolean;
     sharepointPathBase?: string;
     email?: string;
+    backofficeEmail?: string;
   },
 ): Promise<PublicTenant | null> {
   const hasBrandingFields = branding.brandingName !== undefined
@@ -61,7 +62,8 @@ export async function updateTenantBranding(
     || branding.brandingLogo !== undefined
     || branding.removeBrandingLogo === true
     || branding.sharepointPathBase !== undefined
-    || branding.email !== undefined;
+    || branding.email !== undefined
+    || branding.backofficeEmail !== undefined;
 
   let record = hasBrandingFields
     ? await tenantsRepo.patchTenantBranding(tenantId, {
@@ -72,6 +74,7 @@ export async function updateTenantBranding(
       removeBrandingLogo: branding.removeBrandingLogo,
       sharepointPathBase: branding.sharepointPathBase,
       email: branding.email,
+      backofficeEmail: branding.backofficeEmail,
     })
     : await tenantsRepo.findTenantById(tenantId);
 

@@ -35,6 +35,7 @@ export interface Env {
     webhookFccSend: string;       // Send FCC prefill link by email (MAKE_WH4 / noydem1a…)
     webhookFccSubmit: string;     // FCC form data → Make (MAKE_WEBHOOK_URL in DemoFinance form)
     webhookFccDocusign: string;   // Send FCC PDF to DocuSign (DOCUSIGN_WEBHOOK / c7nl9jij…)
+    webhookNoteUpload: string;    // Note attachment → Make → SharePoint (MAKE_WEBHOOK_NOTE_UPLOAD)
     webhookPasswordSet: string;
     webhookOtp: string;
   };
@@ -115,6 +116,7 @@ export const env: Env = {
     webhookFccSend: process.env.MAKE_WEBHOOK_FCC_SEND || '',
     webhookFccSubmit: process.env.MAKE_WEBHOOK_FCC_SUBMIT || '',
     webhookFccDocusign: process.env.MAKE_WEBHOOK_FCC_DOCUSIGN || '',
+    webhookNoteUpload: process.env.MAKE_WEBHOOK_NOTE_UPLOAD || '',
     webhookPasswordSet: process.env.MAKE_WEBHOOK_PASSWORD_SET || '',
     webhookOtp: process.env.MAKE_WEBHOOK_OTP || '',
   },

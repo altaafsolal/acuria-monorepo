@@ -32,6 +32,7 @@ function mapTenantRow(row: BaserowRow): TenantRecord {
     branding_logo: pickFileValues(row[F.brandingLogo]),
     sharepoint_path_base: String(row[F.sharepointPathBase] || '').trim() || null,
     email: String(row[F.email] || '').trim() || null,
+    backoffice_email: String(row[F.backofficeEmail] || '').trim() || null,
     created_on: pickFieldValue(row[F.createdOn]),
     updated_on: pickFieldValue(row[F.updatedOn]),
   };
@@ -78,6 +79,7 @@ export function toPublicTenant(
     databaseToken: tenant.database_token,
     sharepointPathBase: tenant.sharepoint_path_base,
     email: tenant.email,
+    backofficeEmail: tenant.backoffice_email,
   };
 }
 
@@ -127,6 +129,7 @@ export async function patchTenantBranding(
     removeBrandingLogo?: boolean;
     sharepointPathBase?: string;
     email?: string;
+    backofficeEmail?: string;
   },
 ): Promise<TenantRecord | null> {
   const existing = await findTenantById(tenantId);
@@ -143,6 +146,7 @@ export async function patchTenantBranding(
   if (branding.brandingAccent !== undefined) payload[F.brandingAccent] = branding.brandingAccent;
   if (branding.sharepointPathBase !== undefined) payload[F.sharepointPathBase] = branding.sharepointPathBase;
   if (branding.email !== undefined) payload[F.email] = branding.email;
+  if (branding.backofficeEmail !== undefined) payload[F.backofficeEmail] = branding.backofficeEmail;
 
   if (branding.removeBrandingLogo) {
     payload[F.brandingLogo] = [];

@@ -62,6 +62,7 @@ export interface TenantRecord {
   }>;
   sharepoint_path_base: string | null;
   email: string | null;
+  backoffice_email: string | null;
   created_on: string | null;
   updated_on: string | null;
 }
@@ -85,6 +86,7 @@ export interface PublicTenant {
   databaseToken?: string | null;
   sharepointPathBase?: string | null;
   email?: string | null;
+  backofficeEmail?: string | null;
 }
 
 export interface BeneficiaryFields {

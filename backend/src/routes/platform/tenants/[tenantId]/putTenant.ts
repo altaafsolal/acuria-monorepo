@@ -36,6 +36,7 @@ router.put('/', upload.single('logo'), asyncHandler(async (req, res) => {
     removeBrandingLogo?: string;
     sharepointPathBase?: string;
     email?: string;
+    backofficeEmail?: string;
   };
 
   if (body.brandingAccent !== undefined && body.brandingAccent !== '' && !HEX_COLOR.test(body.brandingAccent)) {
@@ -55,6 +56,7 @@ router.put('/', upload.single('logo'), asyncHandler(async (req, res) => {
     brandingAccent: body.brandingAccent,
     status: body.status,
     email: body.email,
+    backofficeEmail: body.backofficeEmail,
     sharepointPathBase: body.sharepointPathBase,
     removeBrandingLogo: removeBrandingLogo || undefined,
     brandingLogo: logoFile

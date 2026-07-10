@@ -203,28 +203,6 @@ export function buildFccPrefillLink(
   return { link: `${baseUrl}?data=${encoded}`, type };
 }
 
-export async function sendFccDocuSign(
-  clientId: string,
-  clientName: string,
-  clientEmail: string,
-  formType: "PP" | "PM",
-  tenantName: string,
-  tenantEmail: string,
-  tenantId?: string,
-): Promise<{ envelope_id?: string }> {
-  const res = await postWebhook(webhookUrl("webhookFccDocusign"), {
-    record_id: clientId,
-    client_email: clientEmail,
-    client_name: clientName,
-    form_type: formType,
-    tenant_id: tenantId || "",
-    tenant_name: tenantName,
-    tenant_email: tenantEmail,
-  });
-  const data = (await res.json()) as { envelope_id?: string };
-  return data;
-}
-
 export function ldmAvailableDate(derDate: string | null): Date | null {
   if (!derDate) return null;
   const d = new Date(derDate);

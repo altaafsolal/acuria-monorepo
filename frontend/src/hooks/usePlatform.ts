@@ -78,6 +78,7 @@ export function useUpdateTenantBranding() {
       if (input.status !== undefined) formData.append('status', input.status);
       if (input.sharepointPathBase !== undefined) formData.append('sharepointPathBase', input.sharepointPathBase);
       if (input.email !== undefined) formData.append('email', input.email);
+      if (input.backofficeEmail !== undefined) formData.append('backofficeEmail', input.backofficeEmail);
       if (logo) formData.append('logo', logo);
       if (removeBrandingLogo) formData.append('removeBrandingLogo', 'true');
 

@@ -44,6 +44,7 @@ export const BASEROW_FIELDS = {
     brandingLogo: 'branding_logo',
     sharepointPathBase: 'sharepoint_path_base',
     email: 'email',
+    backofficeEmail: 'backoffice_email',
     createdOn: 'created_on',
     updatedOn: 'updated_on',
   },

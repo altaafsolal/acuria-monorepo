@@ -38,9 +38,9 @@ router.post(
       await postWebhook(webhookUrl("webhookDer"), {
         client_email: client.email,
         tenant_email: tenant?.email || "",
+        tenant_name: tenant?.name,
         nm_name: body.signataireName,
         nm_titre: nmTitre,
-        tenant_sharepoint: tenant?.sharepoint_path_base || "",
       });
 
       const today = new Date().toISOString().split("T")[0];

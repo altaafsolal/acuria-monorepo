@@ -18,6 +18,7 @@ import {
   useCreateKycDocument,
   useUpdateKycDocument,
 } from '../../hooks/useClientPanel';
+import { useFccHistory } from '../../hooks/useKyc';
 import {
   catalogByCategory,
   getDocumentCatalog,
@@ -233,6 +234,57 @@ function KycDocumentCollectItem({
   );
 }
 
+function fccSubmissionBadgeClass(statut: string): string {
+  if (statut === 'Signé' || statut === 'Validé') return 'badge-doc-signe';
+  if (statut === 'Soumis' || statut === 'Envoyé DocuSign') return 'badge-doc-envoye';
+  if (statut === 'Expiré') return 'badge-doc-renouveler';
+  return 'badge-doc-non';
+}
+
+function FccHistorySection({ clientId }: { clientId: string }) {
+  const { data: submissions = [], isLoading } = useFccHistory(clientId);
+
+  return (
+    <section className="cp-documents-regulatory">
+      <h3 className="cp-documents-regulatory__title">FCC reçues (historique)</h3>
+      {isLoading && (
+        <p style={{ fontSize: '13px', color: 'var(--muted)' }}>Chargement…</p>
+      )}
+      {!isLoading && submissions.length === 0 && (
+        <p style={{ fontSize: '13px', color: 'var(--muted)' }}>Aucune FCC reçue.</p>
+      )}
+      {!isLoading && submissions.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+          {submissions.map((sub) => (
+            <div
+              key={sub.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '8px 0',
+                borderBottom: '1px solid var(--border)',
+                fontSize: '13px',
+              }}
+            >
+              <span className={`client-type type-${(sub.formType || 'pp').toLowerCase()}`}>
+                {sub.formType || 'PP'}
+              </span>
+              <span style={{ flex: 1, fontWeight: 500 }}>
+                {sub.idFormulaire || sub.id}
+              </span>
+              <span>{formatDateFr(sub.dateSoumission || sub.submittedAt)}</span>
+              <span className={`crm-badge ${fccSubmissionBadgeClass(sub.statut)}`}>
+                {sub.statut || '—'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 interface ClientDocumentsTabProps {
   clientId: string;
   documents: KycDocument[];
@@ -392,6 +444,8 @@ export default function ClientDocumentsTab({
           </p>
         </section>
       )}
+
+      <FccHistorySection clientId={clientId} />
     </div>
   );
 }
