@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../../../middleware/index.js';
 import { kycDocsRepo } from '../../../../services/baserow/index.js';
-import { asyncHandler, HttpError, requireTenant, reqParam } from '../../../../utils/index.js';
+import { asyncHandler, HttpError,reqParam } from '../../../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
+router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
 
 router.put('/:documentId', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const clientId = reqParam(req, 'clientId');
   const documentId = reqParam(req, 'documentId');
   const { recu, dateReception, dateValidite, urlDocument } = req.body as {

@@ -1,16 +1,16 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import { createManagedUser } from '../../services/users/managed.js';
-import { asyncHandler, HttpError, requireTenant } from '../../utils/index.js';
+import { asyncHandler, HttpError} from '../../utils/index.js';
 import type { GestionnaireUserInput, Role } from '../../types/domain.js';
 import { MANAGEABLE_ROLES } from './helpers.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin'));
+router.use(authenticate, requireRole('tenant_admin'), requireTenant);
 
 router.post('/', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const body = req.body as {
     name?: string;
     email?: string;

@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { BASEROW_FIELDS } from "../../../baserow/schema.js";
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import { clientMapper, tenantTables, tenantContext, api } from "../../services/baserow/index.js";
 import { derIsSent, ldmIsUnlocked } from "../../services/make/index.js";
-import { pickLinkRowId, pickTextValue, asyncHandler, requireTenant } from '../../utils/index.js';
+import { pickLinkRowId, pickTextValue, asyncHandler} from '../../utils/index.js';
 import type {
   AccueilResponse,
   AccueilStats,
@@ -16,10 +16,10 @@ const ID_DOC_TYPES = ["CNI", "Passeport", "Pièce d'identité"];
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
+router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
 
 router.get('/', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
 
   const ctx = await tenantContext.resolveTenantDbContext(tenantId);
   const [clientsTableId, kycDocsTableId] = await Promise.all([

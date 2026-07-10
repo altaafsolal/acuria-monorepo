@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import { auditLogsRepo } from '../../services/baserow/index.js';
-import { asyncHandler, requireTenant } from '../../utils/index.js';
+import { asyncHandler} from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin'));
+router.use(authenticate, requireRole('tenant_admin'), requireTenant);
 
 router.get('/', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const page = Number(req.query.page) || 1;
   const size = Number(req.query.pageSize) || 50;
   const userId = typeof req.query.userId === 'string' ? req.query.userId : undefined;

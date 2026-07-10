@@ -1,15 +1,15 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import { clientsRepo, notesRepo, tasksRepo, gestionnairesRepo } from '../../services/baserow/index.js';
-import { asyncHandler, requireTenant, reqParam } from '../../utils/index.js';
+import { asyncHandler,reqParam } from '../../utils/index.js';
 import type { Role } from '../../types/domain.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
+router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
 
 router.get('/:id/timeline', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const clientId = reqParam(req, 'id');
   const user = req.user!;
 

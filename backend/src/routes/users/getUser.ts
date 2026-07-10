@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import { getUserWithGestionnaire } from '../../services/users/managed.js';
-import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
+import { asyncHandler, HttpError,reqParam } from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin'));
+router.use(authenticate, requireRole('tenant_admin'), requireTenant);
 
 router.get('/:id', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const userId = reqParam(req, 'id');
   const result = await getUserWithGestionnaire(tenantId, userId);
   if (!result) {

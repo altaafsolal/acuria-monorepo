@@ -1,16 +1,16 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import * as fccSubmissionsRepo from '../../services/baserow/fcc-submissions.js';
 import * as clientsRepo from '../../services/baserow/clients.js';
-import { asyncHandler, HttpError, requireTenant } from '../../utils/index.js';
+import { asyncHandler, HttpError} from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
+router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
 
 // Mark an FCC submission as validated and update client FCC status to Signé
 router.post('/quick-validate', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const { submissionId, clientId } = req.body as { submissionId?: string; clientId?: string };
 
   if (!submissionId && !clientId) {

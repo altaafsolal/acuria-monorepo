@@ -1,19 +1,19 @@
 import { Router } from "express";
-import { authenticate, requireRole } from "../../middleware/index.js";
+import { authenticate, requireRole, requireTenant} from "../../middleware/index.js";
 import { clientsRepo, tenantsRepo } from "../../services/baserow/index.js";
-import { asyncHandler, HttpError, requireTenant } from "../../utils/index.js";
+import { asyncHandler, HttpError} from "../../utils/index.js";
 import type { SendDerInput } from "../../types/domain.js";
 import { postWebhook, webhookUrl } from "../../services/make/http.js";
 import { env } from "../../config/env.js";
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole("tenant_admin", "standard_user"));
+router.use(authenticate, requireRole("tenant_admin", "standard_user"), requireTenant);
 
 router.post(
   "/der/docusign",
   asyncHandler(async (req, res) => {
-    const tenantId = requireTenant(req);
+    const tenantId = req.tenantId!;
     const body = req.body as SendDerInput;
 
     if (!body?.clientId || !body?.signataireName || !body?.signataireEmail) {

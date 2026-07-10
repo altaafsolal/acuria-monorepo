@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import * as fccSubmissionsRepo from '../../services/baserow/fcc-submissions.js';
-import { asyncHandler, requireTenant } from '../../utils/index.js';
+import { asyncHandler} from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
+router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
 
 router.get('/history', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const clientId = typeof req.query.clientId === 'string' ? req.query.clientId : undefined;
 
   const submissions = clientId

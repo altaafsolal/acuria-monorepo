@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { authenticate, requireRole } from '../../../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../../../middleware/index.js';
 import { notesRepo, tenantsRepo } from '../../../../services/baserow/index.js';
 import { env } from '../../../../config/env.js';
-import { asyncHandler, HttpError, requireTenant, reqParam } from '../../../../utils/index.js';
+import { asyncHandler, HttpError,reqParam } from '../../../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
@@ -25,10 +25,10 @@ const upload = multer({
   },
 });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
+router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
 
 router.post('/', upload.array('files', 10), asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const clientId = reqParam(req, 'clientId');
   const { noteType, auteur, contenu, date } = req.body as {
     noteType?: string;

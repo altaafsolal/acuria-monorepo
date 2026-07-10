@@ -1,22 +1,22 @@
 import { Router } from "express";
-import { authenticate, requireRole } from "../../middleware/index.js";
+import { authenticate, requireRole, requireTenant} from "../../middleware/index.js";
 import {
   clientsRepo,
   tenantsRepo,
   clientMapper,
 } from "../../services/baserow/index.js";
 import { buildFccPrefillLink } from "../../services/make/index.js";
-import { asyncHandler, HttpError, requireTenant } from "../../utils/index.js";
+import { asyncHandler, HttpError} from "../../utils/index.js";
 import { postWebhook, webhookUrl } from "../../services/make/http.js";
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole("tenant_admin", "standard_user"));
+router.use(authenticate, requireRole("tenant_admin", "standard_user"), requireTenant);
 
 router.post(
   "/fcc/send",
   asyncHandler(async (req, res) => {
-    const tenantId = requireTenant(req);
+    const tenantId = req.tenantId!;
     const { clientId } = req.body as { clientId?: string };
 
     if (!clientId) {

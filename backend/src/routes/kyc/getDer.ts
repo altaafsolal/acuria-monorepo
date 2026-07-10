@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import { clientsRepo, clientMapper } from '../../services/baserow/index.js';
-import { asyncHandler, requireTenant } from '../../utils/index.js';
+import { asyncHandler} from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
+router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
 
 router.get('/der', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const filter = String(req.query.filter || '');
 
   const all = clientMapper.excludeArchived(await clientsRepo.listClientsByTenantId(tenantId));

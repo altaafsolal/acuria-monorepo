@@ -1,16 +1,16 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import { usersRepo, tenantsRepo } from '../../services/baserow/index.js';
 import { issueSetPasswordToken } from '../../services/password-reset.js';
-import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
+import { asyncHandler, HttpError,reqParam } from '../../utils/index.js';
 import { isManageableUser } from './helpers.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin'));
+router.use(authenticate, requireRole('tenant_admin'), requireTenant);
 
 router.post('/:id/reset-password', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const userId = reqParam(req, 'id');
 
   const [existing, tenant] = await Promise.all([

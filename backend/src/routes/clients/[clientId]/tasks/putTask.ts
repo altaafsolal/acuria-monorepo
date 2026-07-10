@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../../../middleware/index.js';
 import { tasksRepo, gestionnairesRepo } from '../../../../services/baserow/index.js';
-import { asyncHandler, HttpError, requireTenant, reqParam } from '../../../../utils/index.js';
+import { asyncHandler, HttpError,reqParam } from '../../../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'));
+router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
 
 router.put('/:taskId', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const taskId = reqParam(req, 'taskId');
   const user = req.user!;
   const body = req.body as { assigneA?: string };

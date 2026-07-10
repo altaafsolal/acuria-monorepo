@@ -1,24 +1,24 @@
 import { Router } from "express";
-import { authenticate, requireRole } from "../../middleware/index.js";
+import { authenticate, requireRole, requireTenant} from "../../middleware/index.js";
 import { clientsRepo, tenantsRepo } from "../../services/baserow/index.js";
 import {
   derIsSent,
   ldmAvailableDate,
   ldmIsUnlocked,
 } from "../../services/make/index.js";
-import { asyncHandler, HttpError, requireTenant } from "../../utils/index.js";
+import { asyncHandler, HttpError} from "../../utils/index.js";
 import type { SendLdmInput } from "../../types/domain.js";
 import { postWebhook, webhookUrl } from "../../services/make/http.js";
 import { env } from "../../config/env.js";
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole("tenant_admin", "standard_user"));
+router.use(authenticate, requireRole("tenant_admin", "standard_user"), requireTenant);
 
 router.post(
   "/ldm/send",
   asyncHandler(async (req, res) => {
-    const tenantId = requireTenant(req);
+    const tenantId = req.tenantId!;
     const body = req.body as SendLdmInput;
 
     if (

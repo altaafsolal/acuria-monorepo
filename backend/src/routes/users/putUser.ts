@@ -1,17 +1,17 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../../middleware/index.js';
+import { authenticate, requireRole, requireTenant} from '../../middleware/index.js';
 import { usersRepo } from '../../services/baserow/index.js';
 import { updateManagedUser } from '../../services/users/managed.js';
-import { asyncHandler, HttpError, requireTenant, reqParam } from '../../utils/index.js';
+import { asyncHandler, HttpError,reqParam } from '../../utils/index.js';
 import type { GestionnaireUserInput, Role } from '../../types/domain.js';
 import { isManageableUser, MANAGEABLE_ROLES } from './helpers.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin'));
+router.use(authenticate, requireRole('tenant_admin'), requireTenant);
 
 router.put('/:id', asyncHandler(async (req, res) => {
-  const tenantId = requireTenant(req);
+  const tenantId = req.tenantId!;
   const currentUserId = req.user?.id;
   if (!currentUserId) {
     throw new HttpError(403, 'No tenant assigned to this account');
