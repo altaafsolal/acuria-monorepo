@@ -7,7 +7,8 @@ const SENSITIVE_KEYS = new Set([
   'password', 'password_hash', 'accessToken', 'refreshToken', 'token', 'database_token',
 ]);
 
-function sanitizeBody(body: unknown): string | null {
+/** @internal exported for testing */
+export function sanitizeBody(body: unknown): string | null {
   if (body === undefined || body === null) return null;
   if (typeof body !== 'object') return String(body);
   const redacted: Record<string, unknown> = {};
@@ -17,7 +18,8 @@ function sanitizeBody(body: unknown): string | null {
   try { return JSON.stringify(redacted); } catch { return null; }
 }
 
-function deriveAuditMeta(method: string, path: string): {
+/** @internal exported for testing */
+export function deriveAuditMeta(method: string, path: string): {
   entityType: string; entityId: string | null; action: string;
 } {
   const cleanPath = path.split('?')[0] ?? path;

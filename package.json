@@ -14,7 +14,10 @@
     "setup": "npm run setup --workspace=backend",
     "db:setup": "npm run setup --workspace=backend",
     "build": "npm run build --workspace=frontend",
-    "start": "npm run start --workspace=backend"
+    "start": "npm run start --workspace=backend",
+    "test": "npm run test --workspace=backend && npm run test --workspace=frontend",
+    "test:backend": "npm run test --workspace=backend",
+    "test:frontend": "npm run test --workspace=frontend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
