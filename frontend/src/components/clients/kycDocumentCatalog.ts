@@ -84,9 +84,6 @@ export const KYC_DOCUMENT_CATALOG_PM: KycDocumentCatalogItem[] = [
   },
 ];
 
-/** @deprecated Use getDocumentCatalog(clientType) */
-export const KYC_DOCUMENT_CATALOG = KYC_DOCUMENT_CATALOG_PP;
-
 export function getDocumentCatalog(clientType: string): KycDocumentCatalogItem[] {
   return isPersonneMorale(clientType) ? KYC_DOCUMENT_CATALOG_PM : KYC_DOCUMENT_CATALOG_PP;
 }
@@ -96,24 +93,4 @@ export function catalogByCategory(
   category: KycDocumentCategory,
 ): KycDocumentCatalogItem[] {
   return catalog.filter((item) => item.category === category);
-}
-
-export function findCatalogDocument(
-  docType: string,
-  clientType?: string,
-): KycDocumentCatalogItem | undefined {
-  const normalized = docType.trim().toLowerCase();
-  const catalogs = clientType
-    ? [getDocumentCatalog(clientType)]
-    : [KYC_DOCUMENT_CATALOG_PP, KYC_DOCUMENT_CATALOG_PM];
-
-  for (const catalog of catalogs) {
-    const match = catalog.find(
-      (item) =>
-        item.docType.toLowerCase() === normalized
-        || item.label.toLowerCase() === normalized,
-    );
-    if (match) return match;
-  }
-  return undefined;
 }

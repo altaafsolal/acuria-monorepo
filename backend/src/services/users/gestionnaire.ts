@@ -1,7 +1,6 @@
 import * as gestionnairesRepo from '../baserow/gestionnaires.js';
 import { usersRepo } from '../baserow/index.js';
 import type {
-  DbGestionnaire,
   DbUser,
   GestionnaireUserInput,
   PublicGestionnaire,
@@ -18,23 +17,6 @@ export function buildGestionnaireName(
     .filter(Boolean)
     .join(' ');
   return fromParts || fallbackName.trim();
-}
-
-export function toGestionnaireUserInput(
-  gestionnaire: DbGestionnaire | null | undefined,
-): GestionnaireUserInput | null {
-  if (!gestionnaire) return null;
-  return {
-    firstName: gestionnaire.first_name ?? '',
-    lastName: gestionnaire.last_name ?? '',
-    email: gestionnaire.email || '',
-    phone: gestionnaire.phone ?? '',
-    role: gestionnaire.role ?? '',
-    status: gestionnaire.status || 'Actif',
-    peutSignerDocusign: gestionnaire.peut_signer_docusign,
-    initiales: gestionnaire.initiales ?? '',
-    couleur: gestionnaire.couleur ?? '',
-  };
 }
 
 export async function getGestionnaireForUser(

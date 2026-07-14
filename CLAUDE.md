@@ -29,7 +29,7 @@ There are no tests in this codebase.
 
 ## Architecture
 
-**Monorepo** with npm workspaces: `frontend/` and `backend/`. There is also a thin `api/index.js` Vercel serverless entry point used for deployment.
+**Monorepo** with npm workspaces: `frontend/` and `backend/`. Deployed on Render (backend build `tsc`, start `node dist/src/index.js`; frontend built via `npm run build`).
 
 ### Backend (`backend/src/`)
 

@@ -1,6 +1,6 @@
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
 import { pickTextValue } from '../../utils/baserow.js';
-import { createRow, deleteRow, getRow, listAllRows, listRowsPage, updateRow } from './api.js';
+import { createRow, getRow, listAllRows, listRowsPage, updateRow } from './api.js';
 import { resolveTenantDbContext } from './tenant-context.js';
 import {
   clientInputToBaserow,
@@ -64,15 +64,6 @@ export async function updateClient(
 
   const row = await updateRow(tableId, clientId, fields, ctx);
   return mapClientRow(row);
-}
-
-export async function deleteClient(tenantId: string, clientId: string): Promise<boolean> {
-  const existing = await getClientById(tenantId, clientId);
-  if (!existing) return false;
-  const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'clients');
-  await deleteRow(tableId, clientId, ctx);
-  return true;
 }
 
 export async function countClientsByTenantId(tenantId: string): Promise<number> {

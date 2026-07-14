@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 vi.mock('../../config/env.js', () => ({ env: {} }));
 vi.mock('./http.js', () => ({ webhookUrl: () => '', postWebhook: async () => ({}) }));
 
-import { ldmAvailableDate, ldmIsUnlocked, derIsSent, NM_SIGNATAIRES } from './kyc.js';
+import { ldmAvailableDate, ldmIsUnlocked, derIsSent } from './kyc.js';
 
 describe('ldmAvailableDate', () => {
   it('returns null when derDate is null', () => {
@@ -63,15 +63,5 @@ describe('derIsSent', () => {
 
   it('returns false for undefined', () => {
     expect(derIsSent(undefined)).toBe(false);
-  });
-});
-
-describe('NM_SIGNATAIRES', () => {
-  it('has exactly 2 entries', () => {
-    expect(Object.keys(NM_SIGNATAIRES)).toHaveLength(2);
-  });
-
-  it('Baptiste Money has titre "Président"', () => {
-    expect(NM_SIGNATAIRES['Baptiste Money'].titre).toBe('Président');
   });
 });

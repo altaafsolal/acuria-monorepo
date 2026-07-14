@@ -11,7 +11,7 @@ import type {
   TimelineEvent,
 } from '../types';
 
-export interface CreateClientNoteInput {
+interface CreateClientNoteInput {
   date: string;
   noteType: string;
   auteur: string;
@@ -145,7 +145,7 @@ export function useClientKycDocuments(clientId: string | undefined) {
   });
 }
 
-export interface UpdateKycDocumentInput {
+interface UpdateKycDocumentInput {
   id: string;
   recu?: boolean;
   dateReception?: string | null;

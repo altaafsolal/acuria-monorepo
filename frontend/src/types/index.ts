@@ -1,5 +1,5 @@
 export type { Role, Status, CountStats, HealthResponse, ChartDataItem } from './common';
-export type { LoginResponse, RefreshResponse, MeResponse } from './auth';
+export type { LoginResponse, MeResponse } from './auth';
 export type {
   User,
   UsersResponse,
@@ -25,7 +25,6 @@ export type {
   DashboardStats,
 } from './tenant';
 export type {
-  ClientStatus,
   ClientType,
   Client,
   ClientInputFields,
@@ -36,7 +35,6 @@ export type {
   ClientsResponse,
 } from './client';
 export type {
-  AccueilStats,
   AccueilTodoItem,
   AccueilResponse,
 } from './accueil';
@@ -58,7 +56,6 @@ export type {
   FccHistoryResponse,
 } from './kyc';
 export type {
-  AuditLog,
   AuditLogsResponse,
   AuditListParams,
 } from './audit';

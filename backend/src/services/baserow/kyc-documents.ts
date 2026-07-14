@@ -48,12 +48,6 @@ export async function listKycDocumentsByClient(
   }, ctx)).map(mapRow).map(toPublicKycDocument);
 }
 
-export async function listAllKycDocuments(tenantId: string): Promise<DbKycDocument[]> {
-  const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'kyc_documents');
-  return (await listAllRows(tableId, {}, ctx)).map(mapRow);
-}
-
 export async function getKycDocumentById(
   tenantId: string,
   documentId: string,

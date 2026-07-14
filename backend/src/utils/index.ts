@@ -19,5 +19,5 @@ export {
   pickFileValues,
   normalizePhoneForBaserow,
 } from './baserow.js';
-export { HttpError, asyncHandler, requireTenant, reqParam, errorHandler } from './http.js';
+export { HttpError, asyncHandler, reqParam, errorHandler } from './http.js';
 export { loadRoutes } from './loadRoutes.js';

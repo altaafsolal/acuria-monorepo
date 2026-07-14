@@ -18,14 +18,6 @@ export function asyncHandler(
   };
 }
 
-export function requireTenant(req: Request): string {
-  const tenantId = req.user?.tenantId ?? null;
-  if (!tenantId) {
-    throw new HttpError(403, 'No tenant assigned to this account');
-  }
-  return tenantId;
-}
-
 export function reqParam(req: Request, name: string): string {
   const value = req.params[name];
   if (Array.isArray(value)) {

@@ -1,10 +1,10 @@
-export const ACTION_LABELS: Record<string, string> = {
+const ACTION_LABELS: Record<string, string> = {
   'auth.login': 'Connexion',
   'auth.logout': 'Déconnexion',
   'auth.refresh': 'Rafraîchissement session',
 };
 
-export const METHOD_LABELS: Record<string, string> = {
+const METHOD_LABELS: Record<string, string> = {
   POST: 'Création',
   PUT: 'Modification',
   PATCH: 'Modification',

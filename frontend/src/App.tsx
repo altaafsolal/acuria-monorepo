@@ -1,33 +1,42 @@
-import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useApp } from './context/AppContext';
-import PageLoading from './components/ui/PageLoading';
-import Layout from './components/layout/Layout';
-import DashboardLayout from './components/layout/DashboardLayout';
-import ProtectedRoute from './components/routing/ProtectedRoute';
-import SuperAdminRoute from './components/routing/SuperAdminRoute';
-import TenantUserRoute from './components/routing/TenantUserRoute';
+import React, { lazy, Suspense } from "react";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import { useApp } from "./context/AppContext";
+import PageLoading from "./components/ui/PageLoading";
+import Layout from "./components/layout/Layout";
+import DashboardLayout from "./components/layout/DashboardLayout";
+import ProtectedRoute from "./components/routing/ProtectedRoute";
+import SuperAdminRoute from "./components/routing/SuperAdminRoute";
+import TenantUserRoute from "./components/routing/TenantUserRoute";
 
-const HomePage = lazy(() => import('./pages/public/HomePage'));
-const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
-const SetPasswordPage = lazy(() => import('./pages/auth/SetPasswordPage'));
-const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
-const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
-const AccueilPage = lazy(() => import('./pages/dashboard/AccueilPage'));
-const TenantsPage = lazy(() => import('./pages/tenants/TenantsPage'));
-const TenantUsersPage = lazy(() => import('./pages/tenants/TenantUsersPage'));
-const TenantClientsPage = lazy(() => import('./pages/tenants/TenantClientsPage'));
-const ClientsPage = lazy(() => import('./pages/clients/ClientsPage'));
-const UsersPage = lazy(() => import('./pages/users/UsersPage'));
-const UserDetailPage = lazy(() => import('./pages/users/UserDetailPage'));
-const KycDerPage = lazy(() => import('./pages/kyc/KycDerPage'));
-const KycFccPage = lazy(() => import('./pages/kyc/KycFccPage'));
-const PlatformAuditPage = lazy(() => import('./pages/audit/PlatformAuditPage'));
-const TenantAuditPage = lazy(() => import('./pages/audit/TenantAuditPage'));
-const MarchesPage = lazy(() => import('./pages/outils/MarchesPage'));
-const SimulateursPage = lazy(() => import('./pages/outils/SimulateursPage'));
-const FccPpPage = lazy(() => import('./pages/fcc/FccPpPage'));
-const FccPmPage = lazy(() => import('./pages/fcc/FccPmPage'));
+const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
+const SetPasswordPage = lazy(() => import("./pages/auth/SetPasswordPage"));
+const ForgotPasswordPage = lazy(
+  () => import("./pages/auth/ForgotPasswordPage"),
+);
+const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
+const AccueilPage = lazy(() => import("./pages/dashboard/AccueilPage"));
+const TenantsPage = lazy(() => import("./pages/tenants/TenantsPage"));
+const TenantUsersPage = lazy(() => import("./pages/tenants/TenantUsersPage"));
+const TenantClientsPage = lazy(
+  () => import("./pages/tenants/TenantClientsPage"),
+);
+const ClientsPage = lazy(() => import("./pages/clients/ClientsPage"));
+const UsersPage = lazy(() => import("./pages/users/UsersPage"));
+const UserDetailPage = lazy(() => import("./pages/users/UserDetailPage"));
+const KycDerPage = lazy(() => import("./pages/kyc/KycDerPage"));
+const KycFccPage = lazy(() => import("./pages/kyc/KycFccPage"));
+const PlatformAuditPage = lazy(() => import("./pages/audit/PlatformAuditPage"));
+const TenantAuditPage = lazy(() => import("./pages/audit/TenantAuditPage"));
+const MarchesPage = lazy(() => import("./pages/outils/MarchesPage"));
+const SimulateursPage = lazy(() => import("./pages/outils/SimulateursPage"));
+const FccPpPage = lazy(() => import("./pages/fcc/FccPpPage"));
+const FccPmPage = lazy(() => import("./pages/fcc/FccPmPage"));
 
 function PageLoader() {
   return <PageLoading fullScreen />;
@@ -39,11 +48,20 @@ function DashboardHome() {
 }
 
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    console.log(location.pathname);
+
+    if (location.pathname === "/") navigate("/login"); // Switches page programmatically
+  }, []);
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<HomePage />} />
+          {/* <Route index element={<HomePage />} /> */}
           <Route path="login" element={<LoginPage />} />
           <Route path="set-password" element={<SetPasswordPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
@@ -55,116 +73,116 @@ export default function App() {
         <Route path="fcc/pm" element={<FccPmPage />} />
 
         <Route
-          element={(
+          element={
             <ProtectedRoute>
               <DashboardLayout />
             </ProtectedRoute>
-          )}
+          }
         >
           <Route path="dashboard" element={<DashboardHome />} />
           <Route
             path="dashboard/tenants"
-            element={(
+            element={
               <SuperAdminRoute>
                 <TenantsPage />
               </SuperAdminRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/tenants/:tenantId/users"
-            element={(
+            element={
               <SuperAdminRoute>
                 <TenantUsersPage />
               </SuperAdminRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/tenants/:tenantId/clients"
-            element={(
+            element={
               <SuperAdminRoute>
                 <TenantClientsPage />
               </SuperAdminRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/clients"
-            element={(
+            element={
               <TenantUserRoute>
                 <ClientsPage />
               </TenantUserRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/kyc/der"
-            element={(
+            element={
               <TenantUserRoute>
                 <KycDerPage />
               </TenantUserRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/kyc/fcc"
-            element={(
+            element={
               <TenantUserRoute>
                 <KycFccPage />
               </TenantUserRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/platform/audit"
-            element={(
+            element={
               <SuperAdminRoute>
                 <PlatformAuditPage />
               </SuperAdminRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/audit"
-            element={(
+            element={
               <TenantUserRoute adminOnly>
                 <TenantAuditPage />
               </TenantUserRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/users"
-            element={(
+            element={
               <TenantUserRoute adminOnly>
                 <UsersPage />
               </TenantUserRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/users/new"
-            element={(
+            element={
               <TenantUserRoute adminOnly>
                 <UserDetailPage />
               </TenantUserRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/users/:userId"
-            element={(
+            element={
               <TenantUserRoute adminOnly>
                 <UserDetailPage />
               </TenantUserRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/marches"
-            element={(
+            element={
               <TenantUserRoute>
                 <MarchesPage />
               </TenantUserRoute>
-            )}
+            }
           />
           <Route
             path="dashboard/simulateurs"
-            element={(
+            element={
               <TenantUserRoute>
                 <SimulateursPage />
               </TenantUserRoute>
-            )}
+            }
           />
         </Route>
       </Routes>

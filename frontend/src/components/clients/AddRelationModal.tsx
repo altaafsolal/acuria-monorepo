@@ -4,7 +4,7 @@ import { FiX } from 'react-icons/fi';
 import type { Client } from '../../types';
 import Select from '../ui/Select';
 
-export const RELATION_ROLE_OPTIONS = [
+const RELATION_ROLE_OPTIONS = [
   { value: 'Associé', label: 'Associé' },
   { value: 'Dirigeant', label: 'Dirigeant' },
   { value: 'Bénéficiaire effectif', label: 'Bénéficiaire effectif' },
@@ -13,7 +13,7 @@ export const RELATION_ROLE_OPTIONS = [
   { value: 'Autre', label: 'Autre' },
 ] as const;
 
-export type RelationRoleValue = (typeof RELATION_ROLE_OPTIONS)[number]['value'];
+type RelationRoleValue = (typeof RELATION_ROLE_OPTIONS)[number]['value'];
 
 export interface AddRelationInput {
   clientBId: string;

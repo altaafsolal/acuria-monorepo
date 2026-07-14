@@ -47,13 +47,6 @@ describe('api URL builders', () => {
     expect(api.tenantClients('t1')).toBe('/api/platform/tenants/t1/clients');
   });
 
-  it('builds file download URL with encoded params', () => {
-    const url = api.fileDownload('https://example.com/file.pdf', 'report.pdf');
-    expect(url).toContain('/api/files/download?');
-    expect(url).toContain('url=');
-    expect(url).toContain('filename=report.pdf');
-  });
-
   it('builds audit log URLs with query params', () => {
     const url = api.platformAuditLogs({ page: 2, pageSize: 20, search: 'test' });
     expect(url).toContain('/api/platform/audit?');

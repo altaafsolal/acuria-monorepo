@@ -45,12 +45,3 @@ export async function postAuthenticatedBlob(
   if (!response.ok) throw new Error('Failed to generate preview');
   return response.blob();
 }
-
-export function fileToDataUrl(file: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
-  });
-}

@@ -13,8 +13,7 @@ import {
 import type { Client, ClientRelation } from "../../types";
 import AddRelationModal, { type AddRelationInput } from "./AddRelationModal";
 
-export type { AddRelationInput, RelationRoleValue } from "./AddRelationModal";
-export { RELATION_ROLE_OPTIONS } from "./AddRelationModal";
+export type { AddRelationInput } from "./AddRelationModal";
 
 type RelationTypeConfig = {
   icon: typeof FiLink2;

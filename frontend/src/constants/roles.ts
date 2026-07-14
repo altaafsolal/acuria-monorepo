@@ -38,30 +38,12 @@ export const TENANT_STATUS_LABELS: Record<string, string> = {
   failed: 'Échec de création',
 };
 
-export const CLIENT_STATUS = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  PROSPECT: 'prospect',
-  ARCHIVED: 'archived',
-} as const;
-
 export const CLIENT_STATUS_LABELS: Record<string, string> = {
   active: 'Client actif',
   inactive: 'Inactif',
   prospect: 'Prospect',
   archived: 'Archivé',
 };
-
-export const CLIENT_TYPE_LABELS: Record<string, string> = {
-  PP: 'Personne physique',
-  PM: 'Personne morale',
-};
-
-export const KYC_STATUS = {
-  COMPLETE: 'complete',
-  PENDING: 'pending',
-  INCOMPLETE: 'incomplete',
-} as const;
 
 export const KYC_STATUS_LABELS: Record<string, string> = {
   pending: 'En attente',

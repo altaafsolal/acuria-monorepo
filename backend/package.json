@@ -12,7 +12,6 @@
     "migrate:airtable": "tsx cli/migrate-airtable.ts",
     "provision:tenant-workspace": "tsx cli/provision-tenant-workspace.ts",
     "provision:tenant-tables": "tsx cli/provision-tenant-tables.ts",
-    "provision:tenant": "tsx cli/provision-tenant-tables.ts",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:watch": "vitest",

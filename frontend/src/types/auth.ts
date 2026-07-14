@@ -5,10 +5,6 @@ export interface LoginResponse {
   user: User;
 }
 
-export interface RefreshResponse {
-  accessToken: string;
-}
-
 export interface MeResponse {
   user: User;
 }

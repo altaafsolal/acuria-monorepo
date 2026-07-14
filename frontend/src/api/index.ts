@@ -30,12 +30,6 @@ const api = {
   verifyOtp: `${baseUrl}/auth/verify-otp`,
   setPassword: `${baseUrl}/auth/set-password`,
 
-  // Files
-  fileDownload: (url: string, filename: string) => {
-    const qs = new URLSearchParams({ url, filename });
-    return `${baseUrl}/files/download?${qs.toString()}`;
-  },
-
   // Accueil
   accueil: `${baseUrl}/accueil`,
 

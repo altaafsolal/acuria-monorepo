@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { HttpError, asyncHandler, requireTenant, reqParam, errorHandler } from './http.js';
+import { HttpError, asyncHandler, reqParam, errorHandler } from './http.js';
 
 describe('HttpError', () => {
   it('sets status, message, and name', () => {
@@ -40,33 +40,6 @@ describe('asyncHandler', () => {
     await wrapped(req, res, next);
 
     expect(next).toHaveBeenCalledWith(error);
-  });
-});
-
-describe('requireTenant', () => {
-  it('returns tenantId when present on req.user', () => {
-    const req = { user: { tenantId: 'tenant-123' } } as any;
-    expect(requireTenant(req)).toBe('tenant-123');
-  });
-
-  it('throws HttpError(403) when tenantId is missing', () => {
-    const req = { user: { tenantId: null } } as any;
-    expect(() => requireTenant(req)).toThrow(HttpError);
-    try {
-      requireTenant(req);
-    } catch (e) {
-      expect((e as HttpError).status).toBe(403);
-    }
-  });
-
-  it('throws HttpError(403) when user is undefined', () => {
-    const req = {} as any;
-    expect(() => requireTenant(req)).toThrow(HttpError);
-    try {
-      requireTenant(req);
-    } catch (e) {
-      expect((e as HttpError).status).toBe(403);
-    }
   });
 });
 
