@@ -120,6 +120,33 @@ export function nockTenantsTable(
   return nockListRows(TABLE_IDS.tenants, tenantRows, { times });
 }
 
+/** Stable IDs for a second tenant's per-tenant tables in multi-tenant tests */
+export const TABLE_IDS_B = {
+  clients: '300',
+  gestionnaires: '301',
+  kycDocuments: '302',
+  notes: '303',
+  relations: '304',
+  tasks: '305',
+  tenantAuditLogs: '306',
+  fccSubmissions: '307',
+};
+
+/** Seed table caches for a second tenant using a custom ID set */
+export function seedTableCachesForTenant(
+  tenantId: string,
+  tableIds: typeof TABLE_IDS_B,
+): void {
+  setTenantTableId(tenantId, 'clients', tableIds.clients);
+  setTenantTableId(tenantId, 'gestionnaires', tableIds.gestionnaires);
+  setTenantTableId(tenantId, 'kyc_documents', tableIds.kycDocuments);
+  setTenantTableId(tenantId, 'notes', tableIds.notes);
+  setTenantTableId(tenantId, 'relations', tableIds.relations);
+  setTenantTableId(tenantId, 'tasks', tableIds.tasks);
+  setTenantTableId(tenantId, 'audit_logs', tableIds.tenantAuditLogs);
+  setTenantTableId(tenantId, 'fcc_submissions', tableIds.fccSubmissions);
+}
+
 /** Nock a specific tenant row GET */
 export function nockTenantById(
   rowId: string | number,
