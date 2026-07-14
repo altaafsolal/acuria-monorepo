@@ -36,3 +36,13 @@ export async function resolveTenantTableId(tenantId: string, baseName: TenantTab
   resolvedTableIds.set(key, tableId);
   return tableId;
 }
+
+/** @internal exported for testing */
+export function clearTenantTablesCache(): void {
+  resolvedTableIds.clear();
+}
+
+/** @internal exported for testing — pre-populate cache to skip Baserow discovery */
+export function setTenantTableId(tenantId: string, baseName: string, tableId: string): void {
+  resolvedTableIds.set(`${tenantId}:${baseName}`, tableId);
+}

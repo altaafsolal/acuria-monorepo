@@ -6,10 +6,8 @@ import { asyncHandler, HttpError} from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
-
 // Mark an FCC submission as validated and update client FCC status to Signé
-router.post('/quick-validate', asyncHandler(async (req, res) => {
+router.post('/quick-validate', authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant, asyncHandler(async (req, res) => {
   const tenantId = req.tenantId!;
   const { submissionId, clientId } = req.body as { submissionId?: string; clientId?: string };
 

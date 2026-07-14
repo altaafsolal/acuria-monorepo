@@ -7,6 +7,11 @@ const USER_CACHE_TTL_MS = 30_000;
 interface CachedUser { user: DbUser; expiresAt: number; }
 const userCache = new Map<string, CachedUser>();
 
+/** @internal exported for testing */
+export function clearAuthUserCache(): void {
+  userCache.clear();
+}
+
 async function getCachedUser(userId: string): Promise<DbUser | null> {
   const cached = userCache.get(userId);
   if (cached && Date.now() < cached.expiresAt) return cached.user;

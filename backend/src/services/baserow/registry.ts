@@ -56,3 +56,13 @@ export async function getAuditLogsTableId(): Promise<string> {
   const { auditLogsTableId } = await resolveMainTableIds();
   return auditLogsTableId;
 }
+
+/** @internal exported for testing */
+export function clearRegistryCache(): void {
+  cachedTableIds = null;
+}
+
+/** @internal exported for testing — pre-populate cache to skip Baserow discovery */
+export function setRegistryCache(ids: MainTableIds): void {
+  cachedTableIds = ids;
+}

@@ -5,9 +5,7 @@ import { asyncHandler} from '../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
-router.use(authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant);
-
-router.get('/history', asyncHandler(async (req, res) => {
+router.get('/history', authenticate, requireRole('tenant_admin', 'standard_user'), requireTenant, asyncHandler(async (req, res) => {
   const tenantId = req.tenantId!;
   const clientId = typeof req.query.clientId === 'string' ? req.query.clientId : undefined;
 
