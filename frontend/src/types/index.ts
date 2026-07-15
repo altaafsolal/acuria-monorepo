@@ -52,7 +52,7 @@ export type {
   SendLdmInput,
   SendFccResult,
   TenantBranding,
-  FccSubmission,
+  FccClient,
   FccHistoryResponse,
 } from './kyc';
 export type {

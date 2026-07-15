@@ -12,7 +12,7 @@ export const TENANT_TABLE_BASES = [
   'relations',
   'tasks',
   'audit_logs',
-  'fcc_submissions',
+  'fcc_clients',
 ] as const;
 
 export const BASEROW_FIELDS = {
@@ -211,19 +211,17 @@ export const BASEROW_FIELDS = {
     entityId: 'entity_id',
     details: 'details',
   },
-  fccSubmissions: {
+  fccClients: {
     name: 'Name',
     clientId: 'client_id',
-    submittedAt: 'submitted_at',
-    formType: 'form_type',
-    profilRisque: 'profil_risque',
-    profilConnaissance: 'profil_connaissance',
-    scoreConnaissance: 'score_connaissance',
-    scoreRisque: 'score_risque',
-    statut: 'statut',
-    rawData: 'raw_data',
-    docusignEnvelopeId: 'docusign_envelope_id',
-    airtableRecordId: 'airtable_record_id',
+    profilRisque: 'Profil_Risque',
+    profilConnaissance: 'Profil_Connaissance',
+    scoreConnaissance: 'Score_Connaissance',
+    scoreRisque: 'Score_Risque',
+    docusignEnvelopeId: 'DocuSign_Envelope_ID',
+    docusignSentAt: 'DocuSign_Sent_At',
+    notesNm: 'Notes_NM',
+    migrationRecordId: 'migration_record_id',
     typeFormulaire: 'Type_Formulaire',
     idFormulaire: 'ID_Formulaire',
     dateSoumission: 'Date_Soumission',
@@ -360,16 +358,13 @@ export const GESTIONNAIRE_STATUS_OPTIONS = [
   { value: 'Inactif', color: 'dark-gray' },
 ] as const;
 
-export const FCC_SUBMISSION_STATUS_OPTIONS = [
-  { value: 'En attente', color: 'dark-gray' },
-  { value: 'Soumis', color: 'dark-blue' },
-  { value: 'Validé', color: 'dark-green' },
-  { value: 'Signé', color: 'dark-green' },
-  { value: 'Expiré', color: 'dark-orange' },
-] as const;
-
 export const FCC_DOSSIER_STATUS_OPTIONS = [
   { value: 'En attente', color: 'dark-gray' },
+  { value: 'En review', color: 'dark-blue' },
   { value: 'Validé', color: 'dark-green' },
+  { value: 'Envoyé DocuSign', color: 'dark-cyan' },
+  { value: 'Signé', color: 'dark-green' },
+  { value: 'Incomplet', color: 'dark-orange' },
+  { value: 'Archivé', color: 'dark-gray' },
   { value: 'Rejeté', color: 'dark-red' },
 ] as const;

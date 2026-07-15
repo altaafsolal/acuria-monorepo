@@ -9,7 +9,7 @@ import {
   makeTenantRecord,
   makeTenantRow,
   makeDbClient,
-  makeDbFccSubmission,
+  makeDbFccClient,
 } from '../test/helpers/fixtures.js';
 import {
   seedTableCaches,
@@ -103,22 +103,20 @@ function makeClientRow(client: ReturnType<typeof makeDbClient>): Record<string, 
 
 /* ── FCC Submissions ─────────────────────────────────────────────────── */
 
-function makeFccSubmissionRow(sub: ReturnType<typeof makeDbFccSubmission>): Record<string, unknown> {
-  const F = BASEROW_FIELDS.fccSubmissions;
+function makeFccClientRow(sub: ReturnType<typeof makeDbFccClient>): Record<string, unknown> {
+  const F = BASEROW_FIELDS.fccClients;
   return {
     id: Number(sub.id),
     [F.name]: sub.name,
     [F.clientId]: sub.client_id ? [{ id: Number(sub.client_id), value: `Client ${sub.client_id}` }] : [],
-    [F.submittedAt]: sub.submitted_at ?? '',
-    [F.formType]: sub.form_type ?? '',
     [F.profilRisque]: sub.profil_risque ?? '',
     [F.profilConnaissance]: sub.profil_connaissance ?? '',
     [F.scoreConnaissance]: sub.score_connaissance,
     [F.scoreRisque]: sub.score_risque,
-    [F.statut]: sub.statut ? { id: 1, value: sub.statut, color: 'blue' } : null,
-    [F.rawData]: sub.raw_data ?? '',
     [F.docusignEnvelopeId]: sub.docusign_envelope_id ?? '',
-    [F.airtableRecordId]: sub.airtable_record_id ?? '',
+    [F.docusignSentAt]: sub.docusign_sent_at ?? '',
+    [F.notesNm]: sub.notes_nm ?? '',
+    [F.migrationRecordId]: sub.migration_record_id ?? '',
     [F.typeFormulaire]: sub.type_formulaire ?? '',
     [F.idFormulaire]: sub.id_formulaire ?? '',
     [F.dateSoumission]: sub.date_soumission ?? '',
@@ -313,16 +311,16 @@ describe('Multi-tenant integration', () => {
   /* ── FCC isolation ─────────────────────────────────────────────── */
 
   describe('FCC isolation', () => {
-    const subA1 = makeDbFccSubmission({ id: '400', client: 'Alice', statut: 'En attente' });
-    const subA2 = makeDbFccSubmission({ id: '401', client: 'Bob', statut: 'Signé' });
-    const subB1 = makeDbFccSubmission({ id: '500', client: 'Xavier', statut: 'En attente' });
+    const subA1 = makeDbFccClient({ id: '400', client: 'Alice', statut_dossier: 'En attente' });
+    const subA2 = makeDbFccClient({ id: '401', client: 'Bob', statut_dossier: 'Signé' });
+    const subB1 = makeDbFccClient({ id: '500', client: 'Xavier', statut_dossier: 'En attente' });
 
     it('tenant A FCC history uses tenant A table', async () => {
       nockUserById('10', userARow);
       nockTenantById(TENANT_A_ID, tenantARow);
-      nockListRows(TABLE_IDS.fccSubmissions, [
-        makeFccSubmissionRow(subA1),
-        makeFccSubmissionRow(subA2),
+      nockListRows(TABLE_IDS.fccClients, [
+        makeFccClientRow(subA1),
+        makeFccClientRow(subA2),
       ]);
 
       const res = await supertest(app)
@@ -330,22 +328,22 @@ describe('Multi-tenant integration', () => {
         .set('Authorization', authHeader({ userId: '10', tenantId: TENANT_A_ID }));
 
       expect(res.status).toBe(200);
-      expect(res.body.submissions).toHaveLength(2);
-      expect(res.body.submissions[0].id).toBe('400');
+      expect(res.body.fccClients).toHaveLength(2);
+      expect(res.body.fccClients[0].id).toBe('400');
     });
 
     it('tenant B FCC history uses tenant B table', async () => {
       nockUserById('20', userBRow);
       nockTenantById(TENANT_B_ID, tenantBRow);
-      nockListRows(TABLE_IDS_B.fccSubmissions, [makeFccSubmissionRow(subB1)]);
+      nockListRows(TABLE_IDS_B.fccClients, [makeFccClientRow(subB1)]);
 
       const res = await supertest(app)
         .get('/api/fcc/history')
         .set('Authorization', authHeader({ userId: '20', tenantId: TENANT_B_ID }));
 
       expect(res.status).toBe(200);
-      expect(res.body.submissions).toHaveLength(1);
-      expect(res.body.submissions[0].id).toBe('500');
+      expect(res.body.fccClients).toHaveLength(1);
+      expect(res.body.fccClients[0].id).toBe('500');
     });
   });
 });

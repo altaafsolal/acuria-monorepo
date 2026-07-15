@@ -1,4 +1,4 @@
-import { createField, createTable, updateField } from '../../src/services/baserow/api.js';
+import { createField, createTable, deleteField, updateField, updateTable } from '../../src/services/baserow/api.js';
 import type { BaserowTable } from '../types/baserow.js';
 import type { FieldDef } from '../types/baserow.js';
 
@@ -55,6 +55,54 @@ export async function renameField(
   existingNames.delete(oldName);
   existingNames.add(newName);
   console.log(`    ✓ renamed field "${oldName}" → "${newName}"`);
+}
+
+/** Renames a table if `oldName` exists and `newName` does not. Idempotent. */
+export async function renameTable(
+  databaseId: string,
+  oldName: string,
+  newName: string,
+  existingTables: BaserowTable[],
+): Promise<void> {
+  const hasNew = existingTables.some((t) => t.name === newName);
+  const oldTable = existingTables.find((t) => t.name === oldName);
+
+  if (hasNew && oldTable) {
+    console.log(
+      `  ⚠ both "${oldName}" and "${newName}" exist in database ${databaseId} — skipping rename. Merge and delete "${oldName}" manually.`,
+    );
+    return;
+  }
+  if (hasNew) {
+    console.log(`  · table "${oldName}" already renamed to "${newName}"`);
+    return;
+  }
+  if (!oldTable) {
+    console.log(`  · table "${oldName}" not found, skipping rename`);
+    return;
+  }
+  await updateTable(oldTable.id, { name: newName });
+  oldTable.name = newName;
+  console.log(`  ✓ renamed table "${oldName}" → "${newName}"`);
+}
+
+/** Deletes a field if it exists. Idempotent. */
+export async function deleteFieldIfExists(
+  tableId: string | number,
+  name: string,
+  existingNames: Set<string>,
+): Promise<void> {
+  if (!existingNames.has(name)) {
+    console.log(`    · field "${name}" not found, skipping delete`);
+    return;
+  }
+  const { listTableFieldsWithJwt } = await import('../../src/services/baserow/api.js');
+  const fields = await listTableFieldsWithJwt(tableId);
+  const field = fields.find((f) => f.name === name);
+  if (!field) return;
+  await deleteField(field.id);
+  existingNames.delete(name);
+  console.log(`    ✓ deleted field "${name}"`);
 }
 
 export async function ensureTextFields(

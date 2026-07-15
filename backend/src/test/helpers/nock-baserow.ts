@@ -17,7 +17,7 @@ export const TABLE_IDS = {
   relations: '204',
   tasks: '205',
   tenantAuditLogs: '206',
-  fccSubmissions: '207',
+  fccClients: '207',
 };
 
 /** Pre-populate all caches so tests never hit Baserow for table discovery */
@@ -35,7 +35,7 @@ export function seedTableCaches(tenantId = '1'): void {
   setTenantTableId(tenantId, 'relations', TABLE_IDS.relations);
   setTenantTableId(tenantId, 'tasks', TABLE_IDS.tasks);
   setTenantTableId(tenantId, 'audit_logs', TABLE_IDS.tenantAuditLogs);
-  setTenantTableId(tenantId, 'fcc_submissions', TABLE_IDS.fccSubmissions);
+  setTenantTableId(tenantId, 'fcc_clients', TABLE_IDS.fccClients);
 }
 
 /** Nock a Baserow listRows call (GET /api/database/rows/table/{tableId}/) */
@@ -129,7 +129,7 @@ export const TABLE_IDS_B = {
   relations: '304',
   tasks: '305',
   tenantAuditLogs: '306',
-  fccSubmissions: '307',
+  fccClients: '307',
 };
 
 /** Seed table caches for a second tenant using a custom ID set */
@@ -144,7 +144,7 @@ export function seedTableCachesForTenant(
   setTenantTableId(tenantId, 'relations', tableIds.relations);
   setTenantTableId(tenantId, 'tasks', tableIds.tasks);
   setTenantTableId(tenantId, 'audit_logs', tableIds.tenantAuditLogs);
-  setTenantTableId(tenantId, 'fcc_submissions', tableIds.fccSubmissions);
+  setTenantTableId(tenantId, 'fcc_clients', tableIds.fccClients);
 }
 
 /** Nock a specific tenant row GET */

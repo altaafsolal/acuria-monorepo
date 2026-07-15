@@ -646,20 +646,18 @@ export interface AuditListParams {
   size?: number;
 }
 
-export interface DbFccSubmission {
+export interface DbFccClient {
   id: string;
   name: string;
   client_id: string | null;
-  submitted_at: string | null;
-  form_type: string;
   profil_risque: string | null;
   profil_connaissance: string | null;
   score_connaissance: number | null;
   score_risque: number | null;
-  statut: string;
-  raw_data: string | null;
   docusign_envelope_id: string | null;
-  airtable_record_id: string | null;
+  docusign_sent_at: string | null;
+  notes_nm: string | null;
+  migration_record_id: string | null;
   type_formulaire: string | null;
   id_formulaire: string | null;
   date_soumission: string | null;
@@ -711,17 +709,16 @@ export interface DbFccSubmission {
   client_fiscalite: string | null;
 }
 
-export interface PublicFccSubmission {
+export interface PublicFccClient {
   id: string;
   clientId: string | null;
-  submittedAt: string | null;
-  formType: string;
   profilRisque: string | null;
   profilConnaissance: string | null;
   scoreConnaissance: number | null;
   scoreRisque: number | null;
-  statut: string;
   docusignEnvelopeId: string | null;
+  docusignSentAt: string | null;
+  notesNm: string | null;
   typeFormulaire: string | null;
   idFormulaire: string | null;
   dateSoumission: string | null;

@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import type { Client, FccSubmission, Gestionnaire } from '../../../types';
+import type { Client, FccClient, Gestionnaire } from '../../../types';
 
 const emptyBe = { nom: null, ddn: null, lieuNaissance: null, nationalite: null, adresse: null, residenceFiscale: null, detention: null };
 
@@ -36,12 +36,13 @@ export const sampleSignataires: Gestionnaire[] = [
   },
 ];
 
-export const sampleFccSubmissions: FccSubmission[] = [
+export const sampleFccClients: FccClient[] = [
   {
-    id: '1', clientId: '1', submittedAt: '2026-07-01T10:00:00Z', formType: 'PP',
+    id: '1', clientId: '1',
     profilRisque: 'Prudent', profilConnaissance: 'Débutant',
-    scoreConnaissance: 10, scoreRisque: 5, statut: 'En attente',
-    docusignEnvelopeId: null, typeFormulaire: 'PP', idFormulaire: null,
+    scoreConnaissance: 10, scoreRisque: 5,
+    docusignEnvelopeId: null, docusignSentAt: null, notesNm: null,
+    typeFormulaire: 'PP', idFormulaire: null,
     dateSoumission: '2026-07-01', statutDossier: 'En attente',
     client: 'Jean Dupont', email: 'jean@example.com',
     telephone: null, ville: null, profession: null, scoreTotal: 15,
@@ -87,7 +88,7 @@ export const kycHandlers = [
   }),
 
   http.get('/api/fcc/history', () => {
-    return HttpResponse.json({ submissions: sampleFccSubmissions });
+    return HttpResponse.json({ fccClients: sampleFccClients });
   }),
 
   http.post('/api/fcc/quick-validate', () => {

@@ -7,25 +7,23 @@ import {
 import { createRow, listAllRows, updateRow } from './api.js';
 import { resolveTenantDbContext } from './tenant-context.js';
 import { resolveTenantTableId } from './tenant-tables.js';
-import type { BaserowRow, DbFccSubmission, PublicFccSubmission } from '../../types/domain.js';
+import type { BaserowRow, DbFccClient, PublicFccClient } from '../../types/domain.js';
 
-const F = BASEROW_FIELDS.fccSubmissions;
+const F = BASEROW_FIELDS.fccClients;
 
-function mapRow(row: BaserowRow): DbFccSubmission {
+function mapRow(row: BaserowRow): DbFccClient {
   return {
     id: String(row.id),
     name: String(row[F.name] || ''),
     client_id: pickLinkRowId(row[F.clientId]),
-    submitted_at: pickTextValue(row[F.submittedAt]),
-    form_type: pickTextValue(row[F.formType]) || 'PP',
     profil_risque: pickTextValue(row[F.profilRisque]),
     profil_connaissance: pickTextValue(row[F.profilConnaissance]),
     score_connaissance: typeof row[F.scoreConnaissance] === 'number' ? (row[F.scoreConnaissance] as number) : null,
     score_risque: typeof row[F.scoreRisque] === 'number' ? (row[F.scoreRisque] as number) : null,
-    statut: pickFieldValue(row[F.statut]) || 'Soumis',
-    raw_data: pickTextValue(row[F.rawData]),
     docusign_envelope_id: pickTextValue(row[F.docusignEnvelopeId]),
-    airtable_record_id: pickTextValue(row[F.airtableRecordId]),
+    docusign_sent_at: pickTextValue(row[F.docusignSentAt]),
+    notes_nm: pickTextValue(row[F.notesNm]),
+    migration_record_id: pickTextValue(row[F.migrationRecordId]),
     type_formulaire: pickTextValue(row[F.typeFormulaire]),
     id_formulaire: pickTextValue(row[F.idFormulaire]),
     date_soumission: pickTextValue(row[F.dateSoumission]),
@@ -78,18 +76,17 @@ function mapRow(row: BaserowRow): DbFccSubmission {
   };
 }
 
-export function toPublicFccSubmission(sub: DbFccSubmission): PublicFccSubmission {
+export function toPublicFccClient(sub: DbFccClient): PublicFccClient {
   return {
     id: sub.id,
     clientId: sub.client_id,
-    submittedAt: sub.submitted_at,
-    formType: sub.form_type,
     profilRisque: sub.profil_risque,
     profilConnaissance: sub.profil_connaissance,
     scoreConnaissance: sub.score_connaissance,
     scoreRisque: sub.score_risque,
-    statut: sub.statut,
     docusignEnvelopeId: sub.docusign_envelope_id,
+    docusignSentAt: sub.docusign_sent_at,
+    notesNm: sub.notes_nm,
     typeFormulaire: sub.type_formulaire,
     idFormulaire: sub.id_formulaire,
     dateSoumission: sub.date_soumission,
@@ -108,23 +105,23 @@ export function toPublicFccSubmission(sub: DbFccSubmission): PublicFccSubmission
   };
 }
 
-export async function listSubmissionsByClient(tenantId: string, clientId: string): Promise<PublicFccSubmission[]> {
+export async function listFccClientsByClient(tenantId: string, clientId: string): Promise<PublicFccClient[]> {
   const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'fcc_submissions');
+  const tableId = await resolveTenantTableId(tenantId, 'fcc_clients');
   const rows = await listAllRows(tableId, {
     filters: { filter_type: 'AND', filters: [{ type: 'link_row_has', field: F.clientId, value: clientId }] },
   }, ctx);
-  return rows.map(mapRow).map(toPublicFccSubmission);
+  return rows.map(mapRow).map(toPublicFccClient);
 }
 
-export async function listAllSubmissions(tenantId: string): Promise<PublicFccSubmission[]> {
+export async function listAllFccClients(tenantId: string): Promise<PublicFccClient[]> {
   const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'fcc_submissions');
+  const tableId = await resolveTenantTableId(tenantId, 'fcc_clients');
   const rows = await listAllRows(tableId, {}, ctx);
-  return rows.map(mapRow).map(toPublicFccSubmission);
+  return rows.map(mapRow).map(toPublicFccClient);
 }
 
-export async function createSubmission(
+export async function createFccClient(
   tenantId: string,
   input: {
     clientId?: string | null;
@@ -133,7 +130,6 @@ export async function createSubmission(
     profilConnaissance?: string | null;
     scoreConnaissance?: number | null;
     scoreRisque?: number | null;
-    rawData?: string | null;
     typeFormulaire?: string | null;
     idFormulaire?: string | null;
     dateSoumission?: string | null;
@@ -150,6 +146,7 @@ export async function createSubmission(
     pdfFilename?: string | null;
     prefillToken?: string | null;
     boAgent?: string | null;
+    notesNm?: string | null;
     be1Nom?: string | null;
     be1Ddn?: string | null;
     be1LieuNaissance?: string | null;
@@ -184,23 +181,20 @@ export async function createSubmission(
     clientFondsPropres?: string | null;
     clientFiscalite?: string | null;
   },
-): Promise<PublicFccSubmission> {
+): Promise<PublicFccClient> {
   const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'fcc_submissions');
+  const tableId = await resolveTenantTableId(tenantId, 'fcc_clients');
   const now = new Date().toISOString();
   const payload: Record<string, unknown> = {
     [F.name]: `FCC ${input.formType} — ${now.split('T')[0]}`,
-    [F.submittedAt]: now,
-    [F.formType]: input.formType,
     [F.profilRisque]: input.profilRisque ?? '',
     [F.profilConnaissance]: input.profilConnaissance ?? '',
     [F.scoreConnaissance]: input.scoreConnaissance ?? null,
     [F.scoreRisque]: input.scoreRisque ?? null,
-    [F.statut]: 'Soumis',
-    [F.rawData]: input.rawData ?? null,
-    [F.typeFormulaire]: input.typeFormulaire ?? '',
+    [F.notesNm]: input.notesNm ?? '',
+    [F.typeFormulaire]: input.typeFormulaire ?? input.formType ?? '',
     [F.idFormulaire]: input.idFormulaire ?? '',
-    [F.dateSoumission]: input.dateSoumission ?? '',
+    [F.dateSoumission]: input.dateSoumission ?? now,
     [F.statutDossier]: input.statutDossier ?? 'En attente',
     [F.client]: input.client ?? '',
     [F.email]: input.email ?? '',
@@ -252,35 +246,33 @@ export async function createSubmission(
     payload[F.clientId] = [Number(input.clientId)];
   }
   const row = await createRow(tableId, payload, ctx);
-  return toPublicFccSubmission(mapRow(row));
+  return toPublicFccClient(mapRow(row));
 }
 
-export async function updateSubmissionStatus(
+export async function updateFccClientStatus(
   tenantId: string,
-  submissionId: string,
-  statut: string,
+  fccClientId: string,
+  statutDossier: string,
   docusignEnvelopeId?: string,
-): Promise<PublicFccSubmission> {
+): Promise<PublicFccClient> {
   const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'fcc_submissions');
-  const payload: Record<string, unknown> = { [F.statut]: statut };
+  const tableId = await resolveTenantTableId(tenantId, 'fcc_clients');
+  const payload: Record<string, unknown> = { [F.statutDossier]: statutDossier };
   if (docusignEnvelopeId) payload[F.docusignEnvelopeId] = docusignEnvelopeId;
-  const row = await updateRow(tableId, submissionId, payload, ctx);
-  return toPublicFccSubmission(mapRow(row));
+  const row = await updateRow(tableId, fccClientId, payload, ctx);
+  return toPublicFccClient(mapRow(row));
 }
 
-export async function upsertSubmissionFromAirtable(
+export async function upsertFccClientFromAirtable(
   tenantId: string,
   data: {
     clientId?: string | null;
-    submittedAt?: string | null;
     formType?: string | null;
     profilRisque?: string | null;
     profilConnaissance?: string | null;
     scoreConnaissance?: number | null;
     scoreRisque?: number | null;
-    statut?: string | null;
-    airtableRecordId: string;
+    migrationRecordId: string;
     typeFormulaire?: string | null;
     idFormulaire?: string | null;
     dateSoumission?: string | null;
@@ -297,6 +289,7 @@ export async function upsertSubmissionFromAirtable(
     pdfFilename?: string | null;
     prefillToken?: string | null;
     boAgent?: string | null;
+    notesNm?: string | null;
     be1Nom?: string | null;
     be1Ddn?: string | null;
     be1LieuNaissance?: string | null;
@@ -331,28 +324,27 @@ export async function upsertSubmissionFromAirtable(
     clientFondsPropres?: string | null;
     clientFiscalite?: string | null;
     docusignEnvelopeId?: string | null;
+    docusignSentAt?: string | null;
   },
-): Promise<DbFccSubmission> {
+): Promise<DbFccClient> {
   const ctx = await resolveTenantDbContext(tenantId);
-  const tableId = await resolveTenantTableId(tenantId, 'fcc_submissions');
+  const tableId = await resolveTenantTableId(tenantId, 'fcc_clients');
   const rows = await listAllRows(tableId, {}, ctx);
-  const existing = rows.find((r) => pickTextValue(r[F.airtableRecordId]) === data.airtableRecordId);
-  const submittedAt = data.submittedAt || new Date().toISOString();
+  const existing = rows.find((r) => pickTextValue(r[F.migrationRecordId]) === data.migrationRecordId);
+  const dateSoumission = data.dateSoumission || new Date().toISOString();
   const formType = data.formType || 'PP';
   const rowPayload: Record<string, unknown> = {
-    [F.name]: `FCC ${formType} — ${submittedAt.split('T')[0]}`,
+    [F.name]: `FCC ${formType} — ${dateSoumission.split('T')[0]}`,
     [F.clientId]: data.clientId ? [Number(data.clientId)] : [],
-    [F.submittedAt]: submittedAt,
-    [F.formType]: formType,
     [F.profilRisque]: data.profilRisque ?? '',
     [F.profilConnaissance]: data.profilConnaissance ?? '',
     [F.scoreConnaissance]: data.scoreConnaissance ?? null,
     [F.scoreRisque]: data.scoreRisque ?? null,
-    [F.statut]: data.statut || 'Soumis',
-    [F.airtableRecordId]: data.airtableRecordId,
-    [F.typeFormulaire]: data.typeFormulaire ?? '',
+    [F.migrationRecordId]: data.migrationRecordId,
+    [F.notesNm]: data.notesNm ?? '',
+    [F.typeFormulaire]: data.typeFormulaire ?? formType,
     [F.idFormulaire]: data.idFormulaire ?? '',
-    [F.dateSoumission]: data.dateSoumission ?? '',
+    [F.dateSoumission]: dateSoumission,
     [F.statutDossier]: data.statutDossier ?? '',
     [F.client]: data.client ?? '',
     [F.email]: data.email ?? '',
@@ -400,6 +392,7 @@ export async function upsertSubmissionFromAirtable(
     [F.clientFondsPropres]: data.clientFondsPropres ?? '',
     [F.clientFiscalite]: data.clientFiscalite ?? '',
     [F.docusignEnvelopeId]: data.docusignEnvelopeId ?? '',
+    [F.docusignSentAt]: data.docusignSentAt ?? null,
   };
   if (existing) {
     return mapRow(await updateRow(tableId, existing.id, rowPayload, ctx));

@@ -138,10 +138,24 @@ export async function createTable(
   return data;
 }
 
+export async function updateTable(
+  tableId: string | number,
+  patch: { name?: string },
+): Promise<BaserowTable> {
+  const client = await createAdminClient();
+  const { data } = await client.patch<BaserowTable>(`/database/tables/${tableId}/`, patch);
+  return data;
+}
+
 export async function createField(tableId: string | number, field: FieldDef): Promise<BaserowField> {
   const client = await createAdminClient();
   const { data } = await client.post<BaserowField>(`/database/fields/table/${tableId}/`, field);
   return data;
+}
+
+export async function deleteField(fieldId: string | number): Promise<void> {
+  const client = await createAdminClient();
+  await client.delete(`/database/fields/${fieldId}/`);
 }
 
 export async function updateField(

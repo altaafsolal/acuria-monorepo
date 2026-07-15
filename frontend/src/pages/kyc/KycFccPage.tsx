@@ -32,10 +32,10 @@ const FILTERS = [
 
 type Tab = 'suivi' | 'dossiers';
 
-function submissionStatutClass(statut: string): string {
+function dossierStatutClass(statut: string | null): string {
   if (statut === 'Signé' || statut === 'Validé') return 'badge-doc-signe';
-  if (statut === 'Soumis') return 'badge-doc-envoye';
-  if (statut === 'Expiré') return 'badge-doc-renouveler';
+  if (statut === 'En review' || statut === 'Envoyé DocuSign') return 'badge-doc-envoye';
+  if (statut === 'Incomplet' || statut === 'Rejeté') return 'badge-doc-renouveler';
   return 'badge-doc-non';
 }
 
@@ -85,14 +85,14 @@ export default function KycFccPage() {
     sendFccDocuSign.mutate({ clientId });
   };
 
-  const handleQuickValidate = async (clientId: string, submissionId?: string) => {
+  const handleQuickValidate = async (clientId: string, fccClientId?: string) => {
     const confirmed = await confirm({
       title: 'Valider la FCC',
       message: 'Marquer cette FCC comme signée/validée manuellement ?',
       confirmLabel: 'Valider',
     });
     if (!confirmed) return;
-    quickValidate.mutate({ clientId, submissionId });
+    quickValidate.mutate({ clientId, fccClientId });
   };
 
   return (
@@ -280,22 +280,22 @@ export default function KycFccPage() {
                     ) : (
                       dossiers.map((sub) => (
                         <tr key={sub.id}>
-                          <td className="text-muted">{formatDateFr(sub.submittedAt)}</td>
+                          <td className="text-muted">{formatDateFr(sub.dateSoumission)}</td>
                           <td>
-                            <span className={`client-type type-${sub.formType === 'PM' ? 'pm' : 'pp'}`}>
-                              {sub.formType}
+                            <span className={`client-type type-${sub.typeFormulaire === 'PM' ? 'pm' : 'pp'}`}>
+                              {sub.typeFormulaire}
                             </span>
                           </td>
                           <td>{sub.profilRisque ?? '—'}</td>
                           <td>{sub.profilConnaissance ?? '—'}</td>
                           <td>{sub.scoreConnaissance ?? '—'}</td>
                           <td>
-                            <span className={`crm-badge ${submissionStatutClass(sub.statut)}`}>
-                              {sub.statut}
+                            <span className={`crm-badge ${dossierStatutClass(sub.statutDossier)}`}>
+                              {sub.statutDossier ?? '—'}
                             </span>
                           </td>
                           <td>
-                            {sub.statut === 'Soumis' && sub.clientId && (
+                            {(sub.statutDossier === 'En attente' || sub.statutDossier === 'En review') && sub.clientId && (
                               <button
                                 type="button"
                                 className="btn-secondary btn-sm"

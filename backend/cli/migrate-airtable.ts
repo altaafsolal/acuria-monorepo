@@ -24,7 +24,7 @@ import { join, resolve } from 'node:path';
 import 'dotenv/config';
 import { env, isBaserowConfigured } from '../src/config/env.js';
 import * as clientsRepo from '../src/services/baserow/clients.js';
-import * as fccSubmissionsRepo from '../src/services/baserow/fcc-submissions.js';
+import * as fccClientsRepo from '../src/services/baserow/fcc-clients.js';
 import * as gestionnairesRepo from '../src/services/baserow/gestionnaires.js';
 import * as kycDocsRepo from '../src/services/baserow/kyc-documents.js';
 import * as notesRepo from '../src/services/baserow/notes.js';
@@ -46,7 +46,7 @@ type MigrationStep =
   | 'kyc-docs'
   | 'notes'
   | 'tasks'
-  | 'fcc-submissions';
+  | 'fcc-clients';
 
 const ALL_STEPS: MigrationStep[] = [
   'gestionnaires',
@@ -55,7 +55,7 @@ const ALL_STEPS: MigrationStep[] = [
   'kyc-docs',
   'notes',
   'tasks',
-  'fcc-submissions',
+  'fcc-clients',
 ];
 
 const EXPORT_FILE_ALIASES: Record<MigrationStep, string[]> = {
@@ -65,7 +65,7 @@ const EXPORT_FILE_ALIASES: Record<MigrationStep, string[]> = {
   'kyc-docs': ['kyc-docs.csv', 'kyc-docs.json', 'kyc_documents.json', 'NM - Documents KYC.csv', 'NM - Documents KYC.json'],
   notes: ['notes.csv', 'notes.json', 'Notes.csv', 'Notes.json'],
   tasks: ['tasks.csv', 'tasks.json', 'Taches.csv', 'Taches.json', 'taches.json'],
-  'fcc-submissions': ['fcc-submissions.csv', 'fcc-submissions.json', 'FCC_Clients.csv', 'FCC_Clients.json', 'fcc_clients.json'],
+  'fcc-clients': ['fcc-clients.csv', 'fcc-clients.json', 'FCC_Clients.csv', 'FCC_Clients.json', 'fcc-submissions.csv', 'fcc-submissions.json'],
 };
 
 const RECORD_ID_COLUMNS = [
@@ -709,8 +709,8 @@ async function main() {
     console.log(`✓ Tasks: ${imported}/${taskRecords.length}`);
   }
 
-  if (steps.includes('fcc-submissions')) {
-    const fccRecords = await loadRecords('fcc-submissions', exportDir, env.airtable.tableFccClients);
+  if (steps.includes('fcc-clients')) {
+    const fccRecords = await loadRecords('fcc-clients', exportDir, env.airtable.tableFccClients);
     let imported = 0;
     let orphans = 0;
     for (const rec of fccRecords) {
@@ -718,16 +718,15 @@ async function main() {
       const atClientId = resolveClientAirtableId(f, clientDisplayMap);
       const clientId = atClientId ? clientIdMap.get(atClientId) : undefined;
       if (!clientId) orphans++;
-      await fccSubmissionsRepo.upsertSubmissionFromAirtable(tenantId, {
+      await fccClientsRepo.upsertFccClientFromAirtable(tenantId, {
         clientId: clientId ?? null,
-        submittedAt: str(f.Date_Soumission) || str(f.date_soumission) || str(f['Date soumission']) || str(f.created_time) || null,
         formType: str(f.Type_Formulaire) || str(f.type_client) || str(f.form_type) || str(f['Type']) || 'PP',
         profilRisque: str(f.Profil_Risque) || str(f.profil_risque) || str(f['Profil risque']) || null,
         profilConnaissance: str(f.Profil_Connaissance) || str(f.profil_connaissance) || str(f['Profil connaissance']) || null,
         scoreConnaissance: num(f.Score_Connaissance) ?? num(f.score_connaissance) ?? num(f['Score connaissance']),
         scoreRisque: num(f.Score_Risque) ?? num(f.score_risque) ?? num(f['Score risque']),
-        statut: str(f.statut) || str(f.Statut) || 'Soumis',
-        airtableRecordId: rec.id,
+        migrationRecordId: rec.id,
+        notesNm: str(f.Notes_NM) || null,
         typeFormulaire: str(f.Type_Formulaire) || str(f.form_type) || null,
         idFormulaire: str(f.ID_Formulaire) || str(f.form_id) || null,
         dateSoumission: str(f.Date_Soumission) || str(f.date_soumission) || null,
@@ -777,11 +776,12 @@ async function main() {
         clientBilan: str(f.client_bilan) || null,
         clientFondsPropres: str(f.client_fonds_propres) || null,
         clientFiscalite: str(f.client_fiscalite) || null,
-        docusignEnvelopeId: str(f.DocuSign_Envelope_ID) || str(f.docusign_envelope_id) || null,
+        docusignEnvelopeId: str(f.DocuSign_Envelope_ID) || str(f.docusign_envelope_id) || str(f.DocuSign_EnvelopeId) || null,
+        docusignSentAt: str(f.DocuSign_Sent_At) || null,
       });
       imported++;
     }
-    console.log(`✓ FCC submissions: ${imported}/${fccRecords.length}${orphans ? ` (${orphans} without resolved client)` : ''}`);
+    console.log(`✓ FCC clients: ${imported}/${fccRecords.length}${orphans ? ` (${orphans} without resolved client)` : ''}`);
   }
 
   console.log('\nMigration complete.');

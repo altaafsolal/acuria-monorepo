@@ -8,7 +8,7 @@ import {
   makeTenantRecord,
   makeTenantRow,
   makeDbClient,
-  makeDbFccSubmission,
+  makeDbFccClient,
 } from '../../test/helpers/fixtures.js';
 import {
   seedTableCaches,
@@ -35,22 +35,20 @@ const tenant = makeTenantRecord({
 });
 const tenantRow = makeTenantRow(tenant);
 
-function makeFccSubmissionRow(sub: ReturnType<typeof makeDbFccSubmission>): Record<string, unknown> {
-  const F = BASEROW_FIELDS.fccSubmissions;
+function makeFccClientRow(sub: ReturnType<typeof makeDbFccClient>): Record<string, unknown> {
+  const F = BASEROW_FIELDS.fccClients;
   return {
     id: Number(sub.id),
     [F.name]: sub.name,
     [F.clientId]: sub.client_id ? [{ id: Number(sub.client_id), value: `Client ${sub.client_id}` }] : [],
-    [F.submittedAt]: sub.submitted_at ?? '',
-    [F.formType]: sub.form_type ?? '',
     [F.profilRisque]: sub.profil_risque ?? '',
     [F.profilConnaissance]: sub.profil_connaissance ?? '',
     [F.scoreConnaissance]: sub.score_connaissance,
     [F.scoreRisque]: sub.score_risque,
-    [F.statut]: sub.statut ? { id: 1, value: sub.statut, color: 'blue' } : null,
-    [F.rawData]: sub.raw_data ?? '',
     [F.docusignEnvelopeId]: sub.docusign_envelope_id ?? '',
-    [F.airtableRecordId]: sub.airtable_record_id ?? '',
+    [F.docusignSentAt]: sub.docusign_sent_at ?? '',
+    [F.notesNm]: sub.notes_nm ?? '',
+    [F.migrationRecordId]: sub.migration_record_id ?? '',
     [F.typeFormulaire]: sub.type_formulaire ?? '',
     [F.idFormulaire]: sub.id_formulaire ?? '',
     [F.dateSoumission]: sub.date_soumission ?? '',
@@ -120,25 +118,25 @@ describe('FCC Routes', () => {
   });
 
   describe('GET /api/fcc/history', () => {
-    it('returns FCC submissions for the tenant', async () => {
-      const sub1 = makeDbFccSubmission({
+    it('returns FCC clients for the tenant', async () => {
+      const sub1 = makeDbFccClient({
         id: '300',
-        form_type: 'PP',
-        statut: 'En attente',
+        type_formulaire: 'PP',
+        statut_dossier: 'En attente',
         client: 'Jean Dupont',
       });
-      const sub2 = makeDbFccSubmission({
+      const sub2 = makeDbFccClient({
         id: '301',
-        form_type: 'PM',
-        statut: 'Signé',
+        type_formulaire: 'PM',
+        statut_dossier: 'Signé',
         client: 'Société ABC',
       });
 
       nockUserById(USER_ID, userRow);
       nockTenantById(TENANT_ID, tenantRow);
-      nockListRows(TABLE_IDS.fccSubmissions, [
-        makeFccSubmissionRow(sub1),
-        makeFccSubmissionRow(sub2),
+      nockListRows(TABLE_IDS.fccClients, [
+        makeFccClientRow(sub1),
+        makeFccClientRow(sub2),
       ]);
 
       const res = await supertest(app)
@@ -146,12 +144,12 @@ describe('FCC Routes', () => {
         .set('Authorization', authHeader({ userId: USER_ID, tenantId: TENANT_ID }));
 
       expect(res.status).toBe(200);
-      expect(res.body.submissions).toHaveLength(2);
-      expect(res.body.submissions[0].id).toBe('300');
-      expect(res.body.submissions[0].formType).toBe('PP');
-      expect(res.body.submissions[0].statut).toBe('En attente');
-      expect(res.body.submissions[1].id).toBe('301');
-      expect(res.body.submissions[1].statut).toBe('Signé');
+      expect(res.body.fccClients).toHaveLength(2);
+      expect(res.body.fccClients[0].id).toBe('300');
+      expect(res.body.fccClients[0].typeFormulaire).toBe('PP');
+      expect(res.body.fccClients[0].statutDossier).toBe('En attente');
+      expect(res.body.fccClients[1].id).toBe('301');
+      expect(res.body.fccClients[1].statutDossier).toBe('Signé');
     });
 
     it('returns 401 without auth', async () => {
@@ -161,7 +159,7 @@ describe('FCC Routes', () => {
   });
 
   describe('POST /api/fcc/quick-validate', () => {
-    it('updates submission and client status to Signé', async () => {
+    it('updates FCC dossier and client status to Signé', async () => {
       const client = makeDbClient({
         id: '10',
         fcc_statut: 'Soumis',
@@ -172,16 +170,16 @@ describe('FCC Routes', () => {
         ...clientRow,
         [BASEROW_FIELDS.clients.fccStatut]: { id: 2, value: 'Signé', color: 'green' },
       };
-      const sub = makeDbFccSubmission({ id: '300', statut: 'En attente' });
+      const sub = makeDbFccClient({ id: '300', statut_dossier: 'En attente' });
       const updatedSubRow = {
-        ...makeFccSubmissionRow(sub),
-        [BASEROW_FIELDS.fccSubmissions.statut]: { id: 2, value: 'Signé', color: 'green' },
+        ...makeFccClientRow(sub),
+        [BASEROW_FIELDS.fccClients.statutDossier]: { id: 2, value: 'Signé', color: 'green' },
       };
 
       nockUserById(USER_ID, userRow);
       nockTenantById(TENANT_ID, tenantRow);
-      // updateSubmissionStatus
-      nockUpdateRow(TABLE_IDS.fccSubmissions, '300', updatedSubRow);
+      // updateFccClientStatus
+      nockUpdateRow(TABLE_IDS.fccClients, '300', updatedSubRow);
       // getClientById (for quick-validate)
       nockGetRow(TABLE_IDS.clients, '10', clientRow);
       // patchClientKycFields -> getClientById + updateRow
@@ -191,14 +189,14 @@ describe('FCC Routes', () => {
       const res = await supertest(app)
         .post('/api/fcc/quick-validate')
         .set('Authorization', authHeader({ userId: USER_ID, tenantId: TENANT_ID }))
-        .send({ submissionId: '300', clientId: '10' });
+        .send({ fccClientId: '300', clientId: '10' });
 
       expect(res.status).toBe(200);
       expect(res.body.client).toBeDefined();
       expect(res.body.client.fccStatut).toBe('Signé');
     });
 
-    it('returns 400 when neither submissionId nor clientId provided', async () => {
+    it('returns 400 when neither fccClientId nor clientId provided', async () => {
       nockUserById(USER_ID, userRow);
       nockTenantById(TENANT_ID, tenantRow);
 
@@ -208,7 +206,7 @@ describe('FCC Routes', () => {
         .send({});
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('submissionId or clientId');
+      expect(res.body.error).toContain('fccClientId or clientId');
     });
   });
 
@@ -217,11 +215,11 @@ describe('FCC Routes', () => {
       restoreFetch();
     });
 
-    it('creates an FCC submission (public endpoint, no auth)', async () => {
+    it('creates an FCC client (public endpoint, no auth)', async () => {
       const fetchCalls = stubFetch();
 
-      const newSubRow = makeFccSubmissionRow(
-        makeDbFccSubmission({ id: '400', statut: 'En attente' }),
+      const newSubRow = makeFccClientRow(
+        makeDbFccClient({ id: '400', statut_dossier: 'En attente' }),
       );
 
       // findTenantById for tenant lookup (route-level)
@@ -230,8 +228,8 @@ describe('FCC Routes', () => {
       nockTenantById(TENANT_ID, tenantRow);
       // listClientsByTenantId to find client by email
       nockListRows(TABLE_IDS.clients, []);
-      // createSubmission
-      nockCreateRow(TABLE_IDS.fccSubmissions, newSubRow);
+      // createFccClient
+      nockCreateRow(TABLE_IDS.fccClients, newSubRow);
 
       const res = await supertest(app)
         .post('/api/fcc/submit')

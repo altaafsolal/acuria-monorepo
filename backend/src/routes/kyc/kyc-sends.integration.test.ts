@@ -8,7 +8,7 @@ import {
   makeTenantRecord,
   makeTenantRow,
   makeDbClient,
-  makeDbFccSubmission,
+  makeDbFccClient,
 } from '../../test/helpers/fixtures.js';
 import {
   seedTableCaches,
@@ -70,22 +70,20 @@ function makeClientRow(client: ReturnType<typeof makeDbClient>): Record<string, 
   };
 }
 
-function makeFccSubmissionRow(sub: ReturnType<typeof makeDbFccSubmission>): Record<string, unknown> {
-  const F = BASEROW_FIELDS.fccSubmissions;
+function makeFccClientRow(sub: ReturnType<typeof makeDbFccClient>): Record<string, unknown> {
+  const F = BASEROW_FIELDS.fccClients;
   return {
     id: Number(sub.id),
     [F.name]: sub.name,
     [F.clientId]: sub.client_id ? [{ id: Number(sub.client_id), value: `Client ${sub.client_id}` }] : [],
-    [F.submittedAt]: sub.submitted_at ?? '',
-    [F.formType]: sub.form_type ?? '',
     [F.profilRisque]: sub.profil_risque ?? '',
     [F.profilConnaissance]: sub.profil_connaissance ?? '',
     [F.scoreConnaissance]: sub.score_connaissance,
     [F.scoreRisque]: sub.score_risque,
-    [F.statut]: sub.statut ? { id: 1, value: sub.statut, color: 'blue' } : null,
-    [F.rawData]: sub.raw_data ?? '',
     [F.docusignEnvelopeId]: sub.docusign_envelope_id ?? '',
-    [F.airtableRecordId]: sub.airtable_record_id ?? '',
+    [F.docusignSentAt]: sub.docusign_sent_at ?? '',
+    [F.notesNm]: sub.notes_nm ?? '',
+    [F.migrationRecordId]: sub.migration_record_id ?? '',
     [F.typeFormulaire]: sub.type_formulaire ?? '',
     [F.idFormulaire]: sub.id_formulaire ?? '',
     [F.dateSoumission]: sub.date_soumission ?? '',
@@ -338,16 +336,16 @@ describe('KYC Send Routes', () => {
         [BASEROW_FIELDS.clients.fccStatut]: { id: 2, value: 'DocuSign envoyé', color: 'green' },
       };
 
-      const submission = makeDbFccSubmission({
+      const submission = makeDbFccClient({
         id: '500',
         client_id: '30',
-        statut: 'En attente',
+        statut_dossier: 'En attente',
         pdf_filename: 'fcc-30.pdf',
       });
-      const submissionRow = makeFccSubmissionRow(submission);
+      const submissionRow = makeFccClientRow(submission);
       const updatedSubmissionRow = {
         ...submissionRow,
-        [BASEROW_FIELDS.fccSubmissions.docusignEnvelopeId]: 'env-123',
+        [BASEROW_FIELDS.fccClients.docusignEnvelopeId]: 'env-123',
       };
 
       // auth middleware
@@ -358,9 +356,9 @@ describe('KYC Send Routes', () => {
       nockGetRow(TABLE_IDS.clients, '30', clientRow);
       nockTenantById(TENANT_ID, tenantRow);
       // listSubmissionsByClient
-      nockListRows(TABLE_IDS.fccSubmissions, [submissionRow]);
+      nockListRows(TABLE_IDS.fccClients, [submissionRow]);
       // updateSubmissionStatus (with envelope_id)
-      nockUpdateRow(TABLE_IDS.fccSubmissions, '500', updatedSubmissionRow);
+      nockUpdateRow(TABLE_IDS.fccClients, '500', updatedSubmissionRow);
       // patchClientKycFields -> getClientById + updateRow
       nockGetRow(TABLE_IDS.clients, '30', clientRow);
       nockUpdateRow(TABLE_IDS.clients, '30', updatedClientRow);

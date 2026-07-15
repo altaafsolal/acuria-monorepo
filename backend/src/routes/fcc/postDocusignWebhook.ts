@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../utils/index.js';
-import * as fccSubmissionsRepo from '../../services/baserow/fcc-submissions.js';
+import * as fccClientsRepo from '../../services/baserow/fcc-clients.js';
 import * as clientsRepo from '../../services/baserow/clients.js';
 
 const router = Router({ mergeParams: true });
@@ -20,8 +20,10 @@ router.post('/docusign-webhook', asyncHandler(async (req, res) => {
   }
 
   try {
-    // Map DocuSign status to FCC statut
-    const fccStatut = status === 'completed' || status === 'signed' ? 'Signé' : 'DocuSign envoyé';
+    // Map DocuSign status to client FCC statut and FCC dossier statut
+    const signed = status === 'completed' || status === 'signed';
+    const fccStatut = signed ? 'Signé' : 'DocuSign envoyé';
+    const statutDossier = signed ? 'Signé' : 'Envoyé DocuSign';
 
     // Update the client's FCC status
     await clientsRepo.patchClientKycFields(tenantId, recordId, {
@@ -29,14 +31,14 @@ router.post('/docusign-webhook', asyncHandler(async (req, res) => {
       fcc_date: new Date().toISOString().split('T')[0],
     }).catch(() => undefined);
 
-    // Update matching submission record
-    const submissions = await fccSubmissionsRepo.listSubmissionsByClient(tenantId, recordId).catch(() => []);
-    if (submissions.length > 0) {
-      const latest = submissions[submissions.length - 1];
-      await fccSubmissionsRepo.updateSubmissionStatus(
+    // Update matching FCC dossier record
+    const fccClients = await fccClientsRepo.listFccClientsByClient(tenantId, recordId).catch(() => []);
+    if (fccClients.length > 0) {
+      const latest = fccClients[fccClients.length - 1];
+      await fccClientsRepo.updateFccClientStatus(
         tenantId,
         latest.id,
-        fccStatut,
+        statutDossier,
         envelopeId ?? undefined,
       ).catch(() => undefined);
     }

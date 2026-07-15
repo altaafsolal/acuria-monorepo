@@ -3,7 +3,7 @@ import supertest from 'supertest';
 import { app } from '../../test/helpers/app.js';
 import {
   makeDbClient,
-  makeDbFccSubmission,
+  makeDbFccClient,
   makeTenantRecord,
   makeTenantRow,
 } from '../../test/helpers/fixtures.js';
@@ -60,22 +60,20 @@ function makeClientRow(client: ReturnType<typeof makeDbClient>): Record<string, 
   };
 }
 
-function makeFccSubmissionRow(sub: ReturnType<typeof makeDbFccSubmission>): Record<string, unknown> {
-  const F = BASEROW_FIELDS.fccSubmissions;
+function makeFccClientRow(sub: ReturnType<typeof makeDbFccClient>): Record<string, unknown> {
+  const F = BASEROW_FIELDS.fccClients;
   return {
     id: Number(sub.id),
     [F.name]: sub.name,
     [F.clientId]: sub.client_id ? [{ id: Number(sub.client_id), value: `Client ${sub.client_id}` }] : [],
-    [F.submittedAt]: sub.submitted_at ?? '',
-    [F.formType]: sub.form_type ?? '',
     [F.profilRisque]: sub.profil_risque ?? '',
     [F.profilConnaissance]: sub.profil_connaissance ?? '',
     [F.scoreConnaissance]: sub.score_connaissance,
     [F.scoreRisque]: sub.score_risque,
-    [F.statut]: sub.statut ? { id: 1, value: sub.statut, color: 'blue' } : null,
-    [F.rawData]: sub.raw_data ?? '',
     [F.docusignEnvelopeId]: sub.docusign_envelope_id ?? '',
-    [F.airtableRecordId]: sub.airtable_record_id ?? '',
+    [F.docusignSentAt]: sub.docusign_sent_at ?? '',
+    [F.notesNm]: sub.notes_nm ?? '',
+    [F.migrationRecordId]: sub.migration_record_id ?? '',
     [F.typeFormulaire]: sub.type_formulaire ?? '',
     [F.idFormulaire]: sub.id_formulaire ?? '',
     [F.dateSoumission]: sub.date_soumission ?? '',
@@ -117,17 +115,17 @@ describe('POST /api/fcc/docusign-webhook', () => {
       ...clientRow,
       [BASEROW_FIELDS.clients.fccStatut]: { id: 2, value: 'Signé', color: 'green' },
     };
-    const sub = makeDbFccSubmission({ id: '300', statut: 'DocuSign envoyé' });
+    const sub = makeDbFccClient({ id: '300', statut_dossier: 'Envoyé DocuSign' });
     const updatedSubRow = {
-      ...makeFccSubmissionRow(sub),
-      [BASEROW_FIELDS.fccSubmissions.statut]: { id: 2, value: 'Signé', color: 'green' },
+      ...makeFccClientRow(sub),
+      [BASEROW_FIELDS.fccClients.statutDossier]: { id: 2, value: 'Signé', color: 'green' },
     };
 
     nockTenantById(TENANT_ID, tenantRow);
     nockGetRow(TABLE_IDS.clients, '10', clientRow);
     nockUpdateRow(TABLE_IDS.clients, '10', updatedClientRow);
-    nockListRows(TABLE_IDS.fccSubmissions, [makeFccSubmissionRow(sub)]);
-    nockUpdateRow(TABLE_IDS.fccSubmissions, '300', updatedSubRow);
+    nockListRows(TABLE_IDS.fccClients, [makeFccClientRow(sub)]);
+    nockUpdateRow(TABLE_IDS.fccClients, '300', updatedSubRow);
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
@@ -145,17 +143,17 @@ describe('POST /api/fcc/docusign-webhook', () => {
       ...clientRow,
       [BASEROW_FIELDS.clients.fccStatut]: { id: 2, value: 'Signé', color: 'green' },
     };
-    const sub = makeDbFccSubmission({ id: '300', statut: 'DocuSign envoyé' });
+    const sub = makeDbFccClient({ id: '300', statut_dossier: 'Envoyé DocuSign' });
     const updatedSubRow = {
-      ...makeFccSubmissionRow(sub),
-      [BASEROW_FIELDS.fccSubmissions.statut]: { id: 2, value: 'Signé', color: 'green' },
+      ...makeFccClientRow(sub),
+      [BASEROW_FIELDS.fccClients.statutDossier]: { id: 2, value: 'Signé', color: 'green' },
     };
 
     nockTenantById(TENANT_ID, tenantRow);
     nockGetRow(TABLE_IDS.clients, '10', clientRow);
     nockUpdateRow(TABLE_IDS.clients, '10', updatedClientRow);
-    nockListRows(TABLE_IDS.fccSubmissions, [makeFccSubmissionRow(sub)]);
-    nockUpdateRow(TABLE_IDS.fccSubmissions, '300', updatedSubRow);
+    nockListRows(TABLE_IDS.fccClients, [makeFccClientRow(sub)]);
+    nockUpdateRow(TABLE_IDS.fccClients, '300', updatedSubRow);
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
@@ -173,17 +171,17 @@ describe('POST /api/fcc/docusign-webhook', () => {
       ...clientRow,
       [BASEROW_FIELDS.clients.fccStatut]: { id: 2, value: 'DocuSign envoyé', color: 'orange' },
     };
-    const sub = makeDbFccSubmission({ id: '300', statut: 'En attente' });
+    const sub = makeDbFccClient({ id: '300', statut_dossier: 'En attente' });
     const updatedSubRow = {
-      ...makeFccSubmissionRow(sub),
-      [BASEROW_FIELDS.fccSubmissions.statut]: { id: 2, value: 'DocuSign envoyé', color: 'orange' },
+      ...makeFccClientRow(sub),
+      [BASEROW_FIELDS.fccClients.statutDossier]: { id: 2, value: 'DocuSign envoyé', color: 'orange' },
     };
 
     nockTenantById(TENANT_ID, tenantRow);
     nockGetRow(TABLE_IDS.clients, '10', clientRow);
     nockUpdateRow(TABLE_IDS.clients, '10', updatedClientRow);
-    nockListRows(TABLE_IDS.fccSubmissions, [makeFccSubmissionRow(sub)]);
-    nockUpdateRow(TABLE_IDS.fccSubmissions, '300', updatedSubRow);
+    nockListRows(TABLE_IDS.fccClients, [makeFccClientRow(sub)]);
+    nockUpdateRow(TABLE_IDS.fccClients, '300', updatedSubRow);
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
@@ -201,18 +199,18 @@ describe('POST /api/fcc/docusign-webhook', () => {
       ...clientRow,
       [BASEROW_FIELDS.clients.fccStatut]: { id: 2, value: 'Signé', color: 'green' },
     };
-    const sub = makeDbFccSubmission({ id: '300', statut: 'DocuSign envoyé' });
+    const sub = makeDbFccClient({ id: '300', statut_dossier: 'Envoyé DocuSign' });
     const updatedSubRow = {
-      ...makeFccSubmissionRow(sub),
-      [BASEROW_FIELDS.fccSubmissions.statut]: { id: 2, value: 'Signé', color: 'green' },
-      [BASEROW_FIELDS.fccSubmissions.docusignEnvelopeId]: 'env-123',
+      ...makeFccClientRow(sub),
+      [BASEROW_FIELDS.fccClients.statutDossier]: { id: 2, value: 'Signé', color: 'green' },
+      [BASEROW_FIELDS.fccClients.docusignEnvelopeId]: 'env-123',
     };
 
     nockTenantById(TENANT_ID, tenantRow);
     nockGetRow(TABLE_IDS.clients, '10', clientRow);
     nockUpdateRow(TABLE_IDS.clients, '10', updatedClientRow);
-    nockListRows(TABLE_IDS.fccSubmissions, [makeFccSubmissionRow(sub)]);
-    nockUpdateRow(TABLE_IDS.fccSubmissions, '300', updatedSubRow);
+    nockListRows(TABLE_IDS.fccClients, [makeFccClientRow(sub)]);
+    nockUpdateRow(TABLE_IDS.fccClients, '300', updatedSubRow);
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
@@ -234,7 +232,7 @@ describe('POST /api/fcc/docusign-webhook', () => {
     nockTenantById(TENANT_ID, tenantRow);
     nockGetRow(TABLE_IDS.clients, '10', clientRow);
     nockUpdateRow(TABLE_IDS.clients, '10', updatedClientRow);
-    nockListRows(TABLE_IDS.fccSubmissions, []);
+    nockListRows(TABLE_IDS.fccClients, []);
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
@@ -269,17 +267,17 @@ describe('POST /api/fcc/docusign-webhook', () => {
       ...clientRow,
       [BASEROW_FIELDS.clients.fccStatut]: { id: 2, value: 'Signé', color: 'green' },
     };
-    const sub = makeDbFccSubmission({ id: '300', statut: 'DocuSign envoyé' });
+    const sub = makeDbFccClient({ id: '300', statut_dossier: 'Envoyé DocuSign' });
     const updatedSubRow = {
-      ...makeFccSubmissionRow(sub),
-      [BASEROW_FIELDS.fccSubmissions.statut]: { id: 2, value: 'Signé', color: 'green' },
+      ...makeFccClientRow(sub),
+      [BASEROW_FIELDS.fccClients.statutDossier]: { id: 2, value: 'Signé', color: 'green' },
     };
 
     nockTenantById(TENANT_ID, tenantRow);
     nockGetRow(TABLE_IDS.clients, '10', clientRow);
     nockUpdateRow(TABLE_IDS.clients, '10', updatedClientRow);
-    nockListRows(TABLE_IDS.fccSubmissions, [makeFccSubmissionRow(sub)]);
-    nockUpdateRow(TABLE_IDS.fccSubmissions, '300', updatedSubRow);
+    nockListRows(TABLE_IDS.fccClients, [makeFccClientRow(sub)]);
+    nockUpdateRow(TABLE_IDS.fccClients, '300', updatedSubRow);
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')

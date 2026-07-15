@@ -1,4 +1,4 @@
-import type { DbUser, TenantRecord, DbClient, DbGestionnaire, DbFccSubmission, DbKycDocument, DbNote, DbTask } from '../../types/domain.js';
+import type { DbUser, TenantRecord, DbClient, DbGestionnaire, DbFccClient, DbKycDocument, DbNote, DbTask } from '../../types/domain.js';
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
 
 const F = BASEROW_FIELDS;
@@ -181,22 +181,20 @@ export function makeDbGestionnaire(overrides: Partial<DbGestionnaire> = {}): DbG
   };
 }
 
-export function makeDbFccSubmission(overrides: Partial<DbFccSubmission> = {}): DbFccSubmission {
+export function makeDbFccClient(overrides: Partial<DbFccClient> = {}): DbFccClient {
   const id = overrides.id ?? nextId();
   return {
     id,
     name: `FCC-${id}`,
     client_id: null,
-    submitted_at: '2026-07-01T10:00:00Z',
-    form_type: 'PP',
     profil_risque: 'Prudent',
     profil_connaissance: 'Débutant',
     score_connaissance: 10,
     score_risque: 5,
-    statut: 'En attente',
-    raw_data: null,
     docusign_envelope_id: null,
-    airtable_record_id: null,
+    docusign_sent_at: null,
+    notes_nm: null,
+    migration_record_id: null,
     type_formulaire: 'PP',
     id_formulaire: null,
     date_soumission: '2026-07-01',

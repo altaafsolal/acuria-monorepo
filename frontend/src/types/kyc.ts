@@ -116,17 +116,16 @@ export interface TenantBranding {
   logoDataUrl?: string | null;
 }
 
-export interface FccSubmission {
+export interface FccClient {
   id: string;
   clientId: string | null;
-  submittedAt: string | null;
-  formType: string;
   profilRisque: string | null;
   profilConnaissance: string | null;
   scoreConnaissance: number | null;
   scoreRisque: number | null;
-  statut: string;
   docusignEnvelopeId: string | null;
+  docusignSentAt: string | null;
+  notesNm: string | null;
   typeFormulaire: string | null;
   idFormulaire: string | null;
   dateSoumission: string | null;
@@ -145,5 +144,5 @@ export interface FccSubmission {
 }
 
 export interface FccHistoryResponse {
-  submissions: FccSubmission[];
+  fccClients: FccClient[];
 }

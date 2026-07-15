@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../../utils/index.js";
 import { webhookUrl, postWebhook } from "../../services/make/http.js";
-import * as fccSubmissionsRepo from "../../services/baserow/fcc-submissions.js";
+import * as fccClientsRepo from "../../services/baserow/fcc-clients.js";
 import * as clientsRepo from "../../services/baserow/clients.js";
 import * as tenantsRepo from "../../services/baserow/tenants.js";
 
@@ -94,14 +94,13 @@ router.post(
         }
       }
 
-      await fccSubmissionsRepo.createSubmission(tenantId, {
+      await fccClientsRepo.createFccClient(tenantId, {
         clientId,
         formType,
         profilRisque: str("profil_risque"),
         profilConnaissance: str("profil_connaissance"),
         scoreConnaissance: num("score_connaissance"),
         scoreRisque: num("score_risque"),
-        rawData: JSON.stringify(payload),
         typeFormulaire: str("form_type"),
         idFormulaire: str("form_id"),
         dateSoumission: str("timestamp_soumission"),

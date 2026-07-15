@@ -234,15 +234,15 @@ function KycDocumentCollectItem({
   );
 }
 
-function fccSubmissionBadgeClass(statut: string): string {
+function fccClientBadgeClass(statut: string | null): string {
   if (statut === 'Signé' || statut === 'Validé') return 'badge-doc-signe';
-  if (statut === 'Soumis' || statut === 'Envoyé DocuSign') return 'badge-doc-envoye';
-  if (statut === 'Expiré') return 'badge-doc-renouveler';
+  if (statut === 'En review' || statut === 'Envoyé DocuSign') return 'badge-doc-envoye';
+  if (statut === 'Incomplet' || statut === 'Rejeté') return 'badge-doc-renouveler';
   return 'badge-doc-non';
 }
 
 function FccHistorySection({ clientId }: { clientId: string }) {
-  const { data: submissions = [], isLoading } = useFccHistory(clientId);
+  const { data: fccClients = [], isLoading } = useFccHistory(clientId);
 
   return (
     <section className="cp-documents-regulatory">
@@ -250,12 +250,12 @@ function FccHistorySection({ clientId }: { clientId: string }) {
       {isLoading && (
         <p style={{ fontSize: '13px', color: 'var(--muted)' }}>Chargement…</p>
       )}
-      {!isLoading && submissions.length === 0 && (
+      {!isLoading && fccClients.length === 0 && (
         <p style={{ fontSize: '13px', color: 'var(--muted)' }}>Aucune FCC reçue.</p>
       )}
-      {!isLoading && submissions.length > 0 && (
+      {!isLoading && fccClients.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-          {submissions.map((sub) => (
+          {fccClients.map((sub) => (
             <div
               key={sub.id}
               style={{
@@ -267,15 +267,15 @@ function FccHistorySection({ clientId }: { clientId: string }) {
                 fontSize: '13px',
               }}
             >
-              <span className={`client-type type-${(sub.formType || 'pp').toLowerCase()}`}>
-                {sub.formType || 'PP'}
+              <span className={`client-type type-${(sub.typeFormulaire || 'pp').toLowerCase()}`}>
+                {sub.typeFormulaire || 'PP'}
               </span>
               <span style={{ flex: 1, fontWeight: 500 }}>
                 {sub.idFormulaire || sub.id}
               </span>
-              <span>{formatDateFr(sub.dateSoumission || sub.submittedAt)}</span>
-              <span className={`crm-badge ${fccSubmissionBadgeClass(sub.statut)}`}>
-                {sub.statut || '—'}
+              <span>{formatDateFr(sub.dateSoumission)}</span>
+              <span className={`crm-badge ${fccClientBadgeClass(sub.statutDossier)}`}>
+                {sub.statutDossier || '—'}
               </span>
             </div>
           ))}

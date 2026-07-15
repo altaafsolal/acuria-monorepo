@@ -4,7 +4,6 @@ import {
   CLIENT_TYPE_OPTIONS,
   CRM_DOC_STATUS_OPTIONS,
   FCC_DOSSIER_STATUS_OPTIONS,
-  FCC_SUBMISSION_STATUS_OPTIONS,
   KYC_STATUS_OPTIONS,
   GESTIONNAIRE_STATUS_OPTIONS,
   NOTE_TYPE_OPTIONS,
@@ -194,8 +193,8 @@ async function ensureAuditLogsFields(tableId: string | number): Promise<void> {
   await ensureField(tableId, { name: F.userEmail, type: 'email' }, existing);
 }
 
-async function ensureFccSubmissionsFields(tableId: string | number, clientsTableId: string): Promise<void> {
-  const F = BASEROW_FIELDS.fccSubmissions;
+async function ensureFccClientsFields(tableId: string | number, clientsTableId: string): Promise<void> {
+  const F = BASEROW_FIELDS.fccClients;
   const existing = new Set((await listTableFieldsWithJwt(tableId)).map((f) => f.name));
   await ensureField(
     tableId,
@@ -204,22 +203,18 @@ async function ensureFccSubmissionsFields(tableId: string | number, clientsTable
   );
   await ensureField(
     tableId,
-    { name: F.submittedAt, type: 'date', date_include_time: true, date_format: 'ISO' },
+    { name: F.docusignSentAt, type: 'date', date_include_time: true, date_format: 'ISO' },
     existing,
   );
   await ensureTextFields(
     tableId,
-    [F.formType, F.profilRisque, F.profilConnaissance, F.rawData, F.docusignEnvelopeId, F.airtableRecordId],
+    [F.profilRisque, F.profilConnaissance, F.docusignEnvelopeId, F.migrationRecordId],
     existing,
   );
+  await ensureField(tableId, { name: F.notesNm, type: 'long_text' }, existing);
   await ensureField(tableId, { name: F.scoreConnaissance, type: 'number' }, existing);
   await ensureField(tableId, { name: F.scoreRisque, type: 'number' }, existing);
-  await ensureField(
-    tableId,
-    { name: F.statut, type: 'single_select', select_options: [...FCC_SUBMISSION_STATUS_OPTIONS] },
-    existing,
-  );
-  // New FCC fields
+  // FCC_Clients fields (mirror Airtable)
   await ensureTextFields(
     tableId,
     [
@@ -279,7 +274,7 @@ export async function provisionTenantTables(
     ['notes', ensureNotesFields],
     ['relations', ensureRelationsFields],
     ['tasks', ensureTasksFields],
-    ['fcc_submissions', ensureFccSubmissionsFields],
+    ['fcc_clients', ensureFccClientsFields],
   ];
 
   for (const [base, ensureFields] of linkedTables) {
