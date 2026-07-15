@@ -7,7 +7,16 @@
       "PowerShell(npm run test --workspace=backend)",
       "Bash(git rm *)",
       "PowerShell(npm run typecheck --workspace=frontend)",
-      "PowerShell(npm run test --workspace=frontend)"
+      "PowerShell(npm run test --workspace=frontend)",
+      "Bash(python -c \"import docx; print\\('python-docx', docx.__version__\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"import docx; print\\('ok', docx.__version__\\)\")",
+      "Bash(python \"C:\\\\Users\\\\altaa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-altaa-Projects-acuria-platform\\\\60cb5415-74e3-41ae-9a1b-663783d26208\\\\scratchpad\\\\gen_audit.py\")",
+      "Bash(python -c ' *)",
+      "PowerShell(npm run test:coverage --workspace=backend 2>&1)",
+      "Bash(python \"C:\\\\Users\\\\altaa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-altaa-Projects-acuria-platform\\\\60cb5415-74e3-41ae-9a1b-663783d26208\\\\scratchpad\\\\gen_recette.py\")",
+      "Bash(python \"C:\\\\Users\\\\altaa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-altaa-Projects-acuria-platform\\\\60cb5415-74e3-41ae-9a1b-663783d26208\\\\scratchpad\\\\gen_demo.py\")",
+      "Bash(python \"C:\\\\Users\\\\altaa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-altaa-Projects-acuria-platform\\\\60cb5415-74e3-41ae-9a1b-663783d26208\\\\scratchpad\\\\gen_onboarding.py\")"
     ]
   }
 }
