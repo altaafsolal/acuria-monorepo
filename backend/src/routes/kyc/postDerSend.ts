@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate, requireRole, requireTenant} from "../../middleware/index.js";
-import { clientsRepo, tenantsRepo } from "../../services/baserow/index.js";
+import { clientsRepo, clientMapper, tenantsRepo } from "../../services/baserow/index.js";
+import { sharepointBrokerFields } from "../../services/make/sharepoint.js";
 import { asyncHandler, HttpError} from "../../utils/index.js";
 import type { SendDerInput } from "../../types/domain.js";
 import { postWebhook, webhookUrl } from "../../services/make/http.js";
@@ -37,10 +38,12 @@ router.post(
 
       await postWebhook(webhookUrl("webhookDer"), {
         client_email: client.email,
+        client_name: clientMapper.resolveClientDisplayName(client),
         tenant_email: tenant?.email || "",
         tenant_name: tenant?.name,
         nm_name: body.signataireName,
         nm_titre: nmTitre,
+        ...sharepointBrokerFields(tenant),
       });
 
       const today = new Date().toISOString().split("T")[0];

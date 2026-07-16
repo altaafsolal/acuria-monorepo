@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { authenticate, requireRole, requireTenant} from '../../../../middleware/index.js';
-import { notesRepo, tenantsRepo } from '../../../../services/baserow/index.js';
+import { clientsRepo, clientMapper, notesRepo, tenantsRepo } from '../../../../services/baserow/index.js';
+import { sharepointBrokerFields } from '../../../../services/make/sharepoint.js';
 import { env } from '../../../../config/env.js';
 import { asyncHandler, HttpError,reqParam } from '../../../../utils/index.js';
 
@@ -54,8 +55,13 @@ router.post('/', upload.array('files', 10), asyncHandler(async (req, res) => {
     if (!webhookUrl) {
       throw new HttpError(500, 'MAKE_WEBHOOK_NOTE_UPLOAD is not configured');
     }
-    const tenant = await tenantsRepo.findTenantById(tenantId);
+    const [tenant, client] = await Promise.all([
+      tenantsRepo.findTenantById(tenantId),
+      clientsRepo.getClientById(tenantId, clientId).catch(() => null),
+    ]);
     const tenantName = tenant?.branding_name || tenant?.name || '';
+    const clientName = client ? clientMapper.resolveClientDisplayName(client) : '';
+    const brokerFields = sharepointBrokerFields(tenant);
     uploaded = await Promise.all(
       files.map(async (file) => {
         const res = await fetch(webhookUrl, {
@@ -66,6 +72,8 @@ router.post('/', upload.array('files', 10), asyncHandler(async (req, res) => {
             content: file.buffer.toString('base64'),
             mimeType: file.mimetype,
             tenant_name: tenantName,
+            client_name: clientName,
+            ...brokerFields,
           }),
         });
         if (!res.ok) {

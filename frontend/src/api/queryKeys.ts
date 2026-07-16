@@ -17,6 +17,7 @@ export const queryKeys = {
     stats: ['tenant', 'stats'] as const,
     branding: ['tenant', 'branding'] as const,
     logo: ['tenant', 'logo'] as const,
+    sharepoint: (tenantId: string) => ['tenant', tenantId, 'sharepoint'] as const,
   },
   assets: {
     tenantLogo: (tenantId: string) => ['assets', 'tenant-logo', tenantId] as const,

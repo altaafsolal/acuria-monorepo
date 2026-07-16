@@ -85,6 +85,12 @@ const api = {
   tenantUserResetPassword: (tenantId: string, userId: string) => `${baseUrl}/platform/tenants/${tenantId}/users/${userId}/reset-password`,
   tenantClients: (id: string) => `${baseUrl}/platform/tenants/${id}/clients`,
 
+  // SharePoint integration (per-tenant Microsoft 365 OAuth)
+  sharepointStatus: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/status`,
+  sharepointConnect: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/connect`,
+  sharepointConfig: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/config`,
+  sharepointDisconnect: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/disconnect`,
+
   // Audit
   platformAuditLogs: (params: {
     page?: number;

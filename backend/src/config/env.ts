@@ -5,6 +5,9 @@ export interface Env {
   nodeEnv: string;
   isProduction: boolean;
   appUrl: string;
+  /** Public origin of THIS API, including the /api prefix. The Microsoft OAuth
+   *  redirect URI must hit the backend, not the SPA — hence separate from appUrl. */
+  apiBaseUrl: string;
   jwt: {
     accessSecret: string;
     refreshSecret: string;
@@ -63,11 +66,25 @@ export interface Env {
     password: string;
     folder: string;
   };
+  /** Multitenant Microsoft Entra ID app registration — drives per-tenant SharePoint OAuth. */
+  azure: {
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+  };
+  /** 64 hex chars (32 bytes). Encrypts OAuth tokens at rest. See utils/crypto.ts. */
+  tokenEncryptionKey: string;
   webhookSecret: string; // Shared secret for inbound webhooks from Make (Authorization header)
 }
 
+const port = Number(process.env.PORT) || 3001;
+
+const apiBaseUrl = (
+  process.env.API_BASE_URL || `http://localhost:${port}/api`
+).replace(/\/$/, '');
+
 export const env: Env = {
-  port: Number(process.env.PORT) || 3001,
+  port,
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
 
@@ -76,6 +93,8 @@ export const env: Env = {
     || (process.env.CORS_ORIGINS || 'http://localhost:4001').split(',')[0]?.trim()
     || 'http://localhost:4001'
   ).replace(/\/$/, ''),
+
+  apiBaseUrl,
 
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret',
@@ -148,6 +167,14 @@ export const env: Env = {
     folder: process.env.SP_FOLDER || 'Documents/Notes',
   },
 
+  azure: {
+    clientId: process.env.AZURE_CLIENT_ID || '',
+    clientSecret: process.env.AZURE_CLIENT_SECRET || '',
+    redirectUri: process.env.AZURE_REDIRECT_URI || `${apiBaseUrl}/oauth/sharepoint/callback`,
+  },
+
+  tokenEncryptionKey: process.env.TOKEN_ENCRYPTION_KEY || '',
+
   webhookSecret: process.env.WEBHOOK_SECRET || '',
 };
 
@@ -161,4 +188,8 @@ export function isBaserowMigrateConfigured(): boolean {
     && env.baserow.password
     && env.baserow.mainDatabaseId,
   );
+}
+
+export function isAzureConfigured(): boolean {
+  return Boolean(env.azure.clientId && env.azure.clientSecret && env.azure.redirectUri);
 }

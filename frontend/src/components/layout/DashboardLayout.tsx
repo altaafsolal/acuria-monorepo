@@ -11,6 +11,7 @@ import {
   FiBriefcase,
   FiFileText,
   FiHome,
+  FiLink,
   FiLogOut,
   FiSearch,
   FiShield,
@@ -204,6 +205,10 @@ export default function DashboardLayout() {
               <NavLink to="/dashboard/audit" className={navClass}>
                 <FiActivity className="nav-icon" />
                 Audit
+              </NavLink>
+              <NavLink to="/dashboard/integrations" className={navClass}>
+                <FiLink className="nav-icon" />
+                Intégrations
               </NavLink>
             </>
           )}

@@ -16,7 +16,12 @@
       "PowerShell(npm run test:coverage --workspace=backend 2>&1)",
       "Bash(python \"C:\\\\Users\\\\altaa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-altaa-Projects-acuria-platform\\\\60cb5415-74e3-41ae-9a1b-663783d26208\\\\scratchpad\\\\gen_recette.py\")",
       "Bash(python \"C:\\\\Users\\\\altaa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-altaa-Projects-acuria-platform\\\\60cb5415-74e3-41ae-9a1b-663783d26208\\\\scratchpad\\\\gen_demo.py\")",
-      "Bash(python \"C:\\\\Users\\\\altaa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-altaa-Projects-acuria-platform\\\\60cb5415-74e3-41ae-9a1b-663783d26208\\\\scratchpad\\\\gen_onboarding.py\")"
+      "Bash(python \"C:\\\\Users\\\\altaa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-altaa-Projects-acuria-platform\\\\60cb5415-74e3-41ae-9a1b-663783d26208\\\\scratchpad\\\\gen_onboarding.py\")",
+      "Bash(npm test *)",
+      "Bash(npx vitest *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(node -e \"const fi=require\\('c:/Users/altaa/Projects/acuria-platform/frontend/node_modules/react-icons/fi'\\); console.log\\('FiCloud', typeof fi.FiCloud, '| FiCheckCircle', typeof fi.FiCheckCircle\\)\")",
+      "Bash(npm run *)"
     ]
   }
 }

@@ -3744,4 +3744,107 @@
     color: var(--color-muted);
     margin-top: 4px;
   }
+
+  /* ── SharePoint integration / connect gate ── */
+  .sp-page {
+    padding: 2rem;
+    max-width: 640px;
+  }
+  .sp-page__title {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 600;
+    color: var(--color-navy);
+    margin-bottom: 1.5rem;
+  }
+
+  /* Full-screen blocking variant shown by SharepointGate */
+  .sp-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.75rem;
+    padding: 2rem 1.5rem;
+    background: var(--color-app-bg);
+  }
+  .sp-screen__intro {
+    max-width: 520px;
+    text-align: center;
+  }
+  .sp-screen__title {
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    font-weight: 600;
+    color: var(--color-navy);
+    margin-bottom: 0.75rem;
+  }
+  .sp-screen__lead {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+
+  .sp-card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-md);
+    padding: 1.75rem;
+  }
+  .sp-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1.25rem;
+  }
+  .sp-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--color-navy) 8%, white);
+    color: var(--color-navy);
+    font-size: 1.35rem;
+  }
+  .sp-card__icon--ok {
+    background: color-mix(in srgb, var(--color-success) 12%, white);
+    color: var(--color-success);
+  }
+  .sp-card__title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-navy);
+  }
+  .sp-card__subtitle {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    margin-top: 0.15rem;
+  }
+  .sp-card__text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #475569;
+    margin-bottom: 1.25rem;
+  }
+  .sp-form {
+    display: grid;
+    gap: 1rem;
+  }
+  .sp-form__error {
+    font-size: 0.82rem;
+    color: var(--color-danger);
+  }
+  .sp-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+  }
 }

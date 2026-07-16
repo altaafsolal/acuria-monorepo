@@ -17,9 +17,35 @@ export interface Tenant {
   workspaceId?: string | null;
   databaseId?: string | null;
   databaseToken?: string | null;
-  sharepointPathBase?: string | null;
   email?: string | null;
   backofficeEmail?: string | null;
+  sharepoint?: SharepointStatus;
+}
+
+/** What the API reveals about a tenant's Microsoft 365 link. Tokens live only in
+ *  the backend — they are never part of any response. */
+export interface SharepointStatus {
+  connected: boolean;
+  siteId: string | null;
+  driveId: string | null;
+  siteDisplayName: string | null;
+  connectedAt: string | null;
+  connectedBy: string | null;
+}
+
+export interface SharepointStatusResponse {
+  sharepoint: SharepointStatus;
+}
+
+export interface SharepointConnectResponse {
+  authorizeUrl: string;
+}
+
+export interface SharepointConfigInput {
+  tenantId: string;
+  siteId: string;
+  driveId: string;
+  siteDisplayName?: string;
 }
 
 export interface TenantsResponse {
@@ -42,7 +68,6 @@ export interface UpdateTenantBrandingInput {
   status?: 'active' | 'inactive';
   logo?: File;
   removeBrandingLogo?: boolean;
-  sharepointPathBase?: string;
   email?: string;
   backofficeEmail?: string;
 }

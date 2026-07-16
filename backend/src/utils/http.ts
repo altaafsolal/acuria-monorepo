@@ -3,10 +3,17 @@ import type { ErrorRequestHandler, NextFunction, Request, RequestHandler, Respon
 export class HttpError extends Error {
   readonly status: number;
 
-  constructor(status: number, message: string) {
+  /** Stable, machine-readable error identifier, surfaced as `code` in the JSON
+   *  body. Lets callers branch on the failure (e.g. a Make.com scenario routing
+   *  SHAREPOINT_REAUTH_REQUIRED to a notification path) without matching on
+   *  human-readable message text. */
+  readonly code?: string;
+
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.name = 'HttpError';
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -34,7 +41,10 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
   if (err instanceof HttpError) {
     console.error(`${req.method} ${req.url}:`, err.message);
-    res.status(err.status).json({ error: err.message });
+    res.status(err.status).json({
+      error: err.message,
+      ...(err.code ? { code: err.code } : {}),
+    });
     return;
   }
 

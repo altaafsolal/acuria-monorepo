@@ -60,11 +60,34 @@ export interface TenantRecord {
     visibleName: string | null;
     size: number | null;
   }>;
-  sharepoint_path_base: string | null;
   email: string | null;
   backoffice_email: string | null;
   created_on: string | null;
   updated_on: string | null;
+  /** Per-tenant Microsoft 365 / SharePoint OAuth connection.
+   *  The two token fields hold ciphertext — decrypt via utils/crypto.ts.
+   *  They must never reach PublicTenant. */
+  sharepoint_connected: boolean;
+  sharepoint_access_token: string | null;
+  sharepoint_refresh_token: string | null;
+  sharepoint_token_expires_at: string | null;
+  sharepoint_ms_tenant_id: string | null;
+  sharepoint_site_id: string | null;
+  sharepoint_drive_id: string | null;
+  sharepoint_site_display_name: string | null;
+  sharepoint_connected_at: string | null;
+  sharepoint_connected_by: string | null;
+}
+
+/** Everything a client is allowed to know about a tenant's SharePoint link.
+ *  Deliberately excludes both tokens and the Microsoft tenant id. */
+export interface SharepointStatus {
+  connected: boolean;
+  siteId: string | null;
+  driveId: string | null;
+  siteDisplayName: string | null;
+  connectedAt: string | null;
+  connectedBy: string | null;
 }
 
 export interface PublicTenant {
@@ -84,9 +107,9 @@ export interface PublicTenant {
   workspaceId?: string | null;
   databaseId?: string | null;
   databaseToken?: string | null;
-  sharepointPathBase?: string | null;
   email?: string | null;
   backofficeEmail?: string | null;
+  sharepoint?: SharepointStatus;
 }
 
 export interface BeneficiaryFields {

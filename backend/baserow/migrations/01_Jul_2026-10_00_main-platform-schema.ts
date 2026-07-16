@@ -26,7 +26,10 @@ async function ensureTenantsSchema(databaseId: string): Promise<number> {
     T.brandingName,
     T.brandingOrias,
     T.brandingAccent,
-    T.sharepointPathBase,
+    // `sharepoint_path_base` used to be created here. It is dropped by
+    // 16_Jul_2026-sharepoint-oauth-fields.ts, and there is no applied-migrations
+    // ledger — every migration re-runs on each `npm run setup` — so leaving it
+    // would re-create a column that 16 immediately deletes, on every single run.
     T.email,
   ], fields);
   await ensureField(table.id, { name: T.databaseToken, type: 'long_text' }, fields);

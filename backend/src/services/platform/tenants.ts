@@ -51,7 +51,6 @@ export async function updateTenantBranding(
     status?: string;
     brandingLogo?: { buffer: Buffer; originalName: string; mimeType?: string };
     removeBrandingLogo?: boolean;
-    sharepointPathBase?: string;
     email?: string;
     backofficeEmail?: string;
   },
@@ -61,7 +60,6 @@ export async function updateTenantBranding(
     || branding.brandingAccent !== undefined
     || branding.brandingLogo !== undefined
     || branding.removeBrandingLogo === true
-    || branding.sharepointPathBase !== undefined
     || branding.email !== undefined
     || branding.backofficeEmail !== undefined;
 
@@ -72,7 +70,6 @@ export async function updateTenantBranding(
       brandingAccent: branding.brandingAccent,
       brandingLogo: branding.brandingLogo,
       removeBrandingLogo: branding.removeBrandingLogo,
-      sharepointPathBase: branding.sharepointPathBase,
       email: branding.email,
       backofficeEmail: branding.backofficeEmail,
     })

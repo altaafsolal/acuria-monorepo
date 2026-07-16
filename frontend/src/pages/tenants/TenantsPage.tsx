@@ -42,7 +42,6 @@ interface BrandingFormState {
   brandingOrias: string;
   brandingAccent: string;
   status: EditableTenantStatus;
-  sharepointPathBase: string;
   email: string;
   backofficeEmail: string;
 }
@@ -57,7 +56,6 @@ function brandingFormFromTenant(tenant: Tenant): BrandingFormState {
     brandingOrias: tenant.brandingOrias?.trim() || "",
     brandingAccent: tenant.brandingAccent?.trim() || DEFAULT_ACCENT,
     status: editableStatusFromTenant(tenant),
-    sharepointPathBase: tenant.sharepointPathBase?.trim() || "",
     email: tenant.email?.trim() || "",
     backofficeEmail: tenant.backofficeEmail?.trim() || "",
   };
@@ -76,7 +74,6 @@ export default function TenantsPage() {
     brandingOrias: "",
     brandingAccent: DEFAULT_ACCENT,
     status: TENANT_STATUS.ACTIVE,
-    sharepointPathBase: "",
     email: "",
     backofficeEmail: "",
   });
@@ -229,7 +226,6 @@ export default function TenantsPage() {
         brandingOrias: brandingForm.brandingOrias.trim() || undefined,
         brandingAccent: accent,
         status: brandingForm.status,
-        sharepointPathBase: brandingForm.sharepointPathBase.trim() || undefined,
         email: brandingForm.email.trim() || undefined,
         backofficeEmail: brandingForm.backofficeEmail.trim() || undefined,
         logo: logoFile ?? undefined,
@@ -414,23 +410,6 @@ export default function TenantsPage() {
                       }))
                     }
                     placeholder="backoffice@nm-prime.com"
-                  />
-                </div>
-              </label>
-
-              <label className="field field--full">
-                <span>Chemin SharePoint</span>
-                <div className="field-input">
-                  <input
-                    type="text"
-                    value={brandingForm.sharepointPathBase}
-                    onChange={(e) =>
-                      setBrandingForm((prev) => ({
-                        ...prev,
-                        sharepointPathBase: e.target.value,
-                      }))
-                    }
-                    placeholder="/NOM GÉRANT/STRUCTURE/CABINET CONSEIL/1 - CLIENTS/MON CABINET/Documents Réglementaires"
                   />
                 </div>
               </label>

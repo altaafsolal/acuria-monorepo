@@ -9,7 +9,12 @@ export const sampleTenants: Tenant[] = [
     brandingName: 'NM Prime', brandingOrias: '12345678',
     brandingAccent: '#3B82F6', hasBrandingLogo: false,
     workspaceId: '100', databaseId: '200', databaseToken: 'token-1',
-    sharepointPathBase: null, email: 'contact@nmprime.fr', backofficeEmail: null,
+    email: 'contact@nmprime.fr', backofficeEmail: null,
+    sharepoint: {
+      connected: true, siteId: 'site-1', driveId: 'drive-1',
+      siteDisplayName: 'NM Prime', connectedAt: '2026-03-01T00:00:00Z',
+      connectedBy: 'admin@nmprime.fr',
+    },
   },
   {
     id: '2', name: 'Cabinet Test', slug: 'cabinet-test', status: 'active',
@@ -18,7 +23,11 @@ export const sampleTenants: Tenant[] = [
     brandingName: 'Cabinet Test', brandingOrias: null,
     brandingAccent: '#10B981', hasBrandingLogo: false,
     workspaceId: '101', databaseId: '201', databaseToken: 'token-2',
-    sharepointPathBase: null, email: null, backofficeEmail: null,
+    email: null, backofficeEmail: null,
+    sharepoint: {
+      connected: false, siteId: null, driveId: null, siteDisplayName: null,
+      connectedAt: null, connectedBy: null,
+    },
   },
 ];
 
@@ -67,5 +76,20 @@ export const platformHandlers = [
 
   http.get('/api/platform/tenants/:tenantId/clients', () => {
     return HttpResponse.json({ clients: [] });
+  }),
+
+  // SharePoint integration. Default to connected so the dashboard gate lets the
+  // rest of the app render; tests that exercise the gate override this per-test.
+  http.get('/api/tenants/:tenantId/sharepoint/status', () => {
+    return HttpResponse.json({
+      sharepoint: {
+        connected: true,
+        siteId: 'site-1',
+        driveId: 'drive-1',
+        siteDisplayName: 'Test Site',
+        connectedAt: '2026-03-01T00:00:00Z',
+        connectedBy: 'admin@test.fr',
+      },
+    });
   }),
 ];

@@ -10,6 +10,7 @@ import type {
   BaserowRow,
   CreateTenantFields,
   PublicTenant,
+  SharepointStatus,
   TenantRecord,
 } from '../../types/domain.js';
 
@@ -30,11 +31,32 @@ function mapTenantRow(row: BaserowRow): TenantRecord {
     branding_orias: String(row[F.brandingOrias] || '').trim() || null,
     branding_accent: String(row[F.brandingAccent] || '').trim() || null,
     branding_logo: pickFileValues(row[F.brandingLogo]),
-    sharepoint_path_base: String(row[F.sharepointPathBase] || '').trim() || null,
     email: String(row[F.email] || '').trim() || null,
     backoffice_email: String(row[F.backofficeEmail] || '').trim() || null,
     created_on: pickFieldValue(row[F.createdOn]),
     updated_on: pickFieldValue(row[F.updatedOn]),
+    sharepoint_connected: row[F.sharepointConnected] === true,
+    sharepoint_access_token: String(row[F.sharepointAccessToken] || '').trim() || null,
+    sharepoint_refresh_token: String(row[F.sharepointRefreshToken] || '').trim() || null,
+    sharepoint_token_expires_at: String(row[F.sharepointTokenExpiresAt] || '').trim() || null,
+    sharepoint_ms_tenant_id: String(row[F.sharepointMsTenantId] || '').trim() || null,
+    sharepoint_site_id: String(row[F.sharepointSiteId] || '').trim() || null,
+    sharepoint_drive_id: String(row[F.sharepointDriveId] || '').trim() || null,
+    sharepoint_site_display_name: String(row[F.sharepointSiteDisplayName] || '').trim() || null,
+    sharepoint_connected_at: String(row[F.sharepointConnectedAt] || '').trim() || null,
+    sharepoint_connected_by: String(row[F.sharepointConnectedBy] || '').trim() || null,
+  };
+}
+
+/** Client-safe view of the SharePoint link. Never widen this to include tokens. */
+export function toSharepointStatus(tenant: TenantRecord): SharepointStatus {
+  return {
+    connected: tenant.sharepoint_connected,
+    siteId: tenant.sharepoint_site_id,
+    driveId: tenant.sharepoint_drive_id,
+    siteDisplayName: tenant.sharepoint_site_display_name,
+    connectedAt: tenant.sharepoint_connected_at,
+    connectedBy: tenant.sharepoint_connected_by,
   };
 }
 
@@ -77,9 +99,11 @@ export function toPublicTenant(
     workspaceId: tenant.workspace_id,
     databaseId: tenant.database_id,
     databaseToken: tenant.database_token,
-    sharepointPathBase: tenant.sharepoint_path_base,
     email: tenant.email,
     backofficeEmail: tenant.backoffice_email,
+    // Status only — sharepoint_access_token / sharepoint_refresh_token must
+    // never be serialized to a client. toSharepointStatus() enforces that.
+    sharepoint: toSharepointStatus(tenant),
   };
 }
 
@@ -127,7 +151,6 @@ export async function patchTenantBranding(
     brandingAccent?: string;
     brandingLogo?: { buffer: Buffer; originalName: string; mimeType?: string };
     removeBrandingLogo?: boolean;
-    sharepointPathBase?: string;
     email?: string;
     backofficeEmail?: string;
   },
@@ -144,7 +167,6 @@ export async function patchTenantBranding(
   if (branding.brandingName !== undefined) payload[F.brandingName] = branding.brandingName;
   if (branding.brandingOrias !== undefined) payload[F.brandingOrias] = branding.brandingOrias;
   if (branding.brandingAccent !== undefined) payload[F.brandingAccent] = branding.brandingAccent;
-  if (branding.sharepointPathBase !== undefined) payload[F.sharepointPathBase] = branding.sharepointPathBase;
   if (branding.email !== undefined) payload[F.email] = branding.email;
   if (branding.backofficeEmail !== undefined) payload[F.backofficeEmail] = branding.backofficeEmail;
 
@@ -190,6 +212,76 @@ export async function patchTenantStatus(
 
   const row = await updateRow(await getTenantsTableId(), tenantId, {
     [F.status]: status,
+  });
+  return mapTenantRow(row);
+}
+
+/** Fields writable on a tenant's SharePoint connection. Tokens must already be
+ *  encrypted by the caller (services/sharepoint/oauth.ts) — this layer stores
+ *  whatever string it is handed. */
+export interface SharepointPatch {
+  connected?: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  tokenExpiresAt?: string;
+  msTenantId?: string;
+  siteId?: string;
+  driveId?: string;
+  siteDisplayName?: string;
+  connectedAt?: string;
+  connectedBy?: string;
+}
+
+export async function patchTenantSharepoint(
+  tenantId: string,
+  fields: SharepointPatch,
+): Promise<TenantRecord | null> {
+  const existing = await findTenantById(tenantId);
+  if (!existing) return null;
+
+  const payload: Record<string, unknown> = {};
+  if (fields.connected !== undefined) payload[F.sharepointConnected] = fields.connected;
+  if (fields.accessToken !== undefined) payload[F.sharepointAccessToken] = fields.accessToken;
+  if (fields.refreshToken !== undefined) payload[F.sharepointRefreshToken] = fields.refreshToken;
+  if (fields.tokenExpiresAt !== undefined) payload[F.sharepointTokenExpiresAt] = fields.tokenExpiresAt;
+  if (fields.msTenantId !== undefined) payload[F.sharepointMsTenantId] = fields.msTenantId;
+  if (fields.siteId !== undefined) payload[F.sharepointSiteId] = fields.siteId;
+  if (fields.driveId !== undefined) payload[F.sharepointDriveId] = fields.driveId;
+  if (fields.siteDisplayName !== undefined) payload[F.sharepointSiteDisplayName] = fields.siteDisplayName;
+  if (fields.connectedAt !== undefined) payload[F.sharepointConnectedAt] = fields.connectedAt;
+  if (fields.connectedBy !== undefined) payload[F.sharepointConnectedBy] = fields.connectedBy;
+
+  if (Object.keys(payload).length === 0) return existing;
+
+  const row = await updateRow(await getTenantsTableId(), tenantId, payload);
+  return mapTenantRow(row);
+}
+
+/**
+ * Wipes every SharePoint column for a tenant.
+ *
+ * This does NOT revoke anything server-side: Microsoft has no programmatic
+ * revocation endpoint for the authorization-code flow. A tenant who wants the
+ * grant fully revoked must also remove the app from
+ * https://myapps.microsoft.com → the app's "..." menu → Manage → Revoke.
+ * Dropping the refresh token here means WE can no longer act on their behalf,
+ * which is what matters for the platform's side of the bargain.
+ */
+export async function clearTenantSharepoint(tenantId: string): Promise<TenantRecord | null> {
+  const existing = await findTenantById(tenantId);
+  if (!existing) return null;
+
+  const row = await updateRow(await getTenantsTableId(), tenantId, {
+    [F.sharepointConnected]: false,
+    [F.sharepointAccessToken]: '',
+    [F.sharepointRefreshToken]: '',
+    [F.sharepointTokenExpiresAt]: '',
+    [F.sharepointMsTenantId]: '',
+    [F.sharepointSiteId]: '',
+    [F.sharepointDriveId]: '',
+    [F.sharepointSiteDisplayName]: '',
+    [F.sharepointConnectedAt]: '',
+    [F.sharepointConnectedBy]: '',
   });
   return mapTenantRow(row);
 }

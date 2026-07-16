@@ -42,11 +42,22 @@ export const BASEROW_FIELDS = {
     brandingOrias: 'branding_orias',
     brandingAccent: 'branding_accent',
     brandingLogo: 'branding_logo',
-    sharepointPathBase: 'sharepoint_path_base',
     email: 'email',
     backofficeEmail: 'backoffice_email',
     createdOn: 'created_on',
     updatedOn: 'updated_on',
+    // Per-tenant Microsoft 365 / SharePoint OAuth connection.
+    // Tokens are AES-256-GCM ciphertext at rest — see src/utils/crypto.ts.
+    sharepointConnected: 'sharepoint_connected',
+    sharepointAccessToken: 'sharepoint_access_token',
+    sharepointRefreshToken: 'sharepoint_refresh_token',
+    sharepointTokenExpiresAt: 'sharepoint_token_expires_at',
+    sharepointMsTenantId: 'sharepoint_ms_tenant_id',
+    sharepointSiteId: 'sharepoint_site_id',
+    sharepointDriveId: 'sharepoint_drive_id',
+    sharepointSiteDisplayName: 'sharepoint_site_display_name',
+    sharepointConnectedAt: 'sharepoint_connected_at',
+    sharepointConnectedBy: 'sharepoint_connected_by',
   },
   clients: {
     name: 'Name',

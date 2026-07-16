@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate, requireRole, requireTenant} from "../../middleware/index.js";
 import { clientsRepo, tenantsRepo } from "../../services/baserow/index.js";
+import { sharepointBrokerFields } from "../../services/make/sharepoint.js";
 import {
   derIsSent,
   ldmAvailableDate,
@@ -111,6 +112,7 @@ router.post(
               .filter(Boolean)
               .join(", ")
           : "",
+        ...sharepointBrokerFields(tenant),
       });
 
       const updated = await clientsRepo.patchClientKycFields(

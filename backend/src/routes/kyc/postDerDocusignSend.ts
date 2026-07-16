@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate, requireRole, requireTenant} from "../../middleware/index.js";
 import { clientsRepo, tenantsRepo } from "../../services/baserow/index.js";
+import { sharepointBrokerFields } from "../../services/make/sharepoint.js";
 import { asyncHandler, HttpError} from "../../utils/index.js";
 import type { SendDerInput } from "../../types/domain.js";
 import { postWebhook, webhookUrl } from "../../services/make/http.js";
@@ -94,6 +95,7 @@ router.post(
         der_filename: `${nomFile}_DER_${today}`,
         nm_name: body.signataireName,
         nm_email: body.signataireEmail,
+        ...sharepointBrokerFields(tenant),
       });
 
       const updated = await clientsRepo.patchClientKycFields(

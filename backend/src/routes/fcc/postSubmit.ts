@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../../utils/index.js";
 import { webhookUrl, postWebhook } from "../../services/make/http.js";
+import { sharepointBrokerFields } from "../../services/make/sharepoint.js";
 import * as fccClientsRepo from "../../services/baserow/fcc-clients.js";
 import * as clientsRepo from "../../services/baserow/clients.js";
 import * as tenantsRepo from "../../services/baserow/tenants.js";
@@ -64,6 +65,7 @@ router.post(
         timestamp_soumission: str("timestamp_soumission") || "",
         form_id: str("form_id") || "",
         tenant_backoffice_email: tenantBackofficeEmail,
+        ...sharepointBrokerFields(tenant),
       },
     );
     const makeData = (await makeResponse.json()) as {

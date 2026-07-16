@@ -13,6 +13,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import ProtectedRoute from "./components/routing/ProtectedRoute";
 import SuperAdminRoute from "./components/routing/SuperAdminRoute";
 import TenantUserRoute from "./components/routing/TenantUserRoute";
+import SharepointGate from "./components/routing/SharepointGate";
 
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
 const SetPasswordPage = lazy(() => import("./pages/auth/SetPasswordPage"));
@@ -35,6 +36,7 @@ const PlatformAuditPage = lazy(() => import("./pages/audit/PlatformAuditPage"));
 const TenantAuditPage = lazy(() => import("./pages/audit/TenantAuditPage"));
 const MarchesPage = lazy(() => import("./pages/outils/MarchesPage"));
 const SimulateursPage = lazy(() => import("./pages/outils/SimulateursPage"));
+const IntegrationsPage = lazy(() => import("./pages/settings/IntegrationsPage"));
 const FccPpPage = lazy(() => import("./pages/fcc/FccPpPage"));
 const FccPmPage = lazy(() => import("./pages/fcc/FccPmPage"));
 
@@ -75,7 +77,9 @@ export default function App() {
         <Route
           element={
             <ProtectedRoute>
-              <DashboardLayout />
+              <SharepointGate>
+                <DashboardLayout />
+              </SharepointGate>
             </ProtectedRoute>
           }
         >
@@ -165,6 +169,14 @@ export default function App() {
             element={
               <TenantUserRoute adminOnly>
                 <UserDetailPage />
+              </TenantUserRoute>
+            }
+          />
+          <Route
+            path="dashboard/integrations"
+            element={
+              <TenantUserRoute adminOnly>
+                <IntegrationsPage />
               </TenantUserRoute>
             }
           />

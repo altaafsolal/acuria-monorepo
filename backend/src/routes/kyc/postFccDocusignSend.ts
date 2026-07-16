@@ -8,6 +8,7 @@ import {
 } from "../../services/baserow/index.js";
 import { asyncHandler, HttpError} from "../../utils/index.js";
 import { postWebhook, webhookUrl } from "../../services/make/http.js";
+import { sharepointBrokerFields } from "../../services/make/sharepoint.js";
 
 const router = Router({ mergeParams: true });
 
@@ -43,6 +44,7 @@ router.post(
         client_email: client.email,
         client_name: name,
         pdf_filename: latestFccClient?.pdfFilename || "",
+        ...sharepointBrokerFields(tenant),
       });
       const data = (await res2.json()) as { envelope_id?: string };
 

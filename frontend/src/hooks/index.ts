@@ -15,6 +15,12 @@ export {
   useDeleteTenantUser,
   useResetTenantUserPassword,
 } from './usePlatform';
+export {
+  useSharepointStatus,
+  useSharepointConnect,
+  useSharepointConfig,
+  useSharepointDisconnect,
+} from './useSharepoint';
 export { usePlatformSocket } from './usePlatformSocket';
 export { useHealth } from './useHealth';
 export { useAccueil } from './useAccueil';
