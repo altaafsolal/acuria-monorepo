@@ -1,0 +1,132 @@
+# Render Blueprint — Acuria API (Express backend).
+#
+# The frontend is NOT deployed here — it goes to Vercel (see DEPLOYMENT.md).
+# The API lives on Render because it needs things Vercel's serverless model can't
+# give it: a long-lived process for WebSockets (super-admin realtime dashboard),
+# in-memory caches (JWT / tenant-context / SharePoint token-refresh de-dup), and
+# filesystem-based route loading.
+#
+# To use: Render Dashboard → New → Blueprint → pick this repo. Render reads this
+# file, creates the service, and prompts for every `sync: false` variable.
+# Full walkthrough + env-var reference: DEPLOYMENT.md
+
+services:
+  - type: web
+    name: acuria-api
+    runtime: node
+    # This is an npm-workspaces monorepo; the API is the `backend` package.
+    rootDir: backend
+    region: frankfurt          # closest to French cabinets; change if needed
+    plan: starter              # NOT free: free tier sleeps, which drops WebSocket
+                               # connections and adds cold-start latency
+    branch: master
+    autoDeploy: true
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    # getHealth.ts → 200. Render restarts the instance if this stops responding.
+    healthCheckPath: /api/health
+
+    envVars:
+      # ── Runtime ──────────────────────────────────────────────────────────
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+
+      # ── URLs (fill after both services exist — see DEPLOYMENT.md §3) ──────
+      # APP_URL      = the Vercel frontend origin (used for OAuth success redirect
+      #                and password-set email links)
+      # CORS_ORIGINS = same Vercel origin (comma-separated if more than one)
+      # API_BASE_URL = this service's public origin + /api
+      - key: APP_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: API_BASE_URL
+        sync: false
+
+      # ── Auth secrets ─────────────────────────────────────────────────────
+      # JWT signing keys are generated once by Render and kept stable.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      # 64 hex chars (32 bytes). Encrypts tenant OAuth tokens at rest. MUST be a
+      # real 64-char hex string — do NOT use generateValue (wrong format/length).
+      # Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      # Rotating this makes every stored SharePoint token undecryptable.
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false
+      # Shared secret for inbound Make.com calls AND the SharePoint token broker.
+      - key: WEBHOOK_SECRET
+        sync: false
+
+      # ── Super admin seed (used by `npm run setup`) ───────────────────────
+      - key: SUPER_ADMIN_EMAIL
+        sync: false
+      - key: SUPER_ADMIN_PASSWORD
+        sync: false
+      - key: SUPER_ADMIN_NAME
+        value: Super Admin
+
+      # ── Baserow ──────────────────────────────────────────────────────────
+      - key: BASEROW_API_URL
+        value: https://api.baserow.io
+      - key: BASEROW_MAIN_DATABASE_ID
+        sync: false
+      - key: BASEROW_DATABASE_TOKEN
+        sync: false
+      - key: BASEROW_EMAIL
+        sync: false
+      - key: BASEROW_PASSWORD
+        sync: false
+      - key: BASEROW_WORKSPACE_ID
+        sync: false
+      - key: BASEROW_USERS_TABLE_ID
+        sync: false
+      - key: BASEROW_TENANTS_TABLE_ID
+        sync: false
+
+      # ── Microsoft Entra ID / SharePoint OAuth (see docs/sharepoint-oauth-setup.md) ──
+      - key: AZURE_CLIENT_ID
+        sync: false
+      - key: AZURE_CLIENT_SECRET
+        sync: false
+      # Must equal API_BASE_URL + /oauth/sharepoint/callback, and match the
+      # redirect URI registered on the Azure app.
+      - key: AZURE_REDIRECT_URI
+        sync: false
+
+      # ── Make.com webhooks ────────────────────────────────────────────────
+      - key: MAKE_WEBHOOK_DER
+        sync: false
+      - key: MAKE_WEBHOOK_DER_DOCUSIGN
+        sync: false
+      - key: MAKE_WEBHOOK_LDM
+        sync: false
+      - key: MAKE_WEBHOOK_PREVIEW
+        sync: false
+      - key: MAKE_WEBHOOK_FCC_SEND
+        sync: false
+      - key: MAKE_WEBHOOK_FCC_SUBMIT
+        sync: false
+      - key: MAKE_WEBHOOK_FCC_DOCUSIGN
+        sync: false
+      - key: MAKE_WEBHOOK_NOTE_UPLOAD
+        sync: false
+      - key: MAKE_WEBHOOK_PASSWORD_SET
+        sync: false
+      - key: MAKE_WEBHOOK_OTP
+        sync: false
+
+      # ── Google Docs template IDs (DER / LdM generation) ──────────────────
+      - key: GOOGLE_DOC_DER_ID
+        sync: false
+      - key: GOOGLE_DOC_LDM_PP_SANS
+        sync: false
+      - key: GOOGLE_DOC_LDM_PP_AVEC
+        sync: false
+      - key: GOOGLE_DOC_LDM_PM_SANS
+        sync: false
+      - key: GOOGLE_DOC_LDM_PM_AVEC
+        sync: false
