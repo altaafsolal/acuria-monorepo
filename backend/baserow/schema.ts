@@ -58,6 +58,19 @@ export const BASEROW_FIELDS = {
     sharepointSiteDisplayName: 'sharepoint_site_display_name',
     sharepointConnectedAt: 'sharepoint_connected_at',
     sharepointConnectedBy: 'sharepoint_connected_by',
+    // Per-tenant transactional email OAuth (Microsoft 365 Mail.Send OR Gmail).
+    // Independent of the SharePoint connection above — a tenant may use Gmail for
+    // email and Microsoft for SharePoint. Tokens are AES-256-GCM ciphertext at
+    // rest — see src/utils/crypto.ts.
+    emailProvider: 'email_provider', // 'microsoft' | 'google' | ''
+    emailAccessToken: 'email_access_token',
+    emailRefreshToken: 'email_refresh_token',
+    emailTokenExpiresAt: 'email_token_expires_at',
+    emailMsTenantId: 'email_ms_tenant_id',
+    emailSenderAddress: 'email_sender_address',
+    emailScopesGranted: 'email_scopes_granted',
+    emailConnectedAt: 'email_connected_at',
+    emailConnectedBy: 'email_connected_by',
   },
   clients: {
     name: 'Name',

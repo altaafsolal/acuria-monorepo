@@ -13,7 +13,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import ProtectedRoute from "./components/routing/ProtectedRoute";
 import SuperAdminRoute from "./components/routing/SuperAdminRoute";
 import TenantUserRoute from "./components/routing/TenantUserRoute";
-import SharepointGate from "./components/routing/SharepointGate";
+import OnboardingGate from "./components/routing/OnboardingGate";
 
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
 const SetPasswordPage = lazy(() => import("./pages/auth/SetPasswordPage"));
@@ -77,9 +77,9 @@ export default function App() {
         <Route
           element={
             <ProtectedRoute>
-              <SharepointGate>
+              <OnboardingGate>
                 <DashboardLayout />
-              </SharepointGate>
+              </OnboardingGate>
             </ProtectedRoute>
           }
         >

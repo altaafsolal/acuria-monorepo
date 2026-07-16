@@ -77,6 +77,18 @@ export interface TenantRecord {
   sharepoint_site_display_name: string | null;
   sharepoint_connected_at: string | null;
   sharepoint_connected_by: string | null;
+  /** Per-tenant transactional email OAuth (Microsoft 365 OR Gmail). Independent
+   *  of the SharePoint connection. Token fields hold ciphertext — decrypt via
+   *  utils/crypto.ts. They must never reach PublicTenant. */
+  email_provider: EmailProvider | null;
+  email_access_token: string | null;
+  email_refresh_token: string | null;
+  email_token_expires_at: string | null;
+  email_ms_tenant_id: string | null;
+  email_sender_address: string | null;
+  email_scopes_granted: string | null;
+  email_connected_at: string | null;
+  email_connected_by: string | null;
 }
 
 /** Everything a client is allowed to know about a tenant's SharePoint link.
@@ -88,6 +100,21 @@ export interface SharepointStatus {
   siteDisplayName: string | null;
   connectedAt: string | null;
   connectedBy: string | null;
+}
+
+export type EmailProvider = 'microsoft' | 'google';
+
+/** Client-safe view of a tenant's email connection. Never includes tokens or the
+ *  Microsoft tenant id. */
+export interface EmailStatus {
+  connected: boolean;
+  provider: EmailProvider | null;
+  senderAddress: string | null;
+  connectedAt: string | null;
+  connectedBy: string | null;
+  /** true when the stored grant is missing a scope we now require (Microsoft only)
+   *  — the UI prompts the admin to reconnect. */
+  scopeMissing: boolean;
 }
 
 export interface PublicTenant {
@@ -110,6 +137,7 @@ export interface PublicTenant {
   email?: string | null;
   backofficeEmail?: string | null;
   sharepoint?: SharepointStatus;
+  emailIntegration?: EmailStatus;
 }
 
 export interface BeneficiaryFields {

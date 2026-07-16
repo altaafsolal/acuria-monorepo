@@ -20,6 +20,27 @@ export interface Tenant {
   email?: string | null;
   backofficeEmail?: string | null;
   sharepoint?: SharepointStatus;
+  emailIntegration?: EmailStatus;
+}
+
+export type EmailProvider = 'microsoft' | 'google';
+
+/** What the API reveals about a tenant's email connection. No tokens, ever. */
+export interface EmailStatus {
+  connected: boolean;
+  provider: EmailProvider | null;
+  senderAddress: string | null;
+  connectedAt: string | null;
+  connectedBy: string | null;
+  scopeMissing: boolean;
+}
+
+export interface EmailStatusResponse {
+  email: EmailStatus;
+}
+
+export interface EmailConnectResponse {
+  authorizeUrl: string;
 }
 
 /** What the API reveals about a tenant's Microsoft 365 link. Tokens live only in

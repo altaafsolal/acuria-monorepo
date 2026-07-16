@@ -78,8 +78,9 @@ export const platformHandlers = [
     return HttpResponse.json({ clients: [] });
   }),
 
-  // SharePoint integration. Default to connected so the dashboard gate lets the
-  // rest of the app render; tests that exercise the gate override this per-test.
+  // SharePoint + email integrations. Default to connected so the dashboard
+  // onboarding gate lets the rest of the app render; tests exercising the gate
+  // override these per-test.
   http.get('/api/tenants/:tenantId/sharepoint/status', () => {
     return HttpResponse.json({
       sharepoint: {
@@ -89,6 +90,19 @@ export const platformHandlers = [
         siteDisplayName: 'Test Site',
         connectedAt: '2026-03-01T00:00:00Z',
         connectedBy: 'admin@test.fr',
+      },
+    });
+  }),
+
+  http.get('/api/tenants/:tenantId/email/status', () => {
+    return HttpResponse.json({
+      email: {
+        connected: true,
+        provider: 'microsoft',
+        senderAddress: 'contact@test.fr',
+        connectedAt: '2026-03-01T00:00:00Z',
+        connectedBy: 'admin@test.fr',
+        scopeMissing: false,
       },
     });
   }),

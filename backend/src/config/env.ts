@@ -66,12 +66,21 @@ export interface Env {
     password: string;
     folder: string;
   };
-  /** Multitenant Microsoft Entra ID app registration — drives per-tenant SharePoint OAuth. */
+  /** Multitenant Microsoft Entra ID app registration — drives per-tenant SharePoint
+   *  OAuth AND Microsoft-365 email (same app; Mail.Send added as a delegated scope). */
   azure: {
     clientId: string;
     clientSecret: string;
     redirectUri: string;
   };
+  /** Google Cloud OAuth client — drives per-tenant Gmail sending (gmail.send). */
+  google: {
+    clientId: string;
+    clientSecret: string;
+  };
+  /** Callback both email providers redirect to after consent. Registered on BOTH the
+   *  Azure app and the Google OAuth client. Provider is carried in the signed state. */
+  emailRedirectUri: string;
   /** 64 hex chars (32 bytes). Encrypts OAuth tokens at rest. See utils/crypto.ts. */
   tokenEncryptionKey: string;
   webhookSecret: string; // Shared secret for inbound webhooks from Make (Authorization header)
@@ -173,6 +182,13 @@ export const env: Env = {
     redirectUri: process.env.AZURE_REDIRECT_URI || `${apiBaseUrl}/oauth/sharepoint/callback`,
   },
 
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+  },
+
+  emailRedirectUri: process.env.EMAIL_REDIRECT_URI || `${apiBaseUrl}/oauth/email/callback`,
+
   tokenEncryptionKey: process.env.TOKEN_ENCRYPTION_KEY || '',
 
   webhookSecret: process.env.WEBHOOK_SECRET || '',
@@ -192,4 +208,13 @@ export function isBaserowMigrateConfigured(): boolean {
 
 export function isAzureConfigured(): boolean {
   return Boolean(env.azure.clientId && env.azure.clientSecret && env.azure.redirectUri);
+}
+
+/** Microsoft-365 email reuses the Azure app; only the email redirect URI differs. */
+export function isMicrosoftEmailConfigured(): boolean {
+  return Boolean(env.azure.clientId && env.azure.clientSecret && env.emailRedirectUri);
+}
+
+export function isGoogleEmailConfigured(): boolean {
+  return Boolean(env.google.clientId && env.google.clientSecret && env.emailRedirectUri);
 }

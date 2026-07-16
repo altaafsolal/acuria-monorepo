@@ -101,6 +101,17 @@ services:
       - key: AZURE_REDIRECT_URI
         sync: false
 
+      # ── Per-tenant email OAuth (see docs/email-oauth-setup.md) ───────────
+      # Microsoft email reuses the Azure app above (add Mail.Send scope). Gmail
+      # needs its own Google Cloud OAuth client. Both redirect to EMAIL_REDIRECT_URI
+      # (= API_BASE_URL + /oauth/email/callback), registered on BOTH apps.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: EMAIL_REDIRECT_URI
+        sync: false
+
       # ── Make.com webhooks ────────────────────────────────────────────────
       - key: MAKE_WEBHOOK_DER
         sync: false

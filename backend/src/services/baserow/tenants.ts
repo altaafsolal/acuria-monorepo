@@ -9,12 +9,18 @@ import { getTenantsTableId } from './registry.js';
 import type {
   BaserowRow,
   CreateTenantFields,
+  EmailProvider,
+  EmailStatus,
   PublicTenant,
   SharepointStatus,
   TenantRecord,
 } from '../../types/domain.js';
 
 const F = BASEROW_FIELDS.tenants;
+
+/** Graph scope required to send mail. Used to flag Microsoft connections that
+ *  predate the email feature (SharePoint-only grants) as needing re-consent. */
+const MS_MAIL_SEND_SCOPE = 'Mail.Send';
 
 export type TenantBrandingLogo = TenantRecord['branding_logo'][number];
 
@@ -45,6 +51,42 @@ function mapTenantRow(row: BaserowRow): TenantRecord {
     sharepoint_site_display_name: String(row[F.sharepointSiteDisplayName] || '').trim() || null,
     sharepoint_connected_at: String(row[F.sharepointConnectedAt] || '').trim() || null,
     sharepoint_connected_by: String(row[F.sharepointConnectedBy] || '').trim() || null,
+    email_provider: normalizeEmailProvider(row[F.emailProvider]),
+    email_access_token: String(row[F.emailAccessToken] || '').trim() || null,
+    email_refresh_token: String(row[F.emailRefreshToken] || '').trim() || null,
+    email_token_expires_at: String(row[F.emailTokenExpiresAt] || '').trim() || null,
+    email_ms_tenant_id: String(row[F.emailMsTenantId] || '').trim() || null,
+    email_sender_address: String(row[F.emailSenderAddress] || '').trim() || null,
+    email_scopes_granted: String(row[F.emailScopesGranted] || '').trim() || null,
+    email_connected_at: String(row[F.emailConnectedAt] || '').trim() || null,
+    email_connected_by: String(row[F.emailConnectedBy] || '').trim() || null,
+  };
+}
+
+function normalizeEmailProvider(value: unknown): EmailProvider | null {
+  const v = String(value || '').trim();
+  return v === 'microsoft' || v === 'google' ? v : null;
+}
+
+/** True when a connected Microsoft email grant lacks the Mail.Send scope — i.e. it
+ *  was authorized before we needed to send mail, so the admin must reconnect. */
+function isEmailScopeMissing(tenant: TenantRecord): boolean {
+  if (tenant.email_provider !== 'microsoft') return false;
+  if (!tenant.email_refresh_token) return false;
+  const scopes = tenant.email_scopes_granted || '';
+  // Graph returns scopes with varying case/prefix; match case-insensitively.
+  return !scopes.toLowerCase().includes(MS_MAIL_SEND_SCOPE.toLowerCase());
+}
+
+/** Client-safe view of the email connection. Never widen this to include tokens. */
+export function toEmailStatus(tenant: TenantRecord): EmailStatus {
+  return {
+    connected: Boolean(tenant.email_provider && tenant.email_refresh_token),
+    provider: tenant.email_provider,
+    senderAddress: tenant.email_sender_address,
+    connectedAt: tenant.email_connected_at,
+    connectedBy: tenant.email_connected_by,
+    scopeMissing: isEmailScopeMissing(tenant),
   };
 }
 
@@ -104,6 +146,9 @@ export function toPublicTenant(
     // Status only — sharepoint_access_token / sharepoint_refresh_token must
     // never be serialized to a client. toSharepointStatus() enforces that.
     sharepoint: toSharepointStatus(tenant),
+    // Likewise status-only for email — no tokens. (Named emailIntegration to avoid
+    // clashing with `email`, the tenant's contact address above.)
+    emailIntegration: toEmailStatus(tenant),
   };
 }
 
@@ -282,6 +327,69 @@ export async function clearTenantSharepoint(tenantId: string): Promise<TenantRec
     [F.sharepointSiteDisplayName]: '',
     [F.sharepointConnectedAt]: '',
     [F.sharepointConnectedBy]: '',
+  });
+  return mapTenantRow(row);
+}
+
+/** Fields writable on a tenant's email connection. Tokens must already be
+ *  encrypted by the caller (services/email/oauth.ts). */
+export interface EmailPatch {
+  provider?: EmailProvider | '';
+  accessToken?: string;
+  refreshToken?: string;
+  tokenExpiresAt?: string;
+  msTenantId?: string;
+  senderAddress?: string;
+  scopesGranted?: string;
+  connectedAt?: string;
+  connectedBy?: string;
+}
+
+export async function patchTenantEmail(
+  tenantId: string,
+  fields: EmailPatch,
+): Promise<TenantRecord | null> {
+  const existing = await findTenantById(tenantId);
+  if (!existing) return null;
+
+  const payload: Record<string, unknown> = {};
+  if (fields.provider !== undefined) payload[F.emailProvider] = fields.provider;
+  if (fields.accessToken !== undefined) payload[F.emailAccessToken] = fields.accessToken;
+  if (fields.refreshToken !== undefined) payload[F.emailRefreshToken] = fields.refreshToken;
+  if (fields.tokenExpiresAt !== undefined) payload[F.emailTokenExpiresAt] = fields.tokenExpiresAt;
+  if (fields.msTenantId !== undefined) payload[F.emailMsTenantId] = fields.msTenantId;
+  if (fields.senderAddress !== undefined) payload[F.emailSenderAddress] = fields.senderAddress;
+  if (fields.scopesGranted !== undefined) payload[F.emailScopesGranted] = fields.scopesGranted;
+  if (fields.connectedAt !== undefined) payload[F.emailConnectedAt] = fields.connectedAt;
+  if (fields.connectedBy !== undefined) payload[F.emailConnectedBy] = fields.connectedBy;
+
+  if (Object.keys(payload).length === 0) return existing;
+
+  const row = await updateRow(await getTenantsTableId(), tenantId, payload);
+  return mapTenantRow(row);
+}
+
+/**
+ * Wipes every email column for a tenant. Like SharePoint, this does NOT revoke
+ * server-side — neither Microsoft nor Google support programmatic revocation for
+ * this flow. A tenant wanting a full revoke must also remove the app from their
+ * Microsoft "My Apps" or Google "Third-party access" page. Dropping our copy of
+ * the refresh token is what stops the platform sending on their behalf.
+ */
+export async function clearTenantEmail(tenantId: string): Promise<TenantRecord | null> {
+  const existing = await findTenantById(tenantId);
+  if (!existing) return null;
+
+  const row = await updateRow(await getTenantsTableId(), tenantId, {
+    [F.emailProvider]: '',
+    [F.emailAccessToken]: '',
+    [F.emailRefreshToken]: '',
+    [F.emailTokenExpiresAt]: '',
+    [F.emailMsTenantId]: '',
+    [F.emailSenderAddress]: '',
+    [F.emailScopesGranted]: '',
+    [F.emailConnectedAt]: '',
+    [F.emailConnectedBy]: '',
   });
   return mapTenantRow(row);
 }

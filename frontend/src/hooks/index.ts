@@ -21,6 +21,11 @@ export {
   useSharepointConfig,
   useSharepointDisconnect,
 } from './useSharepoint';
+export {
+  useEmailStatus,
+  useEmailConnect,
+  useEmailDisconnect,
+} from './useEmail';
 export { usePlatformSocket } from './usePlatformSocket';
 export { useHealth } from './useHealth';
 export { useAccueil } from './useAccueil';

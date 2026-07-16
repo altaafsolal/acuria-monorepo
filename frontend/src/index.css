@@ -3847,4 +3847,31 @@
     gap: 0.75rem;
     margin-top: 0.25rem;
   }
+  .sp-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .sp-screen__logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.85rem;
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .sp-screen__logout:hover:not(:disabled) {
+    color: var(--color-navy);
+    background: color-mix(in srgb, var(--color-navy) 6%, transparent);
+  }
+  .sp-screen__logout:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }

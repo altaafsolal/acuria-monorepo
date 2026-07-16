@@ -74,6 +74,15 @@ export function makeTenantRecord(overrides: Partial<TenantRecord> = {}): TenantR
     sharepoint_site_display_name: null,
     sharepoint_connected_at: null,
     sharepoint_connected_by: null,
+    email_provider: null,
+    email_access_token: null,
+    email_refresh_token: null,
+    email_token_expires_at: null,
+    email_ms_tenant_id: null,
+    email_sender_address: null,
+    email_scopes_granted: null,
+    email_connected_at: null,
+    email_connected_by: null,
     ...overrides,
   };
 }
@@ -105,6 +114,15 @@ export function makeTenantRow(tenant: TenantRecord): Record<string, unknown> {
     [F.tenants.sharepointSiteDisplayName]: tenant.sharepoint_site_display_name ?? '',
     [F.tenants.sharepointConnectedAt]: tenant.sharepoint_connected_at ?? '',
     [F.tenants.sharepointConnectedBy]: tenant.sharepoint_connected_by ?? '',
+    [F.tenants.emailProvider]: tenant.email_provider ?? '',
+    [F.tenants.emailAccessToken]: tenant.email_access_token ?? '',
+    [F.tenants.emailRefreshToken]: tenant.email_refresh_token ?? '',
+    [F.tenants.emailTokenExpiresAt]: tenant.email_token_expires_at ?? '',
+    [F.tenants.emailMsTenantId]: tenant.email_ms_tenant_id ?? '',
+    [F.tenants.emailSenderAddress]: tenant.email_sender_address ?? '',
+    [F.tenants.emailScopesGranted]: tenant.email_scopes_granted ?? '',
+    [F.tenants.emailConnectedAt]: tenant.email_connected_at ?? '',
+    [F.tenants.emailConnectedBy]: tenant.email_connected_by ?? '',
   };
 }
 

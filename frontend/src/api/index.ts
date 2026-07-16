@@ -91,6 +91,12 @@ const api = {
   sharepointConfig: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/config`,
   sharepointDisconnect: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/disconnect`,
 
+  // Email integration (per-tenant Microsoft 365 Mail.Send OR Gmail)
+  emailStatus: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/email/status`,
+  emailConnect: (tenantId: string, provider: 'microsoft' | 'google') =>
+    `${baseUrl}/tenants/${tenantId}/email/connect?provider=${provider}`,
+  emailDisconnect: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/email/disconnect`,
+
   // Audit
   platformAuditLogs: (params: {
     page?: number;
