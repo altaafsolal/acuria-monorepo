@@ -21,7 +21,9 @@
       "Bash(npx vitest *)",
       "Bash(echo \"EXIT=$?\")",
       "Bash(node -e \"const fi=require\\('c:/Users/altaa/Projects/acuria-platform/frontend/node_modules/react-icons/fi'\\); console.log\\('FiCloud', typeof fi.FiCloud, '| FiCheckCircle', typeof fi.FiCheckCircle\\)\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git check-ignore *)",
+      "Bash(node -e \"const p=require\\('./backend/package.json'\\); console.log\\('deps:', Object.keys\\(p.dependencies||{}\\).filter\\(d=>d.includes\\('types'\\)||d==='typescript'\\)\\); console.log\\('devDeps:', Object.keys\\(p.devDependencies||{}\\)\\)\")"
     ]
   }
 }

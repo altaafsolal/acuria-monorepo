@@ -21,7 +21,11 @@ services:
                                # connections and adds cold-start latency
     branch: master
     autoDeploy: true
-    buildCommand: npm install && npm run build
+    # --include=dev is required: NODE_ENV=production (below) makes npm skip
+    # devDependencies, but the build (tsc) needs typescript + @types/* which live
+    # there. Without it the build fails with TS7016 "could not find declaration
+    # file for module 'express'". Runtime still ignores devDeps.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
     # getHealth.ts → 200. Render restarts the instance if this stops responding.
     healthCheckPath: /api/health
