@@ -79,38 +79,85 @@ Add a **Router**. On each route set a filter:
 - Multiple recipients → add more objects to `toRecipients`.
 - The sender is implicit (`/me` = the connected mailbox). `{{2.sender_address}}` is
   informational / for logging.
-- **Attachments**: add a `message.attachments` array of
-  `{"@odata.type":"#microsoft.graph.fileAttachment","name":"…","contentBytes":"<base64>"}`.
 - Success = **HTTP 202** (no body).
+
+#### Attaching a file (Microsoft)
+
+Say your file comes from a **Google Docs → Download a Document** module (module **2**
+here — its file bytes are `{{2.data}}`). Add an `attachments` array inside `message`.
+Copy-paste body **with an attachment**:
+
+```json
+{
+  "message": {
+    "subject": "{{1.subject}}",
+    "body": { "contentType": "HTML", "content": "{{1.body_html}}" },
+    "toRecipients": [ { "emailAddress": { "address": "{{1.to}}" } } ],
+    "attachments": [
+      {
+        "@odata.type": "#microsoft.graph.fileAttachment",
+        "name": "Document.pdf",
+        "contentType": "application/pdf",
+        "contentBytes": "{{base64(2.data)}}"
+      }
+    ]
+  },
+  "saveToSentItems": true
+}
+```
+
+- `name` = the filename the recipient sees.
+- `contentBytes` = the file turned into base64 text: **`{{base64(2.data)}}`** — replace
+  `2` with your Download module's number.
+- More files → add more objects to the `attachments` array.
+- That's it. Graph handles the rest.
 
 ### [4B] Gmail — `messages.send`
 
-Gmail is meaningfully different: it does **not** take structured JSON. You send a
-**base64url-encoded raw RFC 5322 MIME message** in a `raw` field.
+**The mental model:** unlike Graph (where you fill in subject/body/to as separate
+JSON fields), Gmail makes you hand it the **entire raw email as one blob** — the
+`To`/`Subject`/`Content-Type` headers AND the HTML body, all together as a single
+text, then scrambled into a URL-safe encoding called base64url. That's the only
+"weird" part; it's three small modules.
 
-**Step B-1 — build the MIME string.** Add a **Tools → Set variable** (or a text
-aggregator) named `mime`:
+#### Step B-1 — write the raw email as plain text
+
+Add a **Tools → Set variable** module. Name it `rawEmail`. Paste this as its value
+(it's just text — the header lines, then a **blank line**, then your HTML):
+
 ```
 To: {{1.to}}
 From: {{2.sender_address}}
-Subject: {{1.subject}}
+Subject: Nouvelle FCC reçue - {{1.client_name}}
 Content-Type: text/html; charset="UTF-8"
 MIME-Version: 1.0
 
-{{1.body_html}}
+<p>Un nouveau formulaire "Connaissance Client" a été soumis.</p><table ...>…your one-line HTML…</table>
 ```
-> The blank line between headers and body is **required** by MIME. Keep the header
-> lines exactly as shown (each `Header: value` on its own line).
 
-**Step B-2 — base64url-encode it.** Gmail needs *base64url* (`+`→`-`, `/`→`_`),
-which differs from standard base64. In Make, use the function:
-```
-{{replace(replace(base64(<mime variable>); "+"; "-"); "/"; "_")}}
-```
-(Trailing `=` padding is tolerated by Gmail; you may strip it with another
-`replace(...; "="; "")` if you prefer.)
+Rules that matter (this is where it usually goes wrong):
+- **The blank line between the headers and the HTML is mandatory.** No blank line =
+  Gmail treats your whole HTML as more headers and the email arrives empty.
+- Each header is its own `Name: value` line. Don't indent them.
+- The HTML body can stay on one line (like the version you already flattened).
+- **Quotes in your HTML are fine here** — this is plain text, *not* JSON, so you do
+  NOT escape the `"` in `style="…"`.
 
-**Step B-3 — HTTP → Make a request:**
+#### Step B-2 — encode it (base64url)
+
+Gmail wants *base64url*, which is normal base64 with two characters swapped
+(`+`→`-`, `/`→`_`). You don't compute this by hand — in the **next module's `raw`
+field**, wrap the variable from B-1 with this exact Make formula:
+
+```
+{{replace(replace(base64(3.rawEmail); "+"; "-"); "/"; "_")}}
+```
+
+Reading it inside-out: `base64(...)` encodes the email → the inner `replace` swaps
+`+` for `-` → the outer `replace` swaps `/` for `_`. (Replace `3.rawEmail` with the
+actual module number of your Set variable.)
+
+#### Step B-3 — send it (HTTP → Make a request)
 
 | Field | Value |
 |---|---|
@@ -119,14 +166,62 @@ which differs from standard base64. In Make, use the function:
 | Headers | `Authorization` = `Bearer {{2.access_token}}` |
 | Body content type | `application/json` |
 
-**Body:**
+**Body** — this one *is* JSON, and it's tiny (the whole email is already inside the
+encoded string):
 ```json
-{ "raw": "{{the base64url string from B-2}}" }
+{ "raw": "{{replace(replace(base64(3.rawEmail); \"+\"; \"-\"); \"/\"; \"_\")}}" }
 ```
-- Success = **HTTP 200** with a message resource `{ "id": "...", ... }`.
-- **Attachments**: build a `multipart/mixed` MIME body with boundaries instead of
-  the simple single-part message above. (Start with plain HTML; add multipart only
-  when you need attachments.)
+
+Success = **HTTP 200** with `{ "id": "...", ... }`.
+
+> **Accented subjects need one extra step.** A raw `Subject:` header with `é`/`ç`
+> (like "reçue") can arrive as garbled text, because email headers are meant to be
+> ASCII. Encode just the subject value:
+> `Subject: =?UTF-8?B?{{base64("Nouvelle FCC reçue - " + 1.client_name)}}?=`
+> The HTML body is unaffected — `charset="UTF-8"` already covers it. This only bites
+> the Subject line.
+
+#### Attaching a file (Gmail)
+
+Gmail has no attachments field — the file goes **inside** the raw email as a second
+section. In **Step B-1**, replace your `rawEmail` variable with this template (file
+from a Google Docs → Download module, module **2**, bytes `{{2.data}}`):
+
+```
+From: {{2.sender_address}}
+To: {{1.to}}
+Subject: =?UTF-8?B?{{base64("Nouvelle FCC reçue")}}?=
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="ACURIABOUNDARY"
+
+--ACURIABOUNDARY
+Content-Type: text/html; charset="UTF-8"
+
+<p>Un nouveau formulaire…</p><table>…your one-line HTML…</table>
+--ACURIABOUNDARY
+Content-Type: application/pdf; name="Document.pdf"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Document.pdf"
+
+{{base64(2.data)}}
+--ACURIABOUNDARY--
+```
+
+Then Steps **B-2** and **B-3** are unchanged — the whole thing still gets base64url'd
+into `{ "raw": … }`.
+
+Exactly what each piece is (and the parts people forget):
+- `boundary="ACURIABOUNDARY"` is just a separator label you invent. It appears in the
+  header **and** before each section.
+- Every section starts with `--ACURIABOUNDARY` on its own line. The very end is
+  `--ACURIABOUNDARY--` (note the **two extra dashes** at the end — this is required).
+- **A blank line after each section's own headers**, before its content — same rule
+  as before, once per section.
+- The attachment content is `{{base64(2.data)}}` — the file as base64 text. Change `2`
+  to your Download module's number, and `Document.pdf` / `application/pdf` to match
+  your file.
+- More files → repeat the `--ACURIABOUNDARY` … block for each, before the final
+  `--ACURIABOUNDARY--`.
 
 ---
 
