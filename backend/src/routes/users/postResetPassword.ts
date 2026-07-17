@@ -27,6 +27,7 @@ router.post('/:id/reset-password', asyncHandler(async (req, res) => {
   }
 
   await issueSetPasswordToken(existing!, tenant ? {
+    id: tenant.id,
     name: tenant.branding_name || tenant.name,
     email: tenant.email || '',
   } : undefined);

@@ -76,6 +76,7 @@ export async function createManagedUser(
   });
 
   await passwordResetService.issueSetPasswordToken(user, {
+    id: tenant.id,
     name: tenant.branding_name || tenant.name,
     email: tenant.email || '',
   });

@@ -53,7 +53,7 @@ router.get('/token', requireWebhookSecret, asyncHandler(async (req, res) => {
   const token = await getValidEmailToken(tenantId);
 
   res.json({
-    provider: token.provider,
+    provider: token.provider || "Super-Admin",
     access_token: token.accessToken,
     sender_address: token.senderAddress,
     expires_at: token.expiresAt,

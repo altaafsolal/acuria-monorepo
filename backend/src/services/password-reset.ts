@@ -5,7 +5,7 @@ import { usersRepo, tenantsRepo } from './baserow/index.js';
 import { sendOtpEmail, sendPasswordSetEmail } from './make/index.js';
 import type { DbUser } from '../types/domain.js';
 
-type TenantContext = { name: string; email: string };
+type TenantContext = { id: string; name: string; email: string };
 
 const { hasUserEmail } = usersRepo;
 
@@ -71,7 +71,7 @@ export async function issueSetPasswordToken(
   });
 
   const link = buildSetPasswordLink(user.id, token);
-  await sendPasswordSetEmail(user.email, user.name, link, tenant?.name, tenant?.email);
+  await sendPasswordSetEmail(user.email, user.name, link, tenant?.name, tenant?.email, tenant?.id);
 }
 
 export async function verifySetPasswordToken(uid: string, rawToken: string): Promise<DbUser> {
@@ -101,7 +101,7 @@ export async function issueOtp(
     otp_expires: expires,
   });
 
-  await sendOtpEmail(user.email, user.name, otp, tenant?.name, tenant?.email);
+  await sendOtpEmail(user.email, user.name, otp, tenant?.name, tenant?.email, tenant?.id);
 }
 
 export async function verifyOtp(email: string, code: string): Promise<{ uid: string; token: string }> {
@@ -148,7 +148,7 @@ export async function requestPasswordResetOtp(email: string): Promise<void> {
   let tenant: TenantContext | undefined;
   if (user.tenant_id) {
     const t = await tenantsRepo.findTenantById(user.tenant_id).catch(() => null);
-    if (t) tenant = { name: t.branding_name || t.name, email: t.email || '' };
+    if (t) tenant = { id: t.id, name: t.branding_name || t.name, email: t.email || '' };
   }
   await issueOtp(user, tenant);
 }
