@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireWebhookSecret } from '../../../../middleware/index.js';
 import { getValidAccessToken } from '../../../../services/sharepoint/oauth.js';
-import { asyncHandler, reqParam } from '../../../../utils/index.js';
+import { asyncHandler, HttpError, reqParam } from '../../../../utils/index.js';
 
 const router = Router({ mergeParams: true });
 
@@ -27,7 +27,12 @@ const router = Router({ mergeParams: true });
  * the Make secret on the user-facing sibling routes.
  */
 router.get('/token', requireWebhookSecret, asyncHandler(async (req, res) => {
-  const tenantId = reqParam(req, 'tenantId');
+  const tenantId = reqParam(req, 'tenantId').trim();
+
+  if (!tenantId) {
+    throw new HttpError(400, 'tenant_id is required', 'TENANT_ID_REQUIRED');
+  }
+
   const token = await getValidAccessToken(tenantId);
 
   res.json({
