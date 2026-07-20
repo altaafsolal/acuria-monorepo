@@ -7,15 +7,18 @@ import { asyncHandler, HttpError, reqParam } from '../../../../utils/index.js';
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 const EDITABLE_STATUSES = ['active', 'inactive'] as const;
 const MAX_LOGO_SIZE = 2 * 1024 * 1024;
-const ALLOWED_LOGO_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg']);
+const ALLOWED_LOGO_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg']);
+const ALLOWED_LOGO_MIME_TYPES = new Set(['image/png', 'image/jpeg']);
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_LOGO_SIZE, files: 1 },
   fileFilter: (_req, file, cb) => {
     const ext = file.originalname.toLowerCase().match(/\.[^.]+$/)?.[0] ?? '';
-    if (!ALLOWED_LOGO_EXTENSIONS.has(ext)) {
-      cb(new HttpError(400, `Type de fichier non autorisé : ${file.originalname}`));
+    const mimeOk = ALLOWED_LOGO_MIME_TYPES.has(file.mimetype);
+    const extOk = ALLOWED_LOGO_EXTENSIONS.has(ext);
+    if (!mimeOk || !extOk) {
+      cb(new HttpError(400, 'Formats de logo autorisés : JPG, JPEG ou PNG'));
       return;
     }
     cb(null, true);

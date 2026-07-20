@@ -32,7 +32,9 @@ import { TENANT_STATUS, TENANT_STATUS_LABELS } from "../../constants/roles";
 import type { Tenant } from "../../types";
 
 const DEFAULT_ACCENT = "#BE845C";
-const LOGO_ACCEPT = "image/png,image/jpeg,image/webp,image/svg+xml";
+const LOGO_ACCEPT = "image/png,image/jpeg";
+const LOGO_ALLOWED_TYPES = new Set(["image/png", "image/jpeg"]);
+const LOGO_ALLOWED_EXTENSIONS = /\.(png|jpe?g)$/i;
 const MAX_LOGO_SIZE = 2 * 1024 * 1024;
 
 type EditableTenantStatus = "active" | "inactive";
@@ -163,6 +165,13 @@ export default function TenantsPage() {
 
     if (file.size > MAX_LOGO_SIZE) {
       setBrandingError("Le logo ne doit pas dépasser 2 Mo.");
+      return;
+    }
+
+    const typeOk = LOGO_ALLOWED_TYPES.has(file.type);
+    const extOk = LOGO_ALLOWED_EXTENSIONS.test(file.name);
+    if (!typeOk && !extOk) {
+      setBrandingError("Formats autorisés : JPG, JPEG ou PNG.");
       return;
     }
 
@@ -527,7 +536,7 @@ export default function TenantsPage() {
                     />
                   </div>
                   <p className="tenant-form__hint tenant-logo-field__hint">
-                    PNG, JPG, WebP ou SVG — 2 Mo max. Affiché dans la barre latérale à la place du nom de marque.
+                    JPG, JPEG ou PNG — 2 Mo max. Affiché dans la barre latérale à la place du nom de marque.
                   </p>
                 </div>
               </label>
