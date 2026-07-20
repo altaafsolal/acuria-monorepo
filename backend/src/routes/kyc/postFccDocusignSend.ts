@@ -32,7 +32,7 @@ router.post(
       if (!client) throw new Error("Client not found");
       if (!client.email) throw new Error("Email client manquant");
 
-      const name = clientMapper.resolveClientDisplayName(client);
+      const name = clientMapper.resolveClientNameForMake(client);
       const fccClients = await fccClientsRepo.listFccClientsByClient(
         tenantId,
         client.id,

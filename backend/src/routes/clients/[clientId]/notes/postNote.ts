@@ -60,7 +60,7 @@ router.post('/', upload.array('files', 10), asyncHandler(async (req, res) => {
       clientsRepo.getClientById(tenantId, clientId).catch(() => null),
     ]);
     const tenantName = tenant?.branding_name || tenant?.name || '';
-    const clientName = client ? clientMapper.resolveClientDisplayName(client) : '';
+    const clientName = client ? clientMapper.resolveClientNameForMake(client) : '';
     const brokerFields = sharepointBrokerFields(tenant);
     uploaded = await Promise.all(
       files.map(async (file) => {

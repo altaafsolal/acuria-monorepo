@@ -39,7 +39,7 @@ router.post(
           }
         : undefined;
       const { link } = buildFccPrefillLink(client, tenantBranding);
-      const name = clientMapper.resolveClientDisplayName(client);
+      const name = clientMapper.resolveClientNameForMake(client);
       const tenantName = tenant?.branding_name || tenant?.name || "";
       const tenantEmail = tenant?.email || "";
 

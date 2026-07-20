@@ -384,7 +384,9 @@ export default function FccForm({ type }: FccFormProps) {
     if (type === 'PP') {
       Object.assign(payload, {
         client_civilite: pp.civility, client_nom: pp.nom, client_prenom: pp.prenom,
-        client_nom_complet: `${pp.civility} ${pp.prenom} ${pp.nom}`.trim(),
+        // Name sent to Make must be "<Prénom> <Nom>" — civility travels separately
+        // in client_civilite, never prefixed onto the name.
+        client_nom_complet: `${pp.prenom} ${pp.nom}`.trim(),
         client_email: pp.email, client_adresse: pp.adresse, client_cp: pp.cp, client_ville: pp.ville,
         client_tel: pp.telMobile, client_ddn: pp.ddn, client_nationalite: pp.nationalite,
         client_situation: pp.situation, client_regime: pp.regime,

@@ -4,6 +4,7 @@ import { webhookUrl, postWebhook } from "../../services/make/http.js";
 import { sharepointBrokerFields } from "../../services/make/sharepoint.js";
 import * as fccClientsRepo from "../../services/baserow/fcc-clients.js";
 import * as clientsRepo from "../../services/baserow/clients.js";
+import * as clientMapper from "../../services/baserow/client-mapper.js";
 import * as tenantsRepo from "../../services/baserow/tenants.js";
 
 const router = Router({ mergeParams: true });
@@ -46,6 +47,9 @@ router.post(
     const tenantName = tenant?.branding_name || tenant?.name || "";
     const tenantBackofficeEmail = tenant?.backoffice_email || "";
 
+    // Client name for Make must be "<First> <Last>" — never a M./Mme prefix.
+    const clientNomComplet = clientMapper.stripLeadingCivility(str("client_nom_complet") || "");
+
     // Forward structured payload to Make webhook
     const makeResponse = await postWebhook(
       webhookUrl("webhookFccSubmit"),
@@ -55,9 +59,9 @@ router.post(
         xlsx_base64: str("xlsx_base64") || "",
         pdf_filename: str("pdf_filename") || "",
         pdf_base64: str("pdf_base64") || "",
-        client_name: str("client_nom_complet") || "",
+        client_name: clientNomComplet,
         form_type: formType,
-        client_nom_complet: str("client_nom_complet") || "",
+        client_nom_complet: clientNomComplet,
         client_email: str("client_email") || "",
         client_tel: str("client_tel") || "",
         client_ville: str("client_ville") || "",
@@ -111,7 +115,7 @@ router.post(
         idFormulaire: str("form_id"),
         dateSoumission: str("timestamp_soumission"),
         statutDossier: "En attente",
-        client: str("client_nom_complet"),
+        client: clientNomComplet,
         email: str("client_email"),
         telephone: str("client_tel"),
         ville: str("client_ville"),

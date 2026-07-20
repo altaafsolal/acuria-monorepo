@@ -328,6 +328,32 @@ export function resolveClientDisplayName(
   return parts.join(' ').trim();
 }
 
+const LEADING_CIVILITY_RE =
+  /^\s*(?:M\.?|Mr\.?|Mme\.?|Mlle\.?|Monsieur|Madame|Mademoiselle)\s+/i;
+
+/** Removes a leading civility title (M., Mme, Monsieur, …) from a name string. */
+export function stripLeadingCivility(name: string): string {
+  return name.replace(LEADING_CIVILITY_RE, '').trim();
+}
+
+/**
+ * Client name for OUTBOUND Make.com payloads. Always "<First> <Last>" for a
+ * physical person (never a "M."/"Mme" prefix), trade name for a legal entity.
+ * Distinct from resolveClientDisplayName, which intentionally keeps the civility
+ * for in-app display. Keep every Make `client_name` field on this helper.
+ */
+export function resolveClientNameForMake(
+  client: Pick<DbClient, 'client_type' | 'first_name' | 'last_name' | 'trade_name' | 'name'>,
+): string {
+  if (client.client_type === 'PM') {
+    return client.trade_name?.trim() || stripLeadingCivility(client.name?.trim() || '');
+  }
+  const parts = [client.first_name?.trim(), client.last_name?.trim()?.toUpperCase()].filter(Boolean);
+  if (parts.length) return parts.join(' ');
+  // No structured name — fall back to the stored name, minus any civility prefix.
+  return stripLeadingCivility(client.name?.trim() || '');
+}
+
 export function isClientArchived(client: DbClient): boolean {
   return client.statut_client === 'Archivé' || client.status === 'archived';
 }

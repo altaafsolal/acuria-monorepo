@@ -38,7 +38,7 @@ router.post(
 
       await postWebhook(webhookUrl("webhookDer"), {
         client_email: client.email,
-        client_name: clientMapper.resolveClientDisplayName(client),
+        client_name: clientMapper.resolveClientNameForMake(client),
         tenant_email: tenant?.email || "",
         tenant_name: tenant?.name,
         nm_name: body.signataireName,
