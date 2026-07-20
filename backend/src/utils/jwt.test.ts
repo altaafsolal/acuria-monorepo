@@ -29,6 +29,7 @@ const sampleDbUser: DbUser = {
   reset_token_expires: null,
   otp_hash: null,
   otp_expires: null,
+  otp_attempts: null,
   created_on: null,
   updated_on: null,
   airtable_record_id: null,

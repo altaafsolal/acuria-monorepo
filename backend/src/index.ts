@@ -1,7 +1,9 @@
 import http from 'http';
 import app from './app.js';
-import { env } from './config/env.js';
+import { env, assertProductionSecrets } from './config/env.js';
 import { attachSocketServer } from './realtime/socket.js';
+
+assertProductionSecrets();
 
 const server = http.createServer(app);
 attachSocketServer(server);

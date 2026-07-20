@@ -16,9 +16,14 @@ function parseTokenPayload(decoded: jwt.JwtPayload | string): TokenPayload {
   };
 }
 
+/** HMAC only — pin the algorithm on both sign and verify so a token can never be
+ *  accepted under a different (e.g. `none` or asymmetric) algorithm. */
+const JWT_ALGORITHM = 'HS256' as const;
+
 export function signAccessToken(payload: TokenPayload): string {
   const options: SignOptions = {
     expiresIn: env.jwt.accessExpiresIn as SignOptions['expiresIn'],
+    algorithm: JWT_ALGORITHM,
   };
   return jwt.sign(payload, env.jwt.accessSecret, options);
 }
@@ -26,17 +31,18 @@ export function signAccessToken(payload: TokenPayload): string {
 export function signRefreshToken(payload: TokenPayload): string {
   const options: SignOptions = {
     expiresIn: env.jwt.refreshExpiresIn as SignOptions['expiresIn'],
+    algorithm: JWT_ALGORITHM,
   };
   return jwt.sign(payload, env.jwt.refreshSecret, options);
 }
 
 export function verifyAccessToken(token: string): TokenPayload {
-  const decoded = jwt.verify(token, env.jwt.accessSecret);
+  const decoded = jwt.verify(token, env.jwt.accessSecret, { algorithms: [JWT_ALGORITHM] });
   return parseTokenPayload(decoded as jwt.JwtPayload | string);
 }
 
 export function verifyRefreshToken(token: string): TokenPayload {
-  const decoded = jwt.verify(token, env.jwt.refreshSecret);
+  const decoded = jwt.verify(token, env.jwt.refreshSecret, { algorithms: [JWT_ALGORITHM] });
   return parseTokenPayload(decoded as jwt.JwtPayload | string);
 }
 

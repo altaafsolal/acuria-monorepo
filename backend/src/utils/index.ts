@@ -21,3 +21,6 @@ export {
 } from './baserow.js';
 export { HttpError, asyncHandler, reqParam, errorHandler } from './http.js';
 export { loadRoutes } from './loadRoutes.js';
+export { signFccPrefillToken, verifyFccPrefillToken } from './fcc-token.js';
+export type { FccPrefillClaims } from './fcc-token.js';
+export { parseBody } from './validate.js';

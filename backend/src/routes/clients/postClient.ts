@@ -26,10 +26,10 @@ router.post('/', asyncHandler(async (req, res) => {
   }
 
   const client = await clientsRepo.createClient(tenantId, {
-    ...body,
+    ...clientMapper.stripWorkflowStatusFields(body as unknown as Record<string, unknown>),
     name,
     email: body.email?.trim() ?? '',
-  });
+  } as CreateClientInput);
   res.status(201).json({ client: clientsRepo.toPublicClient(client) });
 }));
 

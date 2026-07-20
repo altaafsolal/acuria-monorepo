@@ -23,7 +23,14 @@
       "Bash(node -e \"const fi=require\\('c:/Users/altaa/Projects/acuria-platform/frontend/node_modules/react-icons/fi'\\); console.log\\('FiCloud', typeof fi.FiCloud, '| FiCheckCircle', typeof fi.FiCheckCircle\\)\")",
       "Bash(npm run *)",
       "Bash(git check-ignore *)",
-      "Bash(node -e \"const p=require\\('./backend/package.json'\\); console.log\\('deps:', Object.keys\\(p.dependencies||{}\\).filter\\(d=>d.includes\\('types'\\)||d==='typescript'\\)\\); console.log\\('devDeps:', Object.keys\\(p.devDependencies||{}\\)\\)\")"
+      "Bash(node -e \"const p=require\\('./backend/package.json'\\); console.log\\('deps:', Object.keys\\(p.dependencies||{}\\).filter\\(d=>d.includes\\('types'\\)||d==='typescript'\\)\\); console.log\\('devDeps:', Object.keys\\(p.devDependencies||{}\\)\\)\")",
+      "Bash(npm install *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({helmet:p.dependencies.helmet,rl:p.dependencies['express-rate-limit'],zod:p.dependencies.zod},null,2\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(p.dependencies.helmet, p.dependencies['express-rate-limit'], p.dependencies.zod\\)\")",
+      "Bash(perl -0pi -e \"s/\\\\.post\\\\\\('\\\\/api\\\\/fcc\\\\/docusign-webhook'\\\\\\)\\\\n\\(\\\\s*\\)\\\\.send\\\\\\(/.post\\('\\\\/api\\\\/fcc\\\\/docusign-webhook'\\)\\\\n\\\\1.set\\('Authorization', WEBHOOK_SECRET\\)\\\\n\\\\1.send\\(/g\" src/routes/fcc/fcc-webhook.integration.test.ts)",
+      "Bash(git -C /c/Users/altaa/Projects/acuria-platform status --porcelain)",
+      "Bash(git -C /c/Users/altaa/Projects/acuria-platform rev-parse HEAD)",
+      "Bash(git grep *)"
     ]
   }
 }

@@ -1,5 +1,15 @@
+import crypto from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { env } from '../config/env.js';
+
+/** Length-checked constant-time string comparison — avoids leaking the secret
+ *  one byte at a time through response timing. */
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
 
 /**
  * Middleware for inbound webhooks called by Make.com (or other external services).
@@ -7,7 +17,9 @@ import { env } from '../config/env.js';
  * Usage: router.use(requireWebhookSecret);
  */
 export function requireWebhookSecret(req: Request, res: Response, next: NextFunction): void {
-  const provided = req.headers['authorization'] || '';
+  const provided = Array.isArray(req.headers['authorization'])
+    ? req.headers['authorization'][0] ?? ''
+    : req.headers['authorization'] || '';
   const expected = env.webhookSecret;
 
   if (!expected) {
@@ -16,7 +28,7 @@ export function requireWebhookSecret(req: Request, res: Response, next: NextFunc
     return;
   }
 
-  if (provided !== expected) {
+  if (!timingSafeStringEqual(provided, expected)) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }

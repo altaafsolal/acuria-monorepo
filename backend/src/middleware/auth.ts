@@ -40,6 +40,13 @@ export async function authenticate(
       return;
     }
 
+    // A token minted while the account was active must stop working once the
+    // account is deactivated — enforce status here, not just at login.
+    if (user.status && user.status !== 'active') {
+      res.status(403).json({ error: "Account is inactive" });
+      return;
+    }
+
     req.user = {
       id: user.id,
       email: user.email,

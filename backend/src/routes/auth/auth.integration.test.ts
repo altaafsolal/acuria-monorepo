@@ -105,6 +105,8 @@ describe('POST /api/auth/refresh', () => {
   it('returns 200 with new accessToken when refresh cookie is valid', async () => {
     const refreshToken = makeRefreshToken({ userId: '999', email: 'test@example.com', name: 'Test User', role: 'standard_user' });
 
+    // refresh re-loads the user from the DB before re-issuing an access token
+    nockUserById('999', makeDbUserRow(makeDbUser({ id: '999', email: 'test@example.com', name: 'Test User', role: 'standard_user', status: 'active' })));
     // audit log createRow
     nockCreateRow(TABLE_IDS.auditLogs, { id: 1 });
 

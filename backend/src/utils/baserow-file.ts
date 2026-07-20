@@ -125,5 +125,11 @@ export async function streamBaserowFile(
   res.setHeader('Content-Type', String(response.headers['content-type'] ?? 'application/octet-stream'));
   res.setHeader('Content-Disposition', contentDisposition(filename, inline));
   res.setHeader('Cache-Control', 'private, max-age=3600');
+  // Defense against a malicious uploaded SVG (served inline as image/svg+xml
+  // from our own origin): nosniff stops content-type games, and the sandbox CSP
+  // neutralizes any embedded <script> if the file is opened directly. Neither
+  // affects rendering the logo via <img>.
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
   response.data.pipe(res);
 }

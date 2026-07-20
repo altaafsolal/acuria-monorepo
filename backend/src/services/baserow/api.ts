@@ -21,6 +21,17 @@ export interface BaserowDbContext {
 
 const dbClientCache = new Map<string, AxiosInstance>();
 
+/** Baserow row IDs are always positive integers. Reject anything else before it
+ *  is interpolated into a REST path, so a crafted `id` (containing `/`, `?`, `..`)
+ *  from a route param can't alter the request URL or query string. */
+function assertRowId(rowId: string | number): number {
+  const n = typeof rowId === 'number' ? rowId : Number(rowId);
+  if (!Number.isInteger(n) || n <= 0) {
+    throw new Error(`Invalid Baserow row id: ${String(rowId)}`);
+  }
+  return n;
+}
+
 function getDatabaseClient(ctx?: BaserowDbContext): AxiosInstance {
   const token = ctx?.databaseToken ?? env.baserow.databaseToken;
   if (!token) throw new Error('Baserow database token is required');
@@ -279,7 +290,7 @@ export async function getRow(
   ctx?: BaserowDbContext,
 ): Promise<BaserowRow> {
   const { data } = await getDatabaseClient(ctx).get<BaserowRow>(
-    `/database/rows/table/${tableId}/${rowId}/`,
+    `/database/rows/table/${tableId}/${assertRowId(rowId)}/`,
     { params: { user_field_names: true } },
   );
   return data;
@@ -310,7 +321,7 @@ export async function updateRow(
 ): Promise<BaserowRow> {
   try {
     const { data } = await getDatabaseClient(ctx).patch<BaserowRow>(
-      `/database/rows/table/${tableId}/${rowId}/`,
+      `/database/rows/table/${tableId}/${assertRowId(rowId)}/`,
       fields,
       { params: { user_field_names: true } },
     );
@@ -333,7 +344,7 @@ export async function deleteRow(
   rowId: string | number,
   ctx?: BaserowDbContext,
 ): Promise<void> {
-  await getDatabaseClient(ctx).delete(`/database/rows/table/${tableId}/${rowId}/`);
+  await getDatabaseClient(ctx).delete(`/database/rows/table/${tableId}/${assertRowId(rowId)}/`);
 }
 
 export async function batchDeleteRows(

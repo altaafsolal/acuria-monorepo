@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { asyncHandler } from "../../utils/index.js";
+import { asyncHandler, verifyFccPrefillToken } from "../../utils/index.js";
 import { webhookUrl, postWebhook } from "../../services/make/http.js";
 import { sharepointBrokerFields } from "../../services/make/sharepoint.js";
 import * as fccClientsRepo from "../../services/baserow/fcc-clients.js";
@@ -8,7 +8,11 @@ import * as tenantsRepo from "../../services/baserow/tenants.js";
 
 const router = Router({ mergeParams: true });
 
-// Public — no auth (clients fill this form without login)
+// Public form (clients fill it without login), but NOT unauthenticated: every
+// submission must carry the signed prefill_token that `buildFccPrefillLink`
+// issued. tenant_id / record_id come from the verified token only — the body's
+// own tenant_id/record_id are ignored, so nobody can inject FCC data into a
+// tenant they were never given a link for.
 router.post(
   "/submit",
   asyncHandler(async (req, res) => {
@@ -23,15 +27,15 @@ router.post(
       return typeof v === "number" ? v : null;
     };
 
-    // Resolve tenant and client
-    const tenantId =
-      typeof payload.tenant_id === "string" && payload.tenant_id
-        ? payload.tenant_id
-        : null;
-    const recordId =
-      typeof payload.record_id === "string" && payload.record_id
-        ? payload.record_id
-        : null;
+    const claims = verifyFccPrefillToken(str("prefill_token"));
+    if (!claims) {
+      res.status(401).json({ error: "Invalid or missing prefill token" });
+      return;
+    }
+
+    // Trust the token, never the body, for tenant/record binding.
+    const tenantId = claims.tenant_id;
+    const recordId = claims.record_id;
     const formType =
       typeof payload.form_type === "string" ? payload.form_type : "PP";
 

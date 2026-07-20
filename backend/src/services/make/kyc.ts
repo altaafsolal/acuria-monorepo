@@ -1,4 +1,5 @@
 import { env } from "../../config/env.js";
+import { signFccPrefillToken } from "../../utils/fcc-token.js";
 import type { DbClient } from "../../types/domain.js";
 
 export function buildFccPrefillLink(
@@ -13,12 +14,18 @@ export function buildFccPrefillLink(
   const type = client.client_type === "PM" ? "PM" : "PP";
   const baseUrl =
     type === "PP" ? `${env.appUrl}/fcc/pp` : `${env.appUrl}/fcc/pm`;
+  // Signed proof that this link was issued for THIS tenant + client. The public
+  // submit endpoint trusts only this token, never the body's tenant_id/record_id.
+  const prefillToken = tenant?.id
+    ? signFccPrefillToken({ tenant_id: tenant.id, record_id: client.id })
+    : "";
   const tenantMeta = tenant
     ? {
         _tenant_id: tenant.id || "",
         _tenant_name: tenant.name,
         _tenant_orias: tenant.orias || "",
         _tenant_email: tenant.email || "",
+        _prefill_token: prefillToken,
       }
     : {};
   const prefillData =

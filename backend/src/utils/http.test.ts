@@ -82,7 +82,7 @@ describe('errorHandler', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('responds with 500 for a generic Error', () => {
+  it('responds with 500 and a generic message for a generic Error (no internal leak)', () => {
     const req = makeReq();
     const res = makeRes();
     const next = vi.fn();
@@ -91,7 +91,8 @@ describe('errorHandler', () => {
     errorHandler(err, req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'something broke' });
+    // The raw error message must never reach the client.
+    expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
     expect(next).not.toHaveBeenCalled();
   });
 

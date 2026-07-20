@@ -1,5 +1,5 @@
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
-import { pickFieldValue, pickLinkRowId, pickTextValue } from '../../utils/baserow.js';
+import { pickFieldValue, pickLinkRowId, pickNumberValue, pickTextValue } from '../../utils/baserow.js';
 import { createRow, deleteRow, getRow, listAllRows, updateRow } from './api.js';
 import { getUsersTableId } from './registry.js';
 import type { BaserowRow, CreateUserInput, DbUser, PublicUser, UpdateUserInput } from '../../types/domain.js';
@@ -30,6 +30,7 @@ export function mapUserRow(row: BaserowRow): DbUser {
     reset_token_expires: pickTextValue(row[F.resetTokenExpires]) || null,
     otp_hash: pickTextValue(row[F.otpHash]) || null,
     otp_expires: pickTextValue(row[F.otpExpires]) || null,
+    otp_attempts: pickNumberValue(row[F.otpAttempts]),
     created_on: pickFieldValue(row[F.createdOn]),
     updated_on: pickFieldValue(row[F.updatedOn]),
     airtable_record_id: pickTextValue(row[F.airtableRecordId]) || null,
@@ -131,6 +132,7 @@ export async function updateUser(id: string, fields: UpdateUserInput): Promise<D
   if (fields.reset_token_expires !== undefined) payload[F.resetTokenExpires] = fields.reset_token_expires;
   if (fields.otp_hash !== undefined) payload[F.otpHash] = fields.otp_hash;
   if (fields.otp_expires !== undefined) payload[F.otpExpires] = fields.otp_expires;
+  if (fields.otp_attempts !== undefined) payload[F.otpAttempts] = fields.otp_attempts;
   if (fields.airtable_record_id !== undefined) payload[F.airtableRecordId] = fields.airtable_record_id || '';
 
   const row = await updateRow(tableId, id, payload);

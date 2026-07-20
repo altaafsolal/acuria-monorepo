@@ -31,3 +31,9 @@ coverage/
 # Misc
 *.local
 .cache/
+
+# Secrets / internal docs — never commit credential inventories or exports
+*secret*
+*Secret*
+*Inventaire*
+DOCS/*.xlsx

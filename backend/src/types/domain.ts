@@ -27,6 +27,7 @@ export interface DbUser {
   reset_token_expires: string | null;
   otp_hash: string | null;
   otp_expires: string | null;
+  otp_attempts: number | null;
   created_on: string | null;
   updated_on: string | null;
   airtable_record_id: string | null;
@@ -415,6 +416,7 @@ export interface UpdateUserInput {
   reset_token_expires?: string;
   otp_hash?: string;
   otp_expires?: string;
+  otp_attempts?: number;
   airtable_record_id?: string | null;
 }
 

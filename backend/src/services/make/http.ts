@@ -18,13 +18,30 @@ export async function postWebhook(url: string, payload: unknown): Promise<Respon
   return res;
 }
 
+/** Keys whose values are secrets/PII and must never be printed to logs. */
+const SENSITIVE_KEYS = /otp|password|token|link|secret|base64|signature|email/i;
+
+function redactSensitive(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(redactSensitive);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) =>
+        SENSITIVE_KEYS.test(k) ? [k, '[redacted]'] : [k, redactSensitive(v)],
+      ),
+    );
+  }
+  return value;
+}
+
 export async function postOptionalWebhook(
   url: string,
   payload: unknown,
   devLogLabel: string,
 ): Promise<void> {
   if (!url) {
-    console.log(`[dev] ${devLogLabel}:`, JSON.stringify(payload, null, 2));
+    // Dev-only path (no webhook configured) — redact so OTPs, set-password links
+    // and PII never leak into console output.
+    console.log(`[dev] ${devLogLabel}:`, JSON.stringify(redactSensitive(payload), null, 2));
     return;
   }
   await postWebhook(url, payload);

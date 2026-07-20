@@ -22,6 +22,7 @@ import {
 } from '../../test/helpers/nock-baserow.js';
 import { stubFetch, restoreFetch } from '../../test/helpers/nock-make.js';
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
+import { signFccPrefillToken } from '../../utils/fcc-token.js';
 
 const TENANT_ID = '1';
 const USER_ID = '999';
@@ -215,7 +216,7 @@ describe('FCC Routes', () => {
       restoreFetch();
     });
 
-    it('creates an FCC client (public endpoint, no auth)', async () => {
+    it('creates an FCC client when a valid prefill token is supplied', async () => {
       const fetchCalls = stubFetch();
 
       const newSubRow = makeFccClientRow(
@@ -234,7 +235,8 @@ describe('FCC Routes', () => {
       const res = await supertest(app)
         .post('/api/fcc/submit')
         .send({
-          tenant_id: TENANT_ID,
+          // tenant_id in the body is ignored — the token is the source of truth
+          prefill_token: signFccPrefillToken({ tenant_id: TENANT_ID, record_id: null }),
           form_type: 'PP',
           client_nom_complet: 'Jean Dupont',
           client_email: 'jean@example.com',
@@ -251,6 +253,14 @@ describe('FCC Routes', () => {
       // Verify Make webhook was called (even if url is empty, stubFetch captures it)
       // The webhook call is via postWebhook which uses fetch
       expect(fetchCalls.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('rejects a submission with no prefill token', async () => {
+      const res = await supertest(app)
+        .post('/api/fcc/submit')
+        .send({ tenant_id: TENANT_ID, form_type: 'PP', client_email: 'jean@example.com' });
+
+      expect(res.status).toBe(401);
     });
   });
 });

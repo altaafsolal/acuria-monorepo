@@ -48,7 +48,9 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     return;
   }
 
-  const message = err instanceof Error ? err.message : 'Internal server error';
-  console.error(`${req.method} ${req.url}:`, message);
-  res.status(500).json({ error: message });
+  // Log the real detail server-side, but never leak internal error text (Baserow
+  // responses, tenant-context messages, axios failures) to the client.
+  const detail = err instanceof Error ? err.stack || err.message : String(err);
+  console.error(`${req.method} ${req.url}:`, detail);
+  res.status(500).json({ error: 'Internal server error' });
 };

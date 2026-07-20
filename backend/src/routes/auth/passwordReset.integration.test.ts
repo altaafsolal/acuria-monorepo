@@ -116,6 +116,8 @@ describe('POST /api/auth/verify-otp', () => {
     const row = makeDbUserRow(user);
 
     nockUsersTable([row]);
+    // a wrong guess increments the per-account attempt counter
+    nockUpdateRow(TABLE_IDS.users, '10', { ...row, id: 10 });
 
     const res = await supertest(app)
       .post('/api/auth/verify-otp')

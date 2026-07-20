@@ -18,6 +18,8 @@ import {
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
 
 const TENANT_ID = '1';
+// Matches WEBHOOK_SECRET injected by vitest.integration.config.ts
+const WEBHOOK_SECRET = 'test-webhook-secret';
 
 const tenant = makeTenantRecord({
   id: TENANT_ID,
@@ -129,6 +131,7 @@ describe('POST /api/fcc/docusign-webhook', () => {
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
+      .set('Authorization', WEBHOOK_SECRET)
       .send({ tenant_id: TENANT_ID, record_id: '10', status: 'completed' });
 
     expect(res.status).toBe(200);
@@ -157,6 +160,7 @@ describe('POST /api/fcc/docusign-webhook', () => {
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
+      .set('Authorization', WEBHOOK_SECRET)
       .send({ tenant_id: TENANT_ID, record_id: '10', status: 'signed' });
 
     expect(res.status).toBe(200);
@@ -185,6 +189,7 @@ describe('POST /api/fcc/docusign-webhook', () => {
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
+      .set('Authorization', WEBHOOK_SECRET)
       .send({ tenant_id: TENANT_ID, record_id: '10', status: 'sent' });
 
     expect(res.status).toBe(200);
@@ -214,6 +219,7 @@ describe('POST /api/fcc/docusign-webhook', () => {
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
+      .set('Authorization', WEBHOOK_SECRET)
       .send({ tenant_id: TENANT_ID, record_id: '10', status: 'completed', envelope_id: 'env-123' });
 
     expect(res.status).toBe(200);
@@ -236,6 +242,7 @@ describe('POST /api/fcc/docusign-webhook', () => {
 
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
+      .set('Authorization', WEBHOOK_SECRET)
       .send({ tenant_id: TENANT_ID, record_id: '10', status: 'completed' });
 
     expect(res.status).toBe(200);
@@ -245,6 +252,7 @@ describe('POST /api/fcc/docusign-webhook', () => {
   it('returns 400 when tenant_id is missing', async () => {
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
+      .set('Authorization', WEBHOOK_SECRET)
       .send({ record_id: '10' });
 
     expect(res.status).toBe(400);
@@ -254,37 +262,28 @@ describe('POST /api/fcc/docusign-webhook', () => {
   it('returns 400 when record_id is missing', async () => {
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
+      .set('Authorization', WEBHOOK_SECRET)
       .send({ tenant_id: TENANT_ID });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBeDefined();
   });
 
-  it('no auth required — accepts request without Authorization header', async () => {
-    const client = makeDbClient({ id: '10', fcc_statut: 'DocuSign envoyé' });
-    const clientRow = makeClientRow(client);
-    const updatedClientRow = {
-      ...clientRow,
-      [BASEROW_FIELDS.clients.fccStatut]: { id: 2, value: 'Signé', color: 'green' },
-    };
-    const sub = makeDbFccClient({ id: '300', statut_dossier: 'Envoyé DocuSign' });
-    const updatedSubRow = {
-      ...makeFccClientRow(sub),
-      [BASEROW_FIELDS.fccClients.statutDossier]: { id: 2, value: 'Signé', color: 'green' },
-    };
-
-    nockTenantById(TENANT_ID, tenantRow);
-    nockGetRow(TABLE_IDS.clients, '10', clientRow);
-    nockUpdateRow(TABLE_IDS.clients, '10', updatedClientRow);
-    nockListRows(TABLE_IDS.fccClients, [makeFccClientRow(sub)]);
-    nockUpdateRow(TABLE_IDS.fccClients, '300', updatedSubRow);
-
+  it('rejects the webhook when the shared secret is missing', async () => {
     const res = await supertest(app)
       .post('/api/fcc/docusign-webhook')
       .send({ tenant_id: TENANT_ID, record_id: '10', status: 'completed' });
-    // No .set('Authorization', ...) — deliberately omitted
+    // No Authorization header — must be rejected before any DB access.
 
-    expect(res.status).toBe(200);
-    expect(res.body.ok).toBe(true);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects the webhook when the shared secret is wrong', async () => {
+    const res = await supertest(app)
+      .post('/api/fcc/docusign-webhook')
+      .set('Authorization', 'wrong-secret')
+      .send({ tenant_id: TENANT_ID, record_id: '10', status: 'completed' });
+
+    expect(res.status).toBe(401);
   });
 });

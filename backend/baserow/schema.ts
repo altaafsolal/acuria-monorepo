@@ -27,6 +27,7 @@ export const BASEROW_FIELDS = {
     resetTokenExpires: 'reset_token_expires',
     otpHash: 'otp_hash',
     otpExpires: 'otp_expires',
+    otpAttempts: 'otp_attempts',
     createdOn: 'created_on',
     updatedOn: 'updated_on',
     airtableRecordId: 'airtable_record_id',

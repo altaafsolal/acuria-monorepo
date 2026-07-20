@@ -8,7 +8,10 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
   res.on('finish', () => {
     const ms = Date.now() - start;
     const length = res.getHeader('content-length') ?? '-';
-    const line = `${req.method} ${req.originalUrl} ${res.statusCode} ${length} - ${ms}ms`;
+    // Strip the query string — it can carry tokens (e.g. ?token= on the WS
+    // upgrade) that must never land in logs.
+    const path = req.originalUrl.split('?')[0] ?? req.originalUrl;
+    const line = `${req.method} ${path} ${res.statusCode} ${length} - ${ms}ms`;
 
     if (env.isProduction) {
       console.log(line);

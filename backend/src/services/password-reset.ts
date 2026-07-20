@@ -12,6 +12,12 @@ const { hasUserEmail } = usersRepo;
 const SET_PASSWORD_TTL_MS = 72 * 60 * 60 * 1000;
 const OTP_TTL_MS = 10 * 60 * 1000;
 const MIN_PASSWORD_LENGTH = 8;
+// bcrypt silently ignores bytes past 72; cap here so a "valid" long password is
+// never truncated, and to bound hashing CPU cost.
+const MAX_PASSWORD_LENGTH = 72;
+// Invalidate an OTP after this many wrong guesses — per-account brute-force
+// lockout, independent of the per-IP rate limiter.
+const MAX_OTP_ATTEMPTS = 5;
 
 function sha256(value: string): string {
   return crypto.createHash('sha256').update(value).digest('hex');
@@ -22,7 +28,9 @@ function randomToken(): string {
 }
 
 function randomOtp(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  // crypto.randomInt is a CSPRNG — Math.random() is predictable and must never
+  // generate an account-recovery secret.
+  return String(crypto.randomInt(100000, 1000000));
 }
 
 function timingSafeEqualHex(a: string, b: string): boolean {
@@ -45,6 +53,9 @@ export function buildSetPasswordLink(uid: string, token: string): string {
 export function validatePasswordPair(password: string, passwordConfirm: string): void {
   if (!password || password.length < MIN_PASSWORD_LENGTH) {
     throw new Error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+  }
+  if (Buffer.byteLength(password, 'utf8') > MAX_PASSWORD_LENGTH) {
+    throw new Error(`Password must be at most ${MAX_PASSWORD_LENGTH} characters`);
   }
   if (password !== passwordConfirm) {
     throw new Error('Passwords do not match');
@@ -99,6 +110,7 @@ export async function issueOtp(
   await usersRepo.updateUser(user.id, {
     otp_hash: hash,
     otp_expires: expires,
+    otp_attempts: 0,
   });
 
   await sendOtpEmail(user.email, user.name, otp, tenant?.name, tenant?.email, tenant?.id);
@@ -112,7 +124,13 @@ export async function verifyOtp(email: string, code: string): Promise<{ uid: str
   if (new Date(user.otp_expires).getTime() < Date.now()) {
     throw new Error('Invalid or expired OTP');
   }
+  if ((user.otp_attempts ?? 0) >= MAX_OTP_ATTEMPTS) {
+    // Too many wrong guesses — burn the OTP so it can't be brute-forced further.
+    await usersRepo.updateUser(user.id, { otp_hash: '', otp_expires: '' });
+    throw new Error('Invalid or expired OTP');
+  }
   if (!timingSafeEqualHex(sha256(code.trim()), user.otp_hash)) {
+    await usersRepo.updateUser(user.id, { otp_attempts: (user.otp_attempts ?? 0) + 1 });
     throw new Error('Invalid or expired OTP');
   }
 
@@ -125,6 +143,7 @@ export async function verifyOtp(email: string, code: string): Promise<{ uid: str
     reset_token_expires: expires,
     otp_hash: '',
     otp_expires: '',
+    otp_attempts: 0,
   });
 
   return { uid: user.id, token };

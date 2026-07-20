@@ -183,6 +183,27 @@ export function toPublicClient(client: DbClient): PublicClient {
   };
 }
 
+/**
+ * DER/LdM/FCC signature statuses are compliance records — they are proof that a
+ * document was sent/signed and must only be written by the server-side send and
+ * webhook flows (`patchClientKycFields`), never set directly by a user through
+ * POST/PUT /clients. Strip them from any user-supplied client body first.
+ */
+const WORKFLOW_STATUS_KEYS = [
+  'fccStatut', 'fcc_statut', 'fccDate', 'fcc_date',
+  'derStatut', 'der_statut', 'derDate', 'der_date',
+  'derEnvoiTimestamp', 'der_envoi_timestamp',
+  'ldmStatut', 'ldm_statut', 'ldmDate', 'ldm_date',
+] as const;
+
+export function stripWorkflowStatusFields<T extends Record<string, unknown>>(input: T): T {
+  const out = { ...input };
+  for (const key of WORKFLOW_STATUS_KEYS) {
+    delete (out as Record<string, unknown>)[key];
+  }
+  return out;
+}
+
 export function clientInputToBaserow(input: Record<string, unknown>): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
 

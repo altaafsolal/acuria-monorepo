@@ -1,13 +1,19 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../utils/index.js';
+import { requireWebhookSecret } from '../../middleware/index.js';
 import * as fccClientsRepo from '../../services/baserow/fcc-clients.js';
 import * as clientsRepo from '../../services/baserow/clients.js';
 
 const router = Router({ mergeParams: true });
 
-// Public — receives DocuSign webhook from Make.com (no auth required)
+// Server-to-server webhook from Make.com. Guarded by the shared WEBHOOK_SECRET
+// (Authorization header) — without it, anyone could forge a "Signé" signature
+// status for any client in any tenant by posting a tenant_id + record_id.
+// The guard is attached per-route, NOT via router.use(): every fcc/*.ts file is
+// mounted at the same /api/fcc base, so a router-level use() would reject the
+// other FCC routes too.
 // Expected payload: { record_id, tenant_id, envelope_id, status, event }
-router.post('/docusign-webhook', asyncHandler(async (req, res) => {
+router.post('/docusign-webhook', requireWebhookSecret, asyncHandler(async (req, res) => {
   const body = req.body as Record<string, unknown>;
   const recordId = typeof body.record_id === 'string' ? body.record_id : null;
   const tenantId = typeof body.tenant_id === 'string' ? body.tenant_id : null;
