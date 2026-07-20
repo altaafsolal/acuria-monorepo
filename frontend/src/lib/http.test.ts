@@ -7,9 +7,18 @@ import {
   onAuthFailure,
   request,
   tryRefreshAccessToken,
+  isAccessTokenStale,
 } from './http';
 
+/** Unsigned JWT-shaped token with the given exp offset from now (seconds). */
+function makeJwt(expOffsetSeconds: number): string {
+  const exp = Math.floor(Date.now() / 1000) + expOffsetSeconds;
+  const payload = btoa(JSON.stringify({ exp })).replace(/\+/g, '-').replace(/\//g, '_');
+  return `hdr.${payload}.sig`;
+}
+
 beforeEach(() => {
+  clearAccessToken();
   localStorage.clear();
   vi.restoreAllMocks();
 });
@@ -84,7 +93,8 @@ describe('request', () => {
   });
 
   it('includes Authorization header when token is set', async () => {
-    setAccessToken('my-token');
+    const token = makeJwt(600);
+    setAccessToken(token);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -93,7 +103,7 @@ describe('request', () => {
 
     await request('GET', '/api/test');
     const callArgs = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(callArgs[1].headers.Authorization).toBe('Bearer my-token');
+    expect(callArgs[1].headers.Authorization).toBe(`Bearer ${token}`);
   });
 
   it('does not set Content-Type for FormData', async () => {
@@ -111,7 +121,8 @@ describe('request', () => {
   });
 
   it('retries on 401 with token refresh', async () => {
-    setAccessToken('expired-token');
+    // Fresh enough to skip proactive refresh; server still rejects → 401 path.
+    setAccessToken(makeJwt(600));
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: false, status: 401, json: () => Promise.resolve({}) })
       .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ accessToken: 'new-tok' }) })
@@ -147,5 +158,34 @@ describe('tryRefreshAccessToken', () => {
     expect(r1).toBe('new-tok');
     expect(r2).toBe('new-tok');
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('isAccessTokenStale / getAccessTokenExpiresAt', () => {
+  it('treats missing token as stale', () => {
+    expect(isAccessTokenStale(null)).toBe(true);
+  });
+
+  it('treats a token expiring within the skew window as stale', () => {
+    expect(isAccessTokenStale(makeJwt(30))).toBe(true);
+  });
+
+  it('treats a token with plenty of life as fresh', () => {
+    expect(isAccessTokenStale(makeJwt(600))).toBe(false);
+  });
+
+  it('refreshes proactively before sending a request with a stale token', async () => {
+    setAccessToken(makeJwt(-10));
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ accessToken: 'fresh-tok' }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ data: 'ok' }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await request('GET', '/api/data');
+    expect(result).toEqual({ data: 'ok' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][0]).toContain('/auth/refresh');
+    expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer fresh-tok');
   });
 });

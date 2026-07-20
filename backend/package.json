@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "node dist/src/index.js",
     "setup": "tsx cli/setup.ts",
+    "set-super-admin-password": "tsx cli/set-super-admin-password.ts",
     "migrate:airtable": "tsx cli/migrate-airtable.ts",
     "provision:tenant-workspace": "tsx cli/provision-tenant-workspace.ts",
     "provision:tenant-tables": "tsx cli/provision-tenant-tables.ts",

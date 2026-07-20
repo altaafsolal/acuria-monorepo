@@ -16,6 +16,7 @@ From `backend/` or via workspace flag:
 ```bash
 npm run typecheck --workspace=backend
 npm run setup --workspace=backend            # first-time Baserow schema + seed
+npm run set-super-admin-password --workspace=backend  # rotate super-admin password from SUPER_ADMIN_PASSWORD
 npm run provision:tenant-tables --workspace=backend -- --slug=<tenant-slug>
 npm run migrate:airtable --workspace=backend -- --tenant-slug=nm-prime
 ```

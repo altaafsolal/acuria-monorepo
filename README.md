@@ -209,6 +209,7 @@ npm run dev:backend
 | `npm run typecheck --workspace=backend` | Typecheck BE |
 | `npm run test` | Vitest FE + BE |
 | `npm run provision:tenant-tables --workspace=backend -- --slug=<slug>` | Tables d’un tenant |
+| `npm run set-super-admin-password --workspace=backend` | Met à jour le mot de passe super-admin depuis `SUPER_ADMIN_PASSWORD` |
 | `npm run migrate:airtable --workspace=backend -- --tenant-slug=nm-prime` | Import Airtable |
 
 Santé API : `GET http://localhost:3001/api/health`.

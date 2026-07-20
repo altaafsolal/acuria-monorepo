@@ -7,6 +7,7 @@ import { useGet, usePost } from '../lib/api';
 import {
   get,
   getAccessToken,
+  isAccessTokenStale,
   onAuthFailure,
   post,
   tryRefreshAccessToken,
@@ -15,9 +16,15 @@ import type { LoginResponse, MeResponse, User } from '../types';
 
 async function fetchSession(): Promise<User | null> {
   try {
-    if (!getAccessToken()) {
+    // Expired access tokens stay in localStorage until cleared — always refresh
+    // when missing or stale so a tab left open past 15m recovers without F5.
+    if (!getAccessToken() || isAccessTokenStale()) {
       const refreshed = await tryRefreshAccessToken();
+      if (!refreshed && !getAccessToken()) {
+        return null;
+      }
       if (!refreshed) {
+        clearSession();
         return null;
       }
     }

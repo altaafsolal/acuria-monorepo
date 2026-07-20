@@ -1,7 +1,7 @@
-import { getAccessToken, tryRefreshAccessToken } from './http';
+import { ensureFreshAccessToken, getAccessToken, tryRefreshAccessToken } from './http';
 
 export async function fetchAuthenticatedBlob(url: string, retried = false): Promise<Blob> {
-  const token = getAccessToken();
+  const token = retried ? getAccessToken() : await ensureFreshAccessToken();
   const response = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     credentials: 'include',
@@ -26,7 +26,7 @@ export async function postAuthenticatedBlob(
   body: unknown,
   retried = false,
 ): Promise<Blob> {
-  const token = getAccessToken();
+  const token = retried ? getAccessToken() : await ensureFreshAccessToken();
   const response = await fetch(url, {
     method: 'POST',
     headers: {

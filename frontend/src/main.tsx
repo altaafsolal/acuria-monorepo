@@ -6,8 +6,11 @@ import { AppProvider } from './context/AppContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ConfirmProvider } from './context/ConfirmContext';
 import NotificationContainer from './components/ui/NotificationContainer';
+import { installAuthVisibilityRefresh } from './lib/http';
 import App from './App';
 import './index.css';
+
+installAuthVisibilityRefresh();
 
 const queryClient = new QueryClient({
   defaultOptions: {

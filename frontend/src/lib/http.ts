@@ -1,6 +1,8 @@
 import api from '../api';
 
 const ACCESS_TOKEN_KEY = 'accessToken';
+/** Refresh this far before access-token exp so in-flight requests don't race expiry. */
+const REFRESH_SKEW_MS = 60_000;
 
 type PathResolver<T> = string | ((variables: T) => string);
 
@@ -49,11 +51,62 @@ export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
+/** JWT `exp` as epoch ms, or null if the token can't be decoded. */
+export function getAccessTokenExpiresAt(token: string | null = getAccessToken()): number | null {
+  if (!token) return null;
+  try {
+    const part = token.split('.')[1];
+    if (!part) return null;
+    const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '=');
+    const payload = JSON.parse(atob(padded)) as { exp?: unknown };
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True when missing, undecodable, already expired, or inside the refresh skew window. */
+export function isAccessTokenStale(token: string | null = getAccessToken()): boolean {
+  if (!token) return true;
+  const expiresAt = getAccessTokenExpiresAt(token);
+  if (expiresAt === null) return true;
+  return Date.now() >= expiresAt - REFRESH_SKEW_MS;
+}
+
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearRefreshTimer(): void {
+  if (refreshTimer !== null) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
+/** Schedule a background refresh shortly before the access token expires. */
+function scheduleProactiveRefresh(token: string): void {
+  clearRefreshTimer();
+  const expiresAt = getAccessTokenExpiresAt(token);
+  if (expiresAt === null) return;
+
+  const delay = expiresAt - REFRESH_SKEW_MS - Date.now();
+  // Already inside the skew window — leave refresh to the next request / visibility hook.
+  if (delay <= 0) return;
+
+  refreshTimer = setTimeout(() => {
+    void tryRefreshAccessToken().then((next) => {
+      if (!next) notifyAuthFailure();
+    });
+  }, delay);
+}
+
 export function setAccessToken(token: string): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  scheduleProactiveRefresh(token);
 }
 
 export function clearAccessToken(): void {
+  clearRefreshTimer();
   localStorage.removeItem(ACCESS_TOKEN_KEY);
 }
 
@@ -92,6 +145,18 @@ export function tryRefreshAccessToken(): Promise<string | null> {
   return refreshPromise;
 }
 
+/**
+ * Ensure we have a non-stale access token before calling a protected API.
+ * Returns the token to use, or null if refresh failed (caller should treat as logged out).
+ */
+export async function ensureFreshAccessToken(): Promise<string | null> {
+  const current = getAccessToken();
+  if (current && !isAccessTokenStale(current)) {
+    return current;
+  }
+  return tryRefreshAccessToken();
+}
+
 function shouldRetryWithRefresh(path: string, status: number): boolean {
   if (status !== 401) {
     return false;
@@ -105,13 +170,43 @@ function shouldRetryWithRefresh(path: string, status: number): boolean {
     && !normalized.endsWith('/auth/set-password');
 }
 
+let visibilityHookInstalled = false;
+
+/** Refresh when the user returns to a tab left open past access-token expiry. */
+export function installAuthVisibilityRefresh(): void {
+  if (visibilityHookInstalled || typeof document === 'undefined') return;
+  visibilityHookInstalled = true;
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (!getAccessToken()) return;
+    if (!isAccessTokenStale()) return;
+    void tryRefreshAccessToken().then((next) => {
+      if (!next) notifyAuthFailure();
+    });
+  });
+}
+
 export async function request<T = unknown, V = void>(
   method: string,
   path: PathResolver<V>,
   { body, variables, headers, _retry = false, ...fetchOptions }: RequestOptions<V> = {},
 ): Promise<T> {
-  const token = getAccessToken();
   const resolvedPath = resolvePath(path, variables);
+  const isAuthEndpoint = !shouldRetryWithRefresh(resolvedPath, 401);
+
+  // Proactively rotate before the request so we don't wait for a 401 round-trip.
+  // Only when we already have a session token that is expired / near expiry.
+  let token = getAccessToken();
+  if (!_retry && !isAuthEndpoint && token && isAccessTokenStale(token)) {
+    const refreshed = await tryRefreshAccessToken();
+    if (refreshed) {
+      token = refreshed;
+    }
+    // If refresh failed, still attempt the request; the 401 handler below retries once
+    // more or calls notifyAuthFailure().
+  }
+
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const resolvedHeaders: Record<string, string> = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
@@ -139,7 +234,10 @@ export async function request<T = unknown, V = void>(
         return request<T, V>(method, path, {
           body,
           variables,
-          headers,
+          headers: {
+            ...headers,
+            Authorization: `Bearer ${newToken}`,
+          },
           _retry: true,
           ...fetchOptions,
         });

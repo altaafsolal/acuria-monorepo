@@ -89,7 +89,7 @@ Also register those redirect URIs in the Azure Portal (and Google if Gmail is of
 | URLs | `APP_URL`, `CORS_ORIGINS`, `API_BASE_URL` |
 | Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (generate strong random values; keep stable across deploys) |
 | Encryption / webhooks | `TOKEN_ENCRYPTION_KEY` (64 hex chars), `WEBHOOK_SECRET`, optional `FCC_PREFILL_SECRET` |
-| Super admin seed | `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`, `SUPER_ADMIN_NAME` |
+| Super admin | `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`, `SUPER_ADMIN_NAME` — create via `npm run setup`; rotate password later with `npm run set-super-admin-password --workspace=backend` |
 | Baserow | `BASEROW_MAIN_DATABASE_ID`, `BASEROW_DATABASE_TOKEN`, `BASEROW_EMAIL`, `BASEROW_PASSWORD`, `BASEROW_WORKSPACE_ID`, `BASEROW_USERS_TABLE_ID`, `BASEROW_TENANTS_TABLE_ID` |
 | SharePoint OAuth | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_REDIRECT_URI` |
 | Email OAuth | `EMAIL_REDIRECT_URI`; Gmail: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
