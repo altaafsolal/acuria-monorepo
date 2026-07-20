@@ -4,7 +4,7 @@ Per-tenant SharePoint connection for document libraries (DER, LdM, FCC, notes).
 One **multitenant** Azure app registration; each cabinet admin consents inside their own Microsoft 365 org.
 
 Product flow and token broker: see root [`README.md`](../README.md) §1.  
-Deploy redirect URIs: [`DEPLOYMENT.md`](../DEPLOYMENT.md).
+Deploy redirect URIs: [`DEPLOYMENT.md`](../DEPLOYMENT.md) (Vercel).
 
 ---
 

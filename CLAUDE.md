@@ -25,11 +25,11 @@ From `frontend/`:
 npm run typecheck --workspace=frontend
 ```
 
-There are no tests in this codebase.
+Tests: Vitest in both `frontend/` and `backend/` (`npm run test`).
 
 ## Architecture
 
-**Monorepo** with npm workspaces: `frontend/` and `backend/`. Deployed on Render (backend build `tsc`, start `node dist/src/index.js`; frontend built via `npm run build`).
+**Monorepo** with npm workspaces: `frontend/` and `backend/`. **Hosting target: Vercel only** (SPA + API from the same repo; see `DEPLOYMENT.md`). `render.yaml` is obsolete.
 
 ### Backend (`backend/src/`)
 

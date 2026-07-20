@@ -1,14 +1,9 @@
+# OBSOLETE — do not use for new deployments.
+# The monorepo (frontend + backend) deploys on Vercel only. See DEPLOYMENT.md.
+# This Blueprint is kept as historical reference only.
+
+# --- legacy Render Blueprint (unused) ---
 # Render Blueprint — Acuria API (Express backend).
-#
-# The frontend is NOT deployed here — it goes to Vercel (see DEPLOYMENT.md).
-# The API lives on Render because it needs things Vercel's serverless model can't
-# give it: a long-lived process for WebSockets (super-admin realtime dashboard),
-# in-memory caches (JWT / tenant-context / SharePoint token-refresh de-dup), and
-# filesystem-based route loading.
-#
-# To use: Render Dashboard → New → Blueprint → pick this repo. Render reads this
-# file, creates the service, and prompts for every `sync: false` variable.
-# Full walkthrough + env-var reference: DEPLOYMENT.md
 
 services:
   - type: web

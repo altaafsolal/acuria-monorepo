@@ -1,220 +1,158 @@
 # Deploying Acuria Platform
 
-One git repo, two deploy targets:
+One git repo, **one host: Vercel**. The whole monorepo (`frontend/` + `backend/`) is deployed on Vercel.
 
-| Part | Host | Why |
-|---|---|---|
-| **`frontend/`** — React + Vite SPA | **Vercel** | Static build, global CDN, instant rollbacks. |
-| **`backend/`** — Express API | **Render** | Needs a long-lived process: WebSockets (super-admin realtime dashboard), in-memory caches (JWT / tenant-context / SharePoint token-refresh de-dup), and filesystem route loading. Vercel's serverless model breaks all three. |
+| Part | Role on Vercel |
+|---|---|
+| **`frontend/`** — React + Vite SPA | Static build (CDN), SPA rewrites |
+| **`backend/`** — Express API | Node server / serverless entry exposing `/api` (OAuth callbacks, Make brokers, auth) |
 
-They talk over HTTPS. The frontend is told the API's URL at build time via `VITE_API_URL` / `VITE_WS_URL`; the API allows the frontend's origin via `CORS_ORIGINS`.
+They should share the **same site origin** in production (e.g. `https://app.acuria.com` for the SPA and `https://app.acuria.com/api` for the API). That keeps the refresh cookie first-party and avoids the third-party-cookie trap of splitting hosts across different platforms.
 
-Config files in the repo:
-- [`render.yaml`](render.yaml) — Render Blueprint for the API.
-- [`frontend/vercel.json`](frontend/vercel.json) — Vercel build + SPA routing.
-- [`backend/.env.example`](backend/.env.example) — the authoritative list of backend env vars.
+Config / reference in the repo:
+- [`frontend/vercel.json`](frontend/vercel.json) — SPA routing (used when the project root is `frontend`, or as a starting point for monorepo rewrites)
+- [`backend/.env.example`](backend/.env.example) — authoritative list of backend env vars
+- [`frontend/.env.example`](frontend/.env.example) — `VITE_*` build-time vars
+- [`render.yaml`](render.yaml) — **obsolete** (legacy Render blueprint; do not use for new deploys)
 
-> ### ⚠️ Read this before you pick URLs: the auth cookie needs a shared parent domain
-> Login stores the refresh token in an **HttpOnly cookie set by the API's domain**. The
-> browser then sends it back on cross-origin refresh calls. On the raw platform domains
-> (`your-app.vercel.app` ↔ `your-api.onrender.com`) that cookie is a **third-party
-> cookie** — Safari blocks it outright and Chrome is phasing it out, so users get logged
-> out the moment their 15-minute access token expires.
+> ### Auth cookie
+> Login stores the refresh token in an **HttpOnly cookie set by the API**. Prefer a **same-origin** layout (`/api` on the same hostname as the SPA) so the cookie is never third-party.
 >
-> **Fix: put both behind one parent domain** — e.g. `app.acuria.com` (Vercel) and
-> `api.acuria.com` (Render). Same registrable domain (`acuria.com`) ⇒ the cookie is no
-> longer third-party ⇒ refresh works in every browser. Custom domains are covered in
-> §5; treat them as required for production, not optional.
+> If you temporarily split SPA and API on two hostnames, put both under one parent domain (e.g. `app.acuria.com` + `api.acuria.com`) — never mix unrelated platform domains.
 
 ---
 
 ## Prerequisites
 
-- The repo pushed to GitHub (Render and Vercel both deploy from it).
+- Repo pushed to GitHub (Vercel deploys from it).
 - A [Baserow](https://baserow.io) account with the platform database provisioned
   (`BASEROW_MAIN_DATABASE_ID`, tokens, etc.).
-- The Azure app registration done — see [docs/sharepoint-oauth-setup.md](docs/sharepoint-oauth-setup.md).
-- Node 22 locally if you want to run the one-time setup script (§4).
-
-You'll deploy the **API first** (so you know its URL), then the **frontend**, then come
-back and fill in the cross-references.
+- Azure app registration — see [docs/sharepoint-oauth-setup.md](docs/sharepoint-oauth-setup.md).
+- Google OAuth client if Gmail is offered — see [docs/email-oauth-setup.md](docs/email-oauth-setup.md).
+- Node 22 locally to run `npm run setup` against Baserow (§4).
 
 ---
 
-## 1. Deploy the API to Render
-
-### Option A — Blueprint (recommended)
-
-1. **Render Dashboard → New → Blueprint**, and select this repo.
-2. Render reads [`render.yaml`](render.yaml), shows the `acuria-api` service, and lists
-   every `sync: false` variable as an empty field. Fill them in — the full reference is
-   in §6. You can leave `APP_URL`, `CORS_ORIGINS`, `API_BASE_URL`, and `AZURE_REDIRECT_URI`
-   blank for now; you'll set them in §3 once the URLs exist.
-3. **Apply**. Render runs `npm install && npm run build` (which is `tsc`) in `backend/`,
-   then starts it with `node dist/src/index.js`.
-4. When it's live, note the URL, e.g. `https://acuria-api.onrender.com`.
-5. Check health: `https://acuria-api.onrender.com/api/health` → `200`.
-
-### Option B — Manual (no Blueprint)
-
-**New → Web Service** → this repo, then:
-
-| Setting | Value |
-|---|---|
-| Root Directory | `backend` |
-| Runtime | Node |
-| Build Command | `npm install && npm run build` |
-| Start Command | `npm run start` |
-| Health Check Path | `/api/health` |
-| Plan | Starter or higher (**not Free** — see note below) |
-
-Add every variable from §6 under **Environment**.
-
-> **Don't use the Free plan for the API.** Free services sleep after inactivity, which
-> drops WebSocket connections and defeats the in-memory token-refresh de-dup (the process
-> is torn down between requests). Starter keeps one warm instance.
-
----
-
-## 2. Deploy the frontend to Vercel
+## 1. Create the Vercel project (monorepo)
 
 1. **Vercel → Add New → Project**, import this repo.
-2. **Set Root Directory to `frontend`.** This is the important step — it tells Vercel the
-   app lives in a subfolder of the monorepo. Vercel detects the Vite preset and reads
-   [`frontend/vercel.json`](frontend/vercel.json) for the SPA rewrite (all paths →
-   `index.html`, so deep links like `/dashboard/clients` work on refresh).
-3. Add **Environment Variables** (Production scope), pointing at your Render API from §1:
+2. Configure for the **monorepo** (target layout):
+   - Root of the Git repo (not only `frontend/`).
+   - Frontend build: install workspaces, build the Vite app from `frontend/`.
+   - Backend: compile TypeScript (`backend` → `tsc`) and expose the Express app under `/api`.
+   - Rewrites: `/api/*` → API handler; all other routes → SPA `index.html` (deep links).
+3. Until the root monorepo `vercel.json` / server entry is wired in CI, you may still deploy **frontend-only** with Root Directory = `frontend` (current [`frontend/vercel.json`](frontend/vercel.json)) and point `VITE_API_URL` at a separately hosted API on the **same Vercel account** (second project) — still Vercel-only, no Render.
 
-   | Name | Value | Notes |
-   |---|---|---|
-   | `VITE_API_URL` | `https://acuria-api.onrender.com/api` | **Must end in `/api`.** |
-   | `VITE_WS_URL` | `wss://acuria-api.onrender.com/api/ws` | `wss://`, not `https://`. Powers the super-admin realtime dashboard. |
+### Recommended production URLs
 
-   > Vite inlines `VITE_*` vars at **build time**, so changing either requires a
-   > redeploy, not just a restart.
-4. **Deploy.** Note the URL, e.g. `https://acuria-app.vercel.app`.
+| Use | Example |
+|---|---|
+| App + API (same origin) | `https://app.acuria.com` and `https://app.acuria.com/api` |
+| Preview | `https://<project>-<hash>.vercel.app` |
+
+Health check: `https://app.acuria.com/api/health` → `200`.
 
 ---
 
-## 3. Wire the two together
+## 2. Frontend environment (Vercel)
 
-Now that both URLs exist, set these on **Render** (Environment → edit → save triggers a
-redeploy):
+`VITE_*` vars are inlined at **build time** — changing them requires a **redeploy**.
 
-| Variable | Value | Purpose |
+| Name | Value | Notes |
 |---|---|---|
-| `APP_URL` | `https://acuria-app.vercel.app` | Where the OAuth callback and password-set emails send users. |
-| `CORS_ORIGINS` | `https://acuria-app.vercel.app` | Lets the browser call the API with credentials. Comma-separate if you have more than one origin (e.g. a preview domain). |
-| `API_BASE_URL` | `https://acuria-api.onrender.com/api` | The API's own public base — used to build the default OAuth redirect URI. |
-| `AZURE_REDIRECT_URI` | `https://acuria-api.onrender.com/api/oauth/sharepoint/callback` | Must **exactly** match a redirect URI registered on the Azure app. |
-| `EMAIL_REDIRECT_URI` | `https://acuria-api.onrender.com/api/oauth/email/callback` | Same URL on the Azure app **and** the Google OAuth client (if Gmail is offered). |
+| `VITE_API_URL` | `/api` (same origin) **or** `https://app.acuria.com/api` | **Must end in `/api`.** Same-origin relative `/api` is preferred. |
+| `VITE_WS_URL` | `wss://app.acuria.com/api/ws` | Super-admin realtime dashboard. Omit in local dev (Vite proxies). |
+| `VITE_DER_TEMPLATE_URL` | optional | Hides DER template link if unset. |
 
-Then in the **Azure Portal** (Entra ID → your app → Authentication), add both
-`AZURE_REDIRECT_URI` and `EMAIL_REDIRECT_URI` as **Web** redirect URIs if they
-aren't already there. For Gmail, register `EMAIL_REDIRECT_URI` on the Google
-OAuth client as well — see [docs/email-oauth-setup.md](docs/email-oauth-setup.md).
+---
 
-Use your real custom domains here instead of the platform domains if you've set them up
-(§5) — and you should, per the cookie warning at the top.
+## 3. Backend environment (Vercel)
+
+Set these on the Vercel project that runs the API (same project as the SPA in the monorepo target, or the API project if split). Full comments: [`backend/.env.example`](backend/.env.example).
+
+After the public URL exists:
+
+| Variable | Example | Purpose |
+|---|---|---|
+| `APP_URL` | `https://app.acuria.com` | OAuth success redirect + password-set email links |
+| `CORS_ORIGINS` | `https://app.acuria.com` | Browser calls with credentials (comma-separate previews if needed) |
+| `API_BASE_URL` | `https://app.acuria.com/api` | Default OAuth redirect URI base |
+| `AZURE_REDIRECT_URI` | `https://app.acuria.com/api/oauth/sharepoint/callback` | Must match Azure **Web** redirect URI |
+| `EMAIL_REDIRECT_URI` | `https://app.acuria.com/api/oauth/email/callback` | Same URL on Azure **and** Google OAuth client |
+
+Also register those redirect URIs in the Azure Portal (and Google if Gmail is offered).
+
+**You must provide** (summary):
+
+| Group | Variables |
+|---|---|
+| URLs | `APP_URL`, `CORS_ORIGINS`, `API_BASE_URL` |
+| Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (generate strong random values; keep stable across deploys) |
+| Encryption / webhooks | `TOKEN_ENCRYPTION_KEY` (64 hex chars), `WEBHOOK_SECRET`, optional `FCC_PREFILL_SECRET` |
+| Super admin seed | `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`, `SUPER_ADMIN_NAME` |
+| Baserow | `BASEROW_MAIN_DATABASE_ID`, `BASEROW_DATABASE_TOKEN`, `BASEROW_EMAIL`, `BASEROW_PASSWORD`, `BASEROW_WORKSPACE_ID`, `BASEROW_USERS_TABLE_ID`, `BASEROW_TENANTS_TABLE_ID` |
+| SharePoint OAuth | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_REDIRECT_URI` |
+| Email OAuth | `EMAIL_REDIRECT_URI`; Gmail: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| Make.com | `MAKE_WEBHOOK_DER`, `MAKE_WEBHOOK_DER_DOCUSIGN`, `MAKE_WEBHOOK_LDM`, `MAKE_WEBHOOK_PREVIEW`, `MAKE_WEBHOOK_FCC_SEND`, `MAKE_WEBHOOK_FCC_SUBMIT`, `MAKE_WEBHOOK_FCC_DOCUSIGN`, `MAKE_WEBHOOK_NOTE_UPLOAD`, `MAKE_WEBHOOK_PASSWORD_SET`, `MAKE_WEBHOOK_OTP` |
+| Google Docs templates | `GOOGLE_DOC_DER_ID`, `GOOGLE_DOC_LDM_PP_SANS`, `GOOGLE_DOC_LDM_PP_AVEC`, `GOOGLE_DOC_LDM_PM_SANS`, `GOOGLE_DOC_LDM_PM_AVEC` |
+
+Generate `TOKEN_ENCRYPTION_KEY`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ---
 
 ## 4. One-time setup: provision Baserow + seed the super admin
 
-The API needs its Baserow schema created and the super-admin user seeded. Run the setup
-script **once**, after the first successful API deploy. It is idempotent (safe to re-run;
-it's also how you apply future migrations — including the SharePoint one).
+Run once after the first successful API deploy (idempotent; also how you apply later migrations).
 
-**From the Render Shell** (Dashboard → acuria-api → Shell):
+**Locally** (recommended), with production Baserow credentials in `backend/.env`:
 
 ```bash
-npm run setup
+npm run setup --workspace=backend
 ```
 
-This runs all migrations in `backend/baserow/migrations/` (creating the tenants/users
-tables, the SharePoint OAuth columns, etc.), then seeds the super admin from
-`SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD`.
+This runs migrations in `backend/baserow/migrations/`, seeds the super admin from `SUPER_ADMIN_*`, and provisions tenant tables as configured.
 
-> You can also run it locally against the production Baserow by copying the same env vars
-> into `backend/.env` and running `npm run setup --workspace=backend`. The target is
-> Baserow, not Render — the script just needs the Baserow credentials.
-
-After it finishes, log in at your frontend URL with the super-admin credentials.
+Log in at your Vercel app URL with the super-admin credentials.
 
 ---
 
-## 5. Custom domains (do this for production)
+## 5. Custom domains
 
-Because of the third-party-cookie issue (top of this doc), production should run both
-apps under one parent domain.
+1. **Vercel** → Project → Settings → Domains → add `app.acuria.com` (CNAME as instructed).
+2. Point env vars (§2–§3) at that domain; redeploy so `VITE_*` pick up the new API URL if absolute.
+3. Update Azure / Google redirect URIs to `https://app.acuria.com/api/oauth/...`.
 
-1. **Vercel** → Project → Settings → Domains → add `app.acuria.com`. Follow the DNS
-   instructions (a CNAME to Vercel).
-2. **Render** → Service → Settings → Custom Domains → add `api.acuria.com`. Add the CNAME
-   it gives you. Render provisions TLS automatically.
-3. Update the cross-references from §2 and §3 to the custom domains:
-   - Vercel: `VITE_API_URL=https://api.acuria.com/api`, `VITE_WS_URL=wss://api.acuria.com/api/ws` → redeploy.
-   - Render: `APP_URL=https://app.acuria.com`, `CORS_ORIGINS=https://app.acuria.com`,
-     `API_BASE_URL=https://api.acuria.com/api`,
-     `AZURE_REDIRECT_URI=https://api.acuria.com/api/oauth/sharepoint/callback`,
-     `EMAIL_REDIRECT_URI=https://api.acuria.com/api/oauth/email/callback`.
-   - Azure (and Google if Gmail): add the new redirect URIs.
-
-Now `app.acuria.com` and `api.acuria.com` share `acuria.com`, and the refresh cookie
-works in every browser.
+Same-origin on `app.acuria.com` keeps the refresh cookie first-party.
 
 ---
 
-## 6. Backend environment variable reference
+## 6. Continuous deployment
 
-The authoritative list with inline docs is [`backend/.env.example`](backend/.env.example).
-Grouped summary of what Render needs:
-
-**Set by `render.yaml` automatically:** `NODE_VERSION`, `NODE_ENV`, and the two JWT
-secrets (`JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, generated by Render).
-
-**You must provide:**
-
-| Group | Variables |
-|---|---|
-| URLs (§3) | `APP_URL`, `CORS_ORIGINS`, `API_BASE_URL` |
-| Encryption / secrets | `TOKEN_ENCRYPTION_KEY` (64 hex chars — `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`), `WEBHOOK_SECRET` |
-| Super admin seed | `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD`, `SUPER_ADMIN_NAME` |
-| Baserow | `BASEROW_MAIN_DATABASE_ID`, `BASEROW_DATABASE_TOKEN`, `BASEROW_EMAIL`, `BASEROW_PASSWORD`, `BASEROW_WORKSPACE_ID`, `BASEROW_USERS_TABLE_ID`, `BASEROW_TENANTS_TABLE_ID` (`BASEROW_API_URL` defaults to `https://api.baserow.io`) |
-| SharePoint OAuth | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_REDIRECT_URI` — see [docs/sharepoint-oauth-setup.md](docs/sharepoint-oauth-setup.md) |
-| Email OAuth (M365 / Gmail) | `EMAIL_REDIRECT_URI`; for Gmail also `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (M365 reuses `AZURE_*`) — see [docs/email-oauth-setup.md](docs/email-oauth-setup.md) |
-| Other secrets | `FCC_PREFILL_SECRET` (optional; falls back to JWT access secret) |
-| Make.com | `MAKE_WEBHOOK_DER`, `MAKE_WEBHOOK_DER_DOCUSIGN`, `MAKE_WEBHOOK_LDM`, `MAKE_WEBHOOK_PREVIEW`, `MAKE_WEBHOOK_FCC_SEND`, `MAKE_WEBHOOK_FCC_SUBMIT`, `MAKE_WEBHOOK_FCC_DOCUSIGN`, `MAKE_WEBHOOK_NOTE_UPLOAD`, `MAKE_WEBHOOK_PASSWORD_SET`, `MAKE_WEBHOOK_OTP` |
-| Google Docs templates | `GOOGLE_DOC_DER_ID`, `GOOGLE_DOC_LDM_PP_SANS`, `GOOGLE_DOC_LDM_PP_AVEC`, `GOOGLE_DOC_LDM_PM_SANS`, `GOOGLE_DOC_LDM_PM_AVEC` |
-
-**Frontend (Vercel):** `VITE_API_URL`, `VITE_WS_URL` (§2); optional `VITE_DER_TEMPLATE_URL`.
+- Push to the production branch → Vercel rebuilds the monorepo (SPA + API) and serves preview URLs per PR.
+- Add preview origins to `CORS_ORIGINS` if preview frontends must call the production API (or use preview API + matching env).
+- After new Baserow migration files land: redeploy, then run `npm run setup --workspace=backend` locally against the same Baserow.
 
 ---
 
-## 7. Continuous deployment
-
-Both platforms auto-deploy on push to `master` by default:
-- **Render** rebuilds the API when files change (whole repo triggers it; the build only
-  touches `backend/`).
-- **Vercel** rebuilds the frontend on every push and gives each PR a preview URL.
-
-If you add a Vercel **preview** deployment you want to hit the API, add its origin to the
-API's `CORS_ORIGINS` (comma-separated), or preview auth calls will be blocked.
-
-Schema changes ship as new migration files in `backend/baserow/migrations/`; after the
-API redeploys, run `npm run setup` again in the Render Shell to apply them.
-
----
-
-## 8. Troubleshooting
+## 7. Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Logged out after ~15 min / refresh fails | Third-party cookie blocked | Use custom domains under one parent (§5). |
-| `CORS` error in browser console | `CORS_ORIGINS` doesn't match the frontend origin exactly | Match scheme + host exactly, no trailing slash. Redeploy the API. |
-| Login works but every API call 401s | `VITE_API_URL` wrong or missing `/api` | Fix on Vercel, **redeploy** (build-time var). |
-| Realtime dashboard never updates | `VITE_WS_URL` missing/wrong, or API on Free plan (asleep) | Set `wss://…/api/ws`; move API off Free. |
-| OAuth callback → "invalid_state" or Azure error | `AZURE_REDIRECT_URI` mismatch | Make Render's value and the Azure-registered URI byte-identical (§3). |
-| API 503 on SharePoint routes | `TOKEN_ENCRYPTION_KEY` / `AZURE_*` unset | Set them on Render (§6). |
-| Deep link (e.g. `/dashboard/clients`) 404s on refresh | SPA rewrite missing | Ensure `frontend/vercel.json` is present and Root Directory is `frontend`. |
-| Build fails on Vercel: can't resolve workspace deps | Root Directory not set to `frontend` | Set it in Project → Settings → General. |
+| Logged out after ~15 min / refresh fails | Cookie treated as third-party | Same-origin `/api`, or both hosts under one parent domain (§5) |
+| `CORS` error | `CORS_ORIGINS` ≠ SPA origin | Match scheme + host exactly, no trailing slash; redeploy |
+| Login OK but every API call 401s | `VITE_API_URL` wrong / missing `/api` | Fix on Vercel, **redeploy** (build-time) |
+| Realtime dashboard never updates | `VITE_WS_URL` missing/wrong, or WS not supported on that runtime | Set `wss://…/api/ws`; confirm WebSocket support on the Vercel runtime you use for the API |
+| OAuth `invalid_state` / provider error | Redirect URI mismatch | Vercel `AZURE_REDIRECT_URI` / `EMAIL_REDIRECT_URI` byte-identical to IdP registration |
+| API 503 on SharePoint / email routes | `TOKEN_ENCRYPTION_KEY` / `AZURE_*` / `GOOGLE_*` unset | Set on Vercel (§3) |
+| Deep link 404 on refresh | SPA rewrite missing | Ensure all non-`/api` paths rewrite to `index.html` |
+| Build fails resolving workspace deps | Wrong Root Directory / install scope | Install from repo root so npm workspaces resolve |
+
+---
+
+## 8. Obsolete: Render
+
+Do **not** deploy the API to Render. [`render.yaml`](render.yaml) is kept only as historical reference and should not be applied for new environments. Hosting target is **Vercel only**.

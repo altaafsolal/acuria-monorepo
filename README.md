@@ -7,7 +7,8 @@ Ce document décrit l’**architecture actuelle** (React + Express + Baserow + M
 | Document | Contenu |
 |---|---|
 | **Ce README** | Architecture, dépendances, dev local, aperçu déploiement & OAuth |
-| [`DEPLOYMENT.md`](DEPLOYMENT.md) | Procédure détaillée Vercel + Render (env, domaines, troubleshooting) |
+| [`DEPLOYMENT.md`](DEPLOYMENT.md) | Procédure détaillée déploiement Vercel (monorepo, env, domaines) |
+| [`docs/Procedure_Gestion_Incident_Acuria.docx`](docs/Procedure_Gestion_Incident_Acuria.docx) | Procédure de gestion d’incident |
 | [`backend/baserow/README.md`](backend/baserow/README.md) | Schéma Baserow, migrations, provisioners |
 | [`docs/sharepoint-oauth-setup.md`](docs/sharepoint-oauth-setup.md) | App Azure / Entra ID pour SharePoint |
 | [`docs/email-oauth-setup.md`](docs/email-oauth-setup.md) | OAuth email Microsoft 365 ou Gmail |
@@ -19,36 +20,37 @@ Ce document décrit l’**architecture actuelle** (React + Express + Baserow + M
 ### Vue d’ensemble
 
 ```
-┌─────────────────────┐         HTTPS / WSS          ┌─────────────────────┐
-│  Frontend (SPA)     │ ───────────────────────────► │  Backend (API)      │
-│  React 19 + Vite 6  │                              │  Express 5          │
-│  Vercel             │ ◄── JWT access + refresh ─── │  Render (Frankfurt) │
-│  :4001 (dev)        │      cookie (HttpOnly)       │  :3001 (dev)        │
-└─────────────────────┘                              └──────────┬──────────┘
-                                                                │
-                     ┌──────────────────────────────────────────┼──────────────────────┐
-                     ▼                                          ▼                      ▼
-            ┌─────────────────┐                      ┌─────────────────┐     ┌─────────────────┐
-            │  Baserow        │                      │  Make.com       │     │  OAuth IdPs     │
-            │  Main DB        │                      │  Webhooks KYC / │     │  Entra ID       │
-            │  + 1 DB / tenant│                      │  email / upload │     │  Google Cloud   │
-            └─────────────────┘                      └────────┬────────┘     └─────────────────┘
-                                                              │
-                                                              ▼
-                                                     SharePoint / Gmail / DocuSign
-                                                     (via token brokers API)
+┌──────────────────────────────── Vercel (monorepo) ────────────────────────────────┐
+│  ┌─────────────────────┐         HTTPS / WSS          ┌─────────────────────┐   │
+│  │  Frontend (SPA)     │ ──── /api (same origin) ───► │  Backend (API)      │   │
+│  │  React 19 + Vite 6  │                              │  Express 5          │   │
+│  │  :4001 (dev)        │ ◄── JWT + refresh cookie ─── │  :3001 (dev)        │   │
+│  └─────────────────────┘                              └──────────┬──────────┘   │
+└──────────────────────────────────────────────────────────────────┼──────────────┘
+                                                                   │
+                     ┌─────────────────────────────────────────────┼──────────────────────┐
+                     ▼                                             ▼                      ▼
+            ┌─────────────────┐                         ┌─────────────────┐     ┌─────────────────┐
+            │  Baserow        │                         │  Make.com       │     │  OAuth IdPs     │
+            │  Main DB        │                         │  Webhooks KYC / │     │  Entra ID       │
+            │  + 1 DB / tenant│                         │  email / upload │     │  Google Cloud   │
+            └─────────────────┘                         └────────┬────────┘     └─────────────────┘
+                                                                 │
+                                                                 ▼
+                                                        SharePoint / Gmail / DocuSign
+                                                        (via token brokers API)
 ```
 
 | Composant | Techno | Hébergement | Rôle |
 |---|---|---|---|
 | **Frontend** | React 19, Vite 6, TanStack Query, Tailwind 4, React Router 7 | **Vercel** | SPA cabinets + super-admin |
-| **Backend** | Express 5, TypeScript, Zod, JWT, WebSocket (`ws`) | **Render** | API REST `/api`, brokers OAuth, realtime |
+| **Backend** | Express 5, TypeScript, Zod, JWT, WebSocket (`ws`) | **Vercel** (même monorepo) | API REST `/api`, brokers OAuth, realtime |
 | **Données** | Baserow (API REST, pas de SQL applicatif) | Baserow Cloud | DB plateforme + DB isolée par tenant |
 | **Automatisations** | Make.com | Make | DER/LdM/FCC, DocuSign, emails, upload SharePoint |
 | **Documents cabinet** | Microsoft Graph (SharePoint) | Org du client | Bibliothèque docs par tenant |
 | **Email transactionnel** | Graph `Mail.Send` **ou** Gmail `gmail.send` | Org du client | Expéditeur par tenant |
 
-Le backend reste sur Render (processus long-lived) : WebSockets super-admin, caches mémoire (JWT / contexte tenant / refresh OAuth), chargement des routes depuis le filesystem. Le modèle serverless de Vercel ne convient pas à l’API.
+Cible d’hébergement : **Vercel uniquement** pour le monorepo (SPA + API). En production, préférer la **même origine** (`https://app.acuria.com` + `/api`) pour que le cookie de refresh reste first-party.
 
 ### Monorepo (npm workspaces)
 
@@ -60,10 +62,10 @@ acuria-platform/
 │   ├── src/services/  # Baserow, Make, SharePoint, email OAuth
 │   ├── baserow/       # Migrations / seeds / provisioners
 │   └── cli/           # setup, migrate:airtable, provision
-├── render.yaml        # Blueprint API Render
-├── frontend/vercel.json
+├── frontend/vercel.json   # SPA (point de départ monorepo Vercel)
+├── render.yaml            # OBSOLÈTE — ne plus utiliser
 ├── DEPLOYMENT.md
-└── docs/              # Guides OAuth Azure / Google
+└── docs/                  # OAuth + procédure d’incident
 ```
 
 ### Multi-tenancy Baserow
@@ -146,8 +148,7 @@ Les scénarios qui écrivent dans SharePoint / envoient un email reçoivent un `
 |---|---|
 | **Node.js 22** (voir `.nvmrc`) | Runtime FE + BE |
 | **Baserow** (`api.baserow.io`) | Base de données |
-| **Vercel** | Hébergement frontend |
-| **Render** | Hébergement API |
+| **Vercel** | Hébergement monorepo (frontend + API) |
 | **Make.com** | Orchestration documents / emails / DocuSign |
 | **Microsoft Entra ID** | OAuth SharePoint + optionnellement email M365 |
 | **Google Cloud OAuth** | OAuth Gmail (optionnel selon cabinets) |
@@ -218,31 +219,29 @@ Variables : listes commentées dans [`backend/.env.example`](backend/.env.exampl
 
 ## 4. Procédures de déploiement
 
-Résumé ; le détail opérationnel (Blueprint, domaines, cookies, troubleshooting) est dans **[`DEPLOYMENT.md`](DEPLOYMENT.md)**.
+Résumé ; le détail est dans **[`DEPLOYMENT.md`](DEPLOYMENT.md)**.
 
-### Cibles
+### Cible
 
-| Partie | Host | Config |
+| Partie | Host | Notes |
 |---|---|---|
-| `frontend/` | **Vercel** | Root Directory = `frontend`, [`frontend/vercel.json`](frontend/vercel.json) |
-| `backend/` | **Render** | [`render.yaml`](render.yaml) → service `acuria-api`, plan **Starter** (pas Free) |
+| Monorepo `frontend/` + `backend/` | **Vercel** | Même projet (cible) ; SPA + `/api` en same-origin |
+| `render.yaml` | — | **Obsolète** — ne pas déployer sur Render |
 
 ### Ordre recommandé
 
-1. **Déployer l’API** sur Render (Blueprint ou Web Service, `rootDir: backend`).
-2. Vérifier `https://<api>/api/health`.
-3. **Déployer le frontend** sur Vercel avec :
-   - `VITE_API_URL=https://<api>/api`
-   - `VITE_WS_URL=wss://<api>/api/ws`
-4. **Recâbler** sur Render : `APP_URL`, `CORS_ORIGINS`, `API_BASE_URL`, `AZURE_REDIRECT_URI`, `EMAIL_REDIRECT_URI`.
+1. Créer le projet Vercel sur le repo (monorepo).
+2. Configurer les variables backend + `VITE_API_URL` / `VITE_WS_URL` (préférer `/api` en relative).
+3. Vérifier `https://<app>/api/health`.
+4. Recâbler `APP_URL`, `CORS_ORIGINS`, `API_BASE_URL`, `AZURE_REDIRECT_URI`, `EMAIL_REDIRECT_URI`.
 5. Enregistrer les redirect URIs sur Azure (et Google si Gmail).
-6. Shell Render : `npm run setup` (schéma + seed super-admin).
-7. **Domaines custom** sous un même parent (`app.acuria.com` / `api.acuria.com`) — requis en prod pour le refresh cookie.
+6. En local : `npm run setup --workspace=backend` (schéma Baserow + seed super-admin).
+7. Domaine custom (ex. `app.acuria.com`) — same-origin pour le cookie de refresh.
 
 ### Continuous deployment
 
-- Push sur `master` → rebuild Render (API) + Vercel (SPA + previews PR).
-- Après une nouvelle migration Baserow : redeploy API puis `npm run setup` dans le Shell Render.
+- Push sur la branche prod → rebuild Vercel (SPA + API, previews PR).
+- Après une nouvelle migration Baserow : redeploy puis `npm run setup` en local contre Baserow.
 
 ### Secrets critiques en prod
 
@@ -274,7 +273,8 @@ Voir [`backend/baserow/README.md`](backend/baserow/README.md).
 Ne plus documenter ni déployer :
 
 - Sites **Netlify** HTML / JS vanilla
+- Hébergement API sur **Render** (`render.yaml`)
 - Formulaires FCC hébergés hors SPA
 - Modèle mono-tenant / sans OAuth par cabinet
 
-La stack de référence est **Vercel + Render + Baserow + Make + OAuth SharePoint/email** telle que décrite ci-dessus.
+La stack de référence est **Vercel (monorepo) + Baserow + Make + OAuth SharePoint/email** telle que décrite ci-dessus.
