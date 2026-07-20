@@ -7,7 +7,7 @@ This folder holds everything that **sets up or populates** Baserow — separate 
 | Database | Tables |
 |----------|--------|
 | **Main** (`BASEROW_MAIN_DATABASE_ID`) | `tenants`, `users`, `audit_logs` |
-| **Per-tenant** (`tenants.database_id`) | `clients`, `gestionnaires`, `kyc_documents`, `notes`, `relations`, `tasks`, `audit_logs` |
+| **Per-tenant** (`tenants.database_id`) | `clients`, `gestionnaires`, `kyc_documents`, `notes`, `relations`, `tasks`, `fcc_clients`, `audit_logs` |
 
 ## Setup flow (`npm run setup`)
 
