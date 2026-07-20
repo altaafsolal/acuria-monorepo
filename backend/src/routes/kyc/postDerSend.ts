@@ -42,6 +42,7 @@ router.post(
         tenant_email: tenant?.email || "",
         tenant_name: tenant?.name,
         nm_name: body.signataireName,
+        nm_email: body.signataireName,
         nm_titre: nmTitre,
         ...sharepointBrokerFields(tenant),
       });
