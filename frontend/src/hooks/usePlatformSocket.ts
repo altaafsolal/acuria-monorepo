@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../api/queryKeys';
 import { useNotifications } from '../context/NotificationContext';
-import { getAccessToken } from '../lib/http';
+import { ensureFreshAccessToken, getAccessToken } from '../lib/http';
 import { showBrowserNotification } from '../lib/notifications';
 import { getPlatformWsUrl } from '../lib/ws';
 import type { Tenant } from '../types';
@@ -51,7 +51,7 @@ export function usePlatformSocket(enabled: boolean): void {
       clearReconnectTimer();
       reconnectTimerRef.current = window.setTimeout(() => {
         reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, MAX_RECONNECT_MS);
-        connect();
+        void connect();
       }, reconnectDelayRef.current);
     };
 
@@ -97,8 +97,9 @@ export function usePlatformSocket(enabled: boolean): void {
       }
     };
 
-    const connect = () => {
-      const token = getAccessToken();
+    const connect = async () => {
+      // Prefer a non-expired access token — WS auth is query-string JWT, no 401 retry.
+      const token = (await ensureFreshAccessToken()) ?? getAccessToken();
       if (!token) {
         scheduleReconnect();
         return;
@@ -116,13 +117,18 @@ export function usePlatformSocket(enabled: boolean): void {
       });
 
       socket.addEventListener('message', handleMessage);
-      socket.addEventListener('close', scheduleReconnect);
+      socket.addEventListener('close', (event) => {
+        if (import.meta.env.DEV) {
+          console.warn('[ws] closed', event.code, event.reason || '(no reason)');
+        }
+        scheduleReconnect();
+      });
       socket.addEventListener('error', () => {
         socket.close();
       });
     };
 
-    connect();
+    void connect();
 
     return () => {
       shouldReconnectRef.current = false;
