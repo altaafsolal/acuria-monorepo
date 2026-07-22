@@ -28,7 +28,8 @@ router.post(
       return typeof v === "number" ? v : null;
     };
 
-    const claims = verifyFccPrefillToken(str("prefill_token"));
+    const prefillToken = str("prefill_token");
+    const claims = verifyFccPrefillToken(prefillToken);
     if (!claims) {
       res.status(401).json({ error: "Invalid or missing prefill token" });
       return;
@@ -40,6 +41,14 @@ router.post(
     const formType =
       typeof payload.form_type === "string" ? payload.form_type : "PP";
 
+    // Single-use: reject before calling Make so a replay cannot re-upload docs.
+    if (prefillToken && (await fccClientsRepo.isPrefillTokenUsed(tenantId, prefillToken))) {
+      res.status(409).json({
+        error:
+          "Ce lien a déjà été utilisé. Demandez un nouveau lien à votre conseiller.",
+      });
+      return;
+    }
     // Lookup tenant for name and backoffice email
     const tenant = tenantId
       ? await tenantsRepo.findTenantById(tenantId).catch(() => null)
@@ -125,7 +134,7 @@ router.post(
         sharepointFileId: makeData.sharepoint_file_id || null,
         ipClient: str("user_agent"),
         pdfFilename: str("pdf_filename"),
-        prefillToken: str("prefill_token"),
+        prefillToken: prefillToken,
         boAgent: str("bo_agent"),
         be1Nom: str("be1_nom"),
         be1Ddn: str("be1_ddn"),

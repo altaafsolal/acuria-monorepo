@@ -218,25 +218,30 @@ describe('FCC Routes', () => {
 
     it('creates an FCC client when a valid prefill token is supplied', async () => {
       const fetchCalls = stubFetch();
+      const token = signFccPrefillToken({ tenant_id: TENANT_ID, record_id: null });
 
       const newSubRow = makeFccClientRow(
         makeDbFccClient({ id: '400', statut_dossier: 'En attente' }),
       );
 
-      // findTenantById for tenant lookup (route-level)
+      // isPrefillTokenUsed -> resolveTenantDbContext + list fcc_clients
+      nockTenantById(TENANT_ID, tenantRow);
+      nockListRows(TABLE_IDS.fccClients, []);
+      // findTenantById for tenant branding lookup
       nockTenantById(TENANT_ID, tenantRow);
       // resolveTenantDbContext -> findTenantById (for listClientsByTenantId)
       nockTenantById(TENANT_ID, tenantRow);
       // listClientsByTenantId to find client by email
       nockListRows(TABLE_IDS.clients, []);
       // createFccClient
+      nockTenantById(TENANT_ID, tenantRow);
       nockCreateRow(TABLE_IDS.fccClients, newSubRow);
 
       const res = await supertest(app)
         .post('/api/fcc/submit')
         .send({
           // tenant_id in the body is ignored — the token is the source of truth
-          prefill_token: signFccPrefillToken({ tenant_id: TENANT_ID, record_id: null }),
+          prefill_token: token,
           form_type: 'PP',
           client_nom_complet: 'Jean Dupont',
           client_email: 'jean@example.com',
@@ -250,8 +255,6 @@ describe('FCC Routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
-      // Verify Make webhook was called (even if url is empty, stubFetch captures it)
-      // The webhook call is via postWebhook which uses fetch
       expect(fetchCalls.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -261,6 +264,28 @@ describe('FCC Routes', () => {
         .send({ tenant_id: TENANT_ID, form_type: 'PP', client_email: 'jean@example.com' });
 
       expect(res.status).toBe(401);
+    });
+
+    it('rejects a prefill token that was already used', async () => {
+      stubFetch();
+      const token = signFccPrefillToken({ tenant_id: TENANT_ID, record_id: null });
+      const usedRow = makeFccClientRow(
+        makeDbFccClient({ id: '401', prefill_token: token }),
+      );
+
+      nockTenantById(TENANT_ID, tenantRow);
+      nockListRows(TABLE_IDS.fccClients, [usedRow]);
+
+      const res = await supertest(app)
+        .post('/api/fcc/submit')
+        .send({
+          prefill_token: token,
+          form_type: 'PP',
+          client_email: 'jean@example.com',
+        });
+
+      expect(res.status).toBe(409);
+      expect(res.body.error).toMatch(/déjà été utilisé/i);
     });
   });
 });

@@ -8,9 +8,12 @@ import { env } from '../config/env.js';
  * with the submission, and is the ONLY source of truth for tenant_id/record_id —
  * the request body's own tenant_id/record_id are never trusted, otherwise anyone
  * could inject FCC dossiers into arbitrary tenants.
+ *
+ * Lifetime: 15 days from issue. Single-use: after a successful submit the token
+ * is stored on the fcc_clients row and rejected on reuse (advisor must re-send).
  */
 const ALGORITHM = 'HS256' as const;
-const TTL = '30d';
+export const FCC_PREFILL_TTL = '15d';
 
 export interface FccPrefillClaims {
   tenant_id: string;
@@ -21,7 +24,7 @@ export function signFccPrefillToken(claims: FccPrefillClaims): string {
   return jwt.sign(
     { tid: claims.tenant_id, rid: claims.record_id ?? '' },
     env.fccPrefillSecret,
-    { algorithm: ALGORITHM, expiresIn: TTL },
+    { algorithm: ALGORITHM, expiresIn: FCC_PREFILL_TTL },
   );
 }
 

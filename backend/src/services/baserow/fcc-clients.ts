@@ -121,6 +121,20 @@ export async function listAllFccClients(tenantId: string): Promise<PublicFccClie
   return rows.map(mapRow).map(toPublicFccClient);
 }
 
+/** True when this exact prefill JWT was already consumed by a prior /fcc/submit. */
+export async function isPrefillTokenUsed(tenantId: string, prefillToken: string): Promise<boolean> {
+  if (!prefillToken) return false;
+  const ctx = await resolveTenantDbContext(tenantId);
+  const tableId = await resolveTenantTableId(tenantId, 'fcc_clients');
+  const rows = await listAllRows(tableId, {
+    filters: {
+      filter_type: 'AND',
+      filters: [{ type: 'equal', field: F.prefillToken, value: prefillToken }],
+    },
+  }, ctx);
+  return rows.length > 0;
+}
+
 export async function createFccClient(
   tenantId: string,
   input: {
