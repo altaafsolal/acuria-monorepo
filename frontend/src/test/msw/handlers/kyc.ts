@@ -32,7 +32,7 @@ export const sampleSignataires: Gestionnaire[] = [
   {
     id: '1', name: 'Jean Dupont', firstName: 'Jean', lastName: 'Dupont',
     email: 'jean@cabinet.com', phone: null, role: 'Gestionnaire',
-    peutSignerDocusign: true, status: 'Actif', initiales: 'JD', couleur: '#3B82F6', userId: null,
+    peutSignerDocusign: true, status: 'Actif', initiales: 'JD', userId: null,
   },
 ];
 

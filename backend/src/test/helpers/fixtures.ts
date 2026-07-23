@@ -212,7 +212,6 @@ export function makeDbGestionnaire(overrides: Partial<DbGestionnaire> = {}): DbG
     peut_signer_docusign: true,
     status: 'Actif',
     initiales: 'JD',
-    couleur: '#3B82F6',
     user_id: null,
     airtable_record_id: null,
     ...overrides,

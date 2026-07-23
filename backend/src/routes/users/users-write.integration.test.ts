@@ -39,7 +39,6 @@ function makeGestionnaireRow(g: ReturnType<typeof makeDbGestionnaire>): Record<s
     [F.gestionnaires.peutSignerDocusign]: g.peut_signer_docusign,
     [F.gestionnaires.status]: { id: 1, value: g.status, color: 'green' },
     [F.gestionnaires.initiales]: g.initiales ?? '',
-    [F.gestionnaires.couleur]: g.couleur ?? '',
     [F.gestionnaires.userId]: g.user_id ?? '',
     [F.gestionnaires.airtableRecordId]: g.airtable_record_id ?? '',
   };

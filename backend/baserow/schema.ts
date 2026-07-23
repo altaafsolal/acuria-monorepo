@@ -11,7 +11,6 @@ export const TENANT_TABLE_BASES = [
   'notes',
   'relations',
   'tasks',
-  'audit_logs',
   'fcc_clients',
 ] as const;
 
@@ -172,7 +171,6 @@ export const BASEROW_FIELDS = {
     peutSignerDocusign: 'peut_signer_docusign',
     status: 'status',
     initiales: 'initiales',
-    couleur: 'couleur',
     userId: 'user_id',
     airtableRecordId: 'airtable_record_id',
   },

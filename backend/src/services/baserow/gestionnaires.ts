@@ -17,7 +17,6 @@ export interface UpsertGestionnaireInput {
   peutSignerDocusign?: boolean;
   status?: string;
   initiales?: string | null;
-  couleur?: string | null;
   userId?: string | null;
   airtableRecordId?: string;
 }
@@ -34,7 +33,6 @@ function mapRow(row: BaserowRow): DbGestionnaire {
     peut_signer_docusign: Boolean(row[F.peutSignerDocusign]),
     status: pickFieldValue(row[F.status]) || 'Actif',
     initiales: pickTextValue(row[F.initiales]),
-    couleur: pickTextValue(row[F.couleur]),
     user_id: pickTextValue(row[F.userId]),
     airtable_record_id: pickTextValue(row[F.airtableRecordId]),
   };
@@ -53,11 +51,6 @@ function buildPayload(data: UpsertGestionnaireInput): Record<string, unknown> {
     [F.userId]: data.userId || '',
     [F.airtableRecordId]: data.airtableRecordId || '',
   };
-  // `couleur` is no longer collected in the user form; only write it when a caller
-  // (e.g. the Airtable migration) provides it, so user edits don't wipe existing values.
-  if (data.couleur !== undefined) {
-    payload[F.couleur] = data.couleur || '';
-  }
   if (data.email) {
     payload[F.email] = data.email;
   } else {
@@ -78,7 +71,6 @@ export function toPublicGestionnaire(g: DbGestionnaire): PublicGestionnaire {
     peutSignerDocusign: g.peut_signer_docusign,
     status: g.status,
     initiales: g.initiales,
-    couleur: g.couleur,
     userId: g.user_id,
   };
 }

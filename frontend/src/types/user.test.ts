@@ -32,7 +32,6 @@ describe('gestionnaireFromResponse', () => {
       status: 'Actif' as const,
       peutSignerDocusign: true,
       initiales: 'MM',
-      couleur: '#FF0000',
       userId: null,
     };
     const result = gestionnaireFromResponse(gestionnaire);
@@ -46,7 +45,7 @@ describe('gestionnaireFromResponse', () => {
     const gestionnaire = {
       id: 'g1', name: 'Test', firstName: 'A', lastName: 'B',
       email: '', phone: '', role: '', status: 'Actif' as const,
-      peutSignerDocusign: false, initiales: '', couleur: '', userId: null,
+      peutSignerDocusign: false, initiales: '', userId: null,
     };
     const result = gestionnaireFromResponse(gestionnaire, { name: 'X', email: 'fallback@test.com' });
     expect(result.email).toBe('fallback@test.com');

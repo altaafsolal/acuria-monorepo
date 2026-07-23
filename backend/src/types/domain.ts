@@ -471,7 +471,6 @@ export interface DbGestionnaire {
   peut_signer_docusign: boolean;
   status: string;
   initiales: string | null;
-  couleur: string | null;
   user_id: string | null;
   airtable_record_id: string | null;
 }
@@ -487,7 +486,6 @@ export interface PublicGestionnaire {
   peutSignerDocusign: boolean;
   status: string;
   initiales: string | null;
-  couleur: string | null;
   userId: string | null;
 }
 

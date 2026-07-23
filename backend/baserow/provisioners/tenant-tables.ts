@@ -90,7 +90,6 @@ async function ensureGestionnairesFields(tableId: string | number): Promise<void
     F.lastName,
     F.role,
     F.initiales,
-    F.couleur,
     F.userId,
     F.airtableRecordId,
   ], existing);
@@ -186,13 +185,6 @@ async function ensureTasksFields(tableId: string | number, clientsTableId: strin
   );
 }
 
-async function ensureAuditLogsFields(tableId: string | number): Promise<void> {
-  const F = BASEROW_FIELDS.auditLogs;
-  const existing = new Set((await listTableFieldsWithJwt(tableId)).map((f) => f.name));
-  await ensureTextFields(tableId, [F.action, F.entityType, F.entityId, F.details], existing);
-  await ensureField(tableId, { name: F.userEmail, type: 'email' }, existing);
-}
-
 async function ensureFccClientsFields(tableId: string | number, clientsTableId: string): Promise<void> {
   const F = BASEROW_FIELDS.fccClients;
   const existing = new Set((await listTableFieldsWithJwt(tableId)).map((f) => f.name));
@@ -283,9 +275,9 @@ export async function provisionTenantTables(
     tableIdCache.set(`${tenantKey}:${base}`, String(table.id));
   }
 
-  const auditTable = await ensureTable(databaseId, 'audit_logs', existingTables);
-  await ensureAuditLogsFields(auditTable.id);
-  tableIdCache.set(`${tenantKey}:audit_logs`, String(auditTable.id));
+  // NOTE: audit logs are NOT stored per tenant. All audit entries live in the single
+  // `audit_logs` table in the MAIN workspace (filtered by tenant_id), so no audit_logs
+  // table is provisioned here.
 
   const tableIds = Object.fromEntries(
     TENANT_TABLE_BASES.map((base) => [base, tableIdCache.get(`${tenantKey}:${base}`)]),

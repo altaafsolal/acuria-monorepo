@@ -27,7 +27,6 @@ export interface Gestionnaire {
   peutSignerDocusign: boolean;
   status: string;
   initiales?: string | null;
-  couleur?: string | null;
   userId?: string | null;
 }
 

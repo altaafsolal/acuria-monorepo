@@ -331,7 +331,6 @@ function mapAirtableGestionnaire(rec: AirtableRecord) {
     peutSignerDocusign: Boolean(f['Peut signer Docusign']),
     status: str(f.Statut) || 'Actif',
     initiales: str(f.Initiales) || null,
-    couleur: str(f.Couleur) || null,
     airtableRecordId: rec.id,
   };
 }
