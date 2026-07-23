@@ -1,9 +1,17 @@
 import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
+
+// helmet's package exports the middleware factory as its CommonJS `module.exports`
+// with no `__esModule` marker. Under NodeNext some toolchains (e.g. Vercel's build)
+// resolve the default import to the module namespace instead of the callable,
+// producing "This expression is not callable". Loading it via createRequire yields
+// the real callable factory deterministically.
+const require = createRequire(import.meta.url);
+const helmet = require('helmet') as (options?: Record<string, unknown>) => express.RequestHandler;
 import { env } from './config/env.js';
 import { errorHandler, loadRoutes } from './utils/index.js';
 import {
