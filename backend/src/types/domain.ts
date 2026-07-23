@@ -103,7 +103,7 @@ export interface SharepointStatus {
   connectedBy: string | null;
 }
 
-export type EmailProvider = 'microsoft' | 'google';
+export type EmailProvider = "microsoft" | "google" | "Super-Admin";
 
 /** Client-safe view of a tenant's email connection. Never includes tokens or the
  *  Microsoft tenant id. */

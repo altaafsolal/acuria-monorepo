@@ -8,6 +8,7 @@ import {
   verifyState,
 } from '../../../services/email/oauth.js';
 import { asyncHandler } from '../../../utils/index.js';
+import type { EmailProvider } from '../../../types/domain.js';
 
 const router = Router({ mergeParams: true });
 
@@ -57,7 +58,7 @@ router.get('/callback', asyncHandler(async (req, res) => {
 
   let tenantId: string;
   let userId: string;
-  let provider: 'microsoft' | 'google';
+  let provider: EmailProvider;
   try {
     const parsed = verifyState(state);
     if (!nonceCookie || parsed.nonce !== nonceCookie) {

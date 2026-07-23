@@ -21,8 +21,10 @@ const SUPER_ADMIN_TENANT = 'SUPER_ADMIN';
  * `provider` in the response lets Make's Router branch to the correct send module
  * without a second lookup.
  *
+ * A tenant with no provider connected falls back to the platform (Super-Admin)
+ * account, so there is no "not connected" error path here.
+ *
  * 409 codes let a scenario branch to an error path instead of failing silently:
- *   EMAIL_NOT_CONNECTED    — no provider connected
  *   EMAIL_SCOPE_MISSING    — Microsoft grant lacks Mail.Send (reconnect needed)
  *   EMAIL_REAUTH_REQUIRED  — refresh token dead; a tenant admin must reconnect
  *

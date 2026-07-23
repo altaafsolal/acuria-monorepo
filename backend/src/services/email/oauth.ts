@@ -32,6 +32,16 @@ import {
   isGoogleEmailConfigured,
   isMicrosoftEmailConfigured,
 } from '../../config/env.js';
+
+/** Fallback for tenants that have not connected their own mailbox yet: send from the
+ *  platform (super-admin) account. Make routes on the 'Super-Admin' provider to its
+ *  own platform email, so no brokered access token is needed here. */
+const SUPER_ADMIN_EMAIL_TOKEN: BrokeredEmailToken = {
+  provider: 'Super-Admin',
+  accessToken: '',
+  senderAddress: env.superAdmin.email,
+  expiresAt: '',
+};
 import * as tenantsRepo from '../baserow/tenants.js';
 import { decryptSecret, encryptSecret, isEncryptionConfigured } from '../../utils/crypto.js';
 import { HttpError } from '../../utils/http.js';
@@ -53,7 +63,6 @@ export const NONCE_COOKIE_NAME = 'acuria_email_oauth_nonce';
 
 const EXPIRY_BUFFER_MS = 120_000;
 
-export const ERR_NOT_CONNECTED = 'EMAIL_NOT_CONNECTED';
 export const ERR_REAUTH_REQUIRED = 'EMAIL_REAUTH_REQUIRED';
 export const ERR_SCOPE_MISSING = 'EMAIL_SCOPE_MISSING';
 
@@ -320,12 +329,10 @@ export async function getValidEmailToken(tenantId: string): Promise<BrokeredEmai
   if (!tenant) throw new HttpError(404, 'Tenant not found');
 
   const provider = tenant.email_provider;
-  if (!provider || !tenant.email_refresh_token) {
-    throw new HttpError(
-      200,
-      "This tenant has not connected an email provider yet.",
-      ERR_NOT_CONNECTED,
-    );
+  if (!provider || provider === 'Super-Admin' || !tenant.email_refresh_token) {
+    // No mailbox connected for this tenant yet — fall back to the platform
+    // (super-admin) account instead of failing the send.
+    return SUPER_ADMIN_EMAIL_TOKEN;
   }
 
   // A Microsoft grant that predates the email feature (SharePoint-only) lacks
