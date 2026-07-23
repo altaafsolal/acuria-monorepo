@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { auditLogsRepo } from '../../services/baserow/index.js';
 import { validatePasswordPair, verifySetPasswordToken, finalizeNewPassword } from '../../services/password-reset.js';
 import { asyncHandler } from '../../utils/index.js';
 
@@ -21,25 +20,9 @@ router.post('/set-password', asyncHandler(async (req, res) => {
   try {
     validatePasswordPair(password, passwordConfirm);
     await verifySetPasswordToken(uid, token);
-    const user = await finalizeNewPassword(uid, password);
+    await finalizeNewPassword(uid, password);
 
     res.json({ message: 'Password set successfully' });
-    void auditLogsRepo.createAuditLog({
-      user_id: user.id,
-      user_email: user.email,
-      user_name: user.name,
-      user_role: user.role,
-      tenant_id: user.tenant_id,
-      action: 'auth.password_set',
-      method: req.method,
-      path: req.originalUrl.split('?')[0] ?? req.originalUrl,
-      status_code: res.statusCode,
-      entity_type: 'auth',
-      entity_id: user.id,
-      details: null,
-    }).catch((error) => {
-      console.error('Audit log write failed:', error);
-    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to set password';
     if (message === 'Invalid or expired token') {

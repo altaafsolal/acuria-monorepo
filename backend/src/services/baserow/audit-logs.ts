@@ -1,6 +1,6 @@
 import { BASEROW_FIELDS } from '../../../baserow/schema.js';
 import { pickNumberValue, pickTextValue } from '../../utils/baserow.js';
-import { createRow, listRowsPage } from './api.js';
+import { createRow, listRowsPage, listAllRows, batchDeleteRows } from './api.js';
 import { getAuditLogsTableId } from './registry.js';
 import type {
   AuditListParams,
@@ -85,6 +85,30 @@ export async function createAuditLog(input: CreateAuditLogInput): Promise<DbAudi
     [F.details]: input.details || '',
   });
   return mapAuditRow(row);
+}
+
+const BATCH_SIZE = 200;
+
+/** Delete a specific set of audit log rows by id. Returns the number deleted. */
+export async function deleteAuditLogs(ids: (string | number)[]): Promise<number> {
+  const rowIds = ids.map(Number).filter((id) => Number.isFinite(id));
+  if (rowIds.length === 0) return 0;
+  const tableId = await getAuditLogsTableId();
+  for (let i = 0; i < rowIds.length; i += BATCH_SIZE) {
+    await batchDeleteRows(tableId, rowIds.slice(i, i + BATCH_SIZE));
+  }
+  return rowIds.length;
+}
+
+/** Delete every audit log row. Returns the number deleted. */
+export async function purgeAuditLogs(): Promise<number> {
+  const tableId = await getAuditLogsTableId();
+  const rows = await listAllRows(tableId, { size: BATCH_SIZE });
+  const rowIds = rows.map((row) => Number(row.id));
+  for (let i = 0; i < rowIds.length; i += BATCH_SIZE) {
+    await batchDeleteRows(tableId, rowIds.slice(i, i + BATCH_SIZE));
+  }
+  return rowIds.length;
 }
 
 export async function listAuditLogs(params: AuditListParams = {}): Promise<AuditListResult> {

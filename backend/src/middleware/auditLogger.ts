@@ -30,7 +30,7 @@ export function deriveAuditMeta(method: string, path: string): {
     'archive', 'der', 'ldm', 'fcc', 'send', 'preview', 'tenants',
   ]);
   const entityId = parts.find((part, index) => index > 0 && !reserved.has(part)) ?? null;
-  const verbMap: Record<string, string> = { POST: 'create', PUT: 'update', PATCH: 'update', DELETE: 'delete' };
+  const verbMap: Record<string, string> = { POST: 'add', PUT: 'edit', PATCH: 'edit', DELETE: 'delete' };
   const verb = verbMap[method] || method.toLowerCase();
   return { entityType, entityId, action: `${verb}.${entityType}` };
 }

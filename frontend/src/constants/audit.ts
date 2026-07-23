@@ -1,7 +1,6 @@
 const ACTION_LABELS: Record<string, string> = {
   'auth.login': 'Connexion',
   'auth.logout': 'Déconnexion',
-  'auth.refresh': 'Rafraîchissement session',
 };
 
 const METHOD_LABELS: Record<string, string> = {
@@ -22,9 +21,12 @@ export function formatAuditAction(action: string): string {
   if (parts.length === 2) {
     const [verb, entity] = parts;
     const verbFr: Record<string, string> = {
-      create: 'Création',
-      update: 'Modification',
+      add: 'Ajout',
+      edit: 'Modification',
       delete: 'Suppression',
+      // legacy actions logged before ADD/EDIT/DELETE rename
+      create: 'Ajout',
+      update: 'Modification',
     };
     return `${verbFr[verb] || verb} ${entity}`;
   }

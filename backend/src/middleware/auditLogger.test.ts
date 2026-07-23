@@ -68,7 +68,7 @@ describe('deriveAuditMeta', () => {
 
     expect(result.entityType).toBe('clients');
     expect(result.entityId).toBeNull();
-    expect(result.action).toBe('create.clients');
+    expect(result.action).toBe('add.clients');
   });
 
   it('extracts entityId for PUT /api/clients/123', () => {
@@ -76,7 +76,7 @@ describe('deriveAuditMeta', () => {
 
     expect(result.entityType).toBe('clients');
     expect(result.entityId).toBe('123');
-    expect(result.action).toBe('update.clients');
+    expect(result.action).toBe('edit.clients');
   });
 
   it('handles DELETE with nested path', () => {
@@ -92,7 +92,7 @@ describe('deriveAuditMeta', () => {
 
     expect(result.entityType).toBe('clients');
     expect(result.entityId).toBeNull();
-    expect(result.action).toBe('create.clients');
+    expect(result.action).toBe('add.clients');
   });
 
   it('returns "unknown" entityType for empty path', () => {
@@ -107,10 +107,10 @@ describe('deriveAuditMeta', () => {
     expect(result.action).toBe('get.clients');
   });
 
-  it('maps PATCH to update', () => {
+  it('maps PATCH to edit', () => {
     const result = deriveAuditMeta('PATCH', '/api/clients/789');
 
-    expect(result.action).toBe('update.clients');
+    expect(result.action).toBe('edit.clients');
     expect(result.entityId).toBe('789');
   });
 });
@@ -159,7 +159,7 @@ describe('auditLogger middleware', () => {
       expect.objectContaining({
         user_id: 'u1',
         user_email: 'a@b.com',
-        action: 'create.clients',
+        action: 'add.clients',
         method: 'POST',
         path: '/api/clients',
         status_code: 201,
