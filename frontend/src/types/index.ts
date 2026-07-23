@@ -20,6 +20,8 @@ export type {
   TenantResponse,
   CreateTenantInput,
   UpdateTenantBrandingInput,
+  PublicTenantBranding,
+  PublicBrandingResponse,
   SharepointStatus,
   SharepointStatusResponse,
   SharepointConnectResponse,

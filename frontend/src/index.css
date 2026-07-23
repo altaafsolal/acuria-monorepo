@@ -842,6 +842,12 @@
     font-size: 2.25rem;
     color: var(--color-bronze);
   }
+  .login-logo--img {
+    height: 3rem;
+    width: auto;
+    max-width: 220px;
+    object-fit: contain;
+  }
   .login-panel-footer {
     margin-top: auto;
     padding-top: 3rem;

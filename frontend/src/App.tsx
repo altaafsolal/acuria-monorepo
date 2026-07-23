@@ -11,6 +11,7 @@ import PageLoading from "./components/ui/PageLoading";
 import Layout from "./components/layout/Layout";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProtectedRoute from "./components/routing/ProtectedRoute";
+import SingleTenantGuard from "./components/routing/SingleTenantGuard";
 import SuperAdminRoute from "./components/routing/SuperAdminRoute";
 import TenantUserRoute from "./components/routing/TenantUserRoute";
 import OnboardingGate from "./components/routing/OnboardingGate";
@@ -77,9 +78,11 @@ export default function App() {
         <Route
           element={
             <ProtectedRoute>
-              <OnboardingGate>
-                <DashboardLayout />
-              </OnboardingGate>
+              <SingleTenantGuard>
+                <OnboardingGate>
+                  <DashboardLayout />
+                </OnboardingGate>
+              </SingleTenantGuard>
             </ProtectedRoute>
           }
         >

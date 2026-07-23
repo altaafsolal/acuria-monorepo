@@ -1,18 +1,38 @@
-import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useState, type CSSProperties, type FormEvent } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { FiArrowRight, FiLayout, FiLock, FiMail } from 'react-icons/fi';
 import { useApp } from '../../context/AppContext';
-import { useLogin } from '../../hooks';
+import { useLogin, usePublicBranding } from '../../hooks';
+import { clearSession } from '../../api/auth';
+import { queryKeys } from '../../api/queryKeys';
 import PageLoading from '../../components/ui/PageLoading';
 import { DEV_SUPER_ADMIN } from '../../config/auth';
+import { IS_SINGLE_TENANT } from '../../config/tenant';
+import type { PublicTenantBranding, User } from '../../types';
 
+/** Super admins have no tenant, so they may always sign in. Everyone else must belong
+ *  to the tenant this deployment is pinned to. */
+function isUserAllowed(user: User, brand: PublicTenantBranding | null): boolean {
+  if (!IS_SINGLE_TENANT) return true;
+  if (user.role === 'super_admin') return true;
+  return Boolean(brand) && user.tenantId === brand!.id;
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
   const { isAuthenticated, isLoading } = useApp();
   const loginMutation = useLogin();
+  const branding = usePublicBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [accessDenied, setAccessDenied] = useState(
+    new URLSearchParams(location.search).has('denied'),
+  );
+
+  const brand = (IS_SINGLE_TENANT && branding.data?.tenant) || null;
 
   if (isLoading) {
     return <PageLoading fullScreen />;
@@ -24,19 +44,48 @@ export default function LoginPage() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setAccessDenied(false);
     loginMutation.mutate(
       { email, password },
-      { onSuccess: () => navigate('/dashboard') },
+      {
+        onSuccess: (data) => {
+          if (!isUserAllowed(data.user, brand)) {
+            // Undo the session the login hook just persisted — this account may not
+            // sign in on this deployment.
+            clearSession();
+            queryClient.setQueryData(queryKeys.auth.session, null);
+            setAccessDenied(true);
+            return;
+          }
+          navigate('/dashboard');
+        },
+      },
     );
   };
 
+  const brandName = brand ? brand.name : 'Acuria Partners';
+  const brandTagline = brand
+    ? (brand.orias ? `ORIAS n° ${brand.orias}` : 'Espace client sécurisé')
+    : 'Plateforme multi-tenants de gestion de patrimoine pour CGP et MFO.';
+  const formSubtitle = brand
+    ? `Accédez à votre espace ${brand.name}`
+    : "Accédez à l'espace de votre tenant";
+
+  const pageStyle = brand
+    ? ({ '--color-bronze': brand.accent } as CSSProperties)
+    : undefined;
+
   return (
-    <div className="login-page">
+    <div className="login-page" style={pageStyle}>
       <div className="login-panel login-panel--brand">
         <div className="login-brand-content">
-          <FiLayout className="login-logo" />
-          <h1>Acuria Partners</h1>
-          <p>Plateforme multi-tenants de gestion de patrimoine pour CGP et MFO.</p>
+          {brand?.hasLogo && brand.logoDataUrl ? (
+            <img src={brand.logoDataUrl} alt={brandName} className="login-logo login-logo--img" />
+          ) : (
+            <FiLayout className="login-logo" />
+          )}
+          <h1>{brandName}</h1>
+          <p>{brandTagline}</p>
         </div>
         <p className="login-panel-footer">Hébergé en UE · Conforme RGPD</p>
       </div>
@@ -45,7 +94,7 @@ export default function LoginPage() {
         <div className="login-form-wrap">
           <header className="login-form-header">
             <h2>Connexion</h2>
-            <p>Accédez à l&apos;espace de votre tenant</p>
+            <p>{formSubtitle}</p>
           </header>
 
           <form className="login-form" onSubmit={handleSubmit}>
@@ -83,14 +132,20 @@ export default function LoginPage() {
               <Link to="/forgot-password">Mot de passe oublié ?</Link>
             </p>
 
-            {loginMutation.isError && (
+            {accessDenied && (
+              <p className="form-error">
+                {`Cet espace est réservé aux utilisateurs de ${brandName}.`}
+              </p>
+            )}
+
+            {loginMutation.isError && !accessDenied && (
               <p className="form-error">{loginMutation.error.message}</p>
             )}
 
             <button
               type="submit"
               className="btn-primary"
-              disabled={loginMutation.isPending}
+              disabled={loginMutation.isPending || (IS_SINGLE_TENANT && branding.isLoading)}
             >
               {loginMutation.isPending ? 'Connexion…' : 'Se connecter'}
               {!loginMutation.isPending && <FiArrowRight />}

@@ -1,4 +1,5 @@
 export { useAuthSession, useLogin, useLogout } from './useAuth';
+export { usePublicBranding } from './usePublicBranding';
 export { useClients, useClient, useCreateClient, useUpdateClient } from './useClients';
 export { useUsers, useUser, useCreateUser, useUpdateUser, useDeleteUser, useResetUserPassword } from './useUsers';
 export {

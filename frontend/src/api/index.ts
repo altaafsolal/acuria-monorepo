@@ -76,6 +76,7 @@ const api = {
   tenantStats: `${baseUrl}/tenant/stats`,
   tenantBranding: `${baseUrl}/tenant/branding`,
   tenantBrandingLogo: `${baseUrl}/tenant/branding/logo`,
+  publicBranding: (slug: string) => `${baseUrl}/public/branding?slug=${encodeURIComponent(slug)}`,
   tenants: `${baseUrl}/platform/tenants`,
   tenantById: (id: string) => `${baseUrl}/platform/tenants/${id}`,
   platformTenantLogo: (id: string) => `${baseUrl}/platform/tenants/${id}/logo`,

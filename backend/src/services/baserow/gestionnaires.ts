@@ -50,10 +50,14 @@ function buildPayload(data: UpsertGestionnaireInput): Record<string, unknown> {
     [F.peutSignerDocusign]: data.peutSignerDocusign ?? false,
     [F.status]: data.status || 'Actif',
     [F.initiales]: data.initiales || '',
-    [F.couleur]: data.couleur || '',
     [F.userId]: data.userId || '',
     [F.airtableRecordId]: data.airtableRecordId || '',
   };
+  // `couleur` is no longer collected in the user form; only write it when a caller
+  // (e.g. the Airtable migration) provides it, so user edits don't wipe existing values.
+  if (data.couleur !== undefined) {
+    payload[F.couleur] = data.couleur || '';
+  }
   if (data.email) {
     payload[F.email] = data.email;
   } else {

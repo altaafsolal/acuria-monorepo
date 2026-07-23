@@ -82,6 +82,21 @@ export interface CreateTenantInput {
   slug: string;
 }
 
+/** Public branding for the login page of a single-tenant deployment. */
+export interface PublicTenantBranding {
+  id: string;
+  slug: string;
+  name: string;
+  orias: string | null;
+  accent: string;
+  hasLogo: boolean;
+  logoDataUrl: string | null;
+}
+
+export interface PublicBrandingResponse {
+  tenant: PublicTenantBranding;
+}
+
 export interface UpdateTenantBrandingInput {
   brandingName?: string;
   brandingOrias?: string;

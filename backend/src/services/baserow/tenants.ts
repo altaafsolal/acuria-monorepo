@@ -167,6 +167,16 @@ export async function findTenantBySlug(slug: string): Promise<TenantRecord | nul
   return row ? mapTenantRow(row) : null;
 }
 
+/** Case-insensitive slug lookup — used by the public login-branding endpoint, where
+ *  the slug comes from a build-time env value that may not match Baserow's casing. */
+export async function findTenantBySlugInsensitive(slug: string): Promise<TenantRecord | null> {
+  const target = slug.trim().toLowerCase();
+  if (!target) return null;
+  const rows = await listAllRows(await getTenantsTableId());
+  const row = rows.find((item) => String(item[F.slug] ?? '').trim().toLowerCase() === target);
+  return row ? mapTenantRow(row) : null;
+}
+
 export async function listTenants(): Promise<TenantRecord[]> {
   return (await listAllRows(await getTenantsTableId())).map(mapTenantRow);
 }

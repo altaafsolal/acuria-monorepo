@@ -45,7 +45,6 @@ export async function syncGestionnaireFromStandardUser(
     peutSignerDocusign: input?.peutSignerDocusign ?? false,
     status: input?.status === 'Inactif' ? 'Inactif' : 'Actif',
     initiales: input?.initiales?.trim() || null,
-    couleur: input?.couleur?.trim() || null,
     userId: user.id,
   });
 

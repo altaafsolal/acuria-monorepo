@@ -114,18 +114,6 @@ export default function StandardUserGestionnaireFields({
           />
         </div>
       </label>
-
-      <label className="field">
-        <span>Couleur</span>
-        <div className="field-input">
-          <input
-            type="text"
-            value={value.couleur}
-            onChange={(e) => update('couleur', e.target.value)}
-            placeholder="#BE845C"
-          />
-        </div>
-      </label>
     </div>
   );
 }

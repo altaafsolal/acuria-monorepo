@@ -15,5 +15,8 @@ export default defineConfig({
   },
   define: {
     'import.meta.env.VITE_API_URL': JSON.stringify('/api'),
+    // Pin to the default (multi-tenant) build so tests don't inherit a developer's
+    // local VITE_TENANT_SLUG from .env. Single-tenant behaviour is tested explicitly.
+    'import.meta.env.VITE_TENANT_SLUG': JSON.stringify('ACURIA'),
   },
 });

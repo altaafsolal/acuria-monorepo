@@ -429,7 +429,6 @@ export interface GestionnaireUserInput {
   status?: string;
   peutSignerDocusign?: boolean;
   initiales?: string;
-  couleur?: string;
 }
 
 export interface CreateUserWithGestionnaireInput {

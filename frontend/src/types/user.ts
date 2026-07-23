@@ -10,7 +10,6 @@ export interface GestionnaireUserInput {
   status?: string;
   peutSignerDocusign?: boolean;
   initiales?: string;
-  couleur?: string;
 }
 
 export interface User {
@@ -57,7 +56,6 @@ export const EMPTY_GESTIONNAIRE_FORM: Required<GestionnaireUserInput> = {
   status: 'Actif',
   peutSignerDocusign: false,
   initiales: '',
-  couleur: '',
 };
 
 export function gestionnaireFromResponse(
@@ -85,7 +83,6 @@ export function gestionnaireFromResponse(
     status: gestionnaire.status || 'Actif',
     peutSignerDocusign: gestionnaire.peutSignerDocusign,
     initiales: gestionnaire.initiales ?? '',
-    couleur: gestionnaire.couleur ?? '',
   };
 }
 
