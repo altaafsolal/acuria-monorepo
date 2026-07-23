@@ -321,7 +321,11 @@ export async function getValidEmailToken(tenantId: string): Promise<BrokeredEmai
 
   const provider = tenant.email_provider;
   if (!provider || !tenant.email_refresh_token) {
-    throw new HttpError(409, 'This tenant has not connected an email provider yet.', ERR_NOT_CONNECTED);
+    throw new HttpError(
+      200,
+      "This tenant has not connected an email provider yet.",
+      ERR_NOT_CONNECTED,
+    );
   }
 
   // A Microsoft grant that predates the email feature (SharePoint-only) lacks

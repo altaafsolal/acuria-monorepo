@@ -337,15 +337,15 @@ export async function getValidAccessToken(tenantId: string): Promise<BrokeredTok
 
   if (!tenant.sharepoint_refresh_token || !tenant.sharepoint_connected) {
     throw new HttpError(
-      409,
-      'This tenant has not connected SharePoint yet.',
+      200,
+      "This tenant has not connected SharePoint yet.",
       ERR_NOT_CONNECTED,
     );
   }
   if (!tenant.sharepoint_site_id || !tenant.sharepoint_drive_id) {
     throw new HttpError(
-      409,
-      'This tenant is connected but no SharePoint site/drive has been selected.',
+      200,
+      "This tenant is connected but no SharePoint site/drive has been selected.",
       ERR_NOT_CONNECTED,
     );
   }
