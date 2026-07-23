@@ -60,5 +60,10 @@ export {
   useUpdateKycDocument,
   useClientTimeline,
 } from './useClientPanel';
-export { usePlatformAuditLogs, useTenantAuditLogs } from './useAudit';
+export {
+  usePlatformAuditLogs,
+  useTenantAuditLogs,
+  useDeletePlatformAuditLogs,
+  usePurgePlatformAuditLogs,
+} from './useAudit';
 export { useForgotPassword, useVerifyOtp, useSetPassword } from './usePasswordReset';

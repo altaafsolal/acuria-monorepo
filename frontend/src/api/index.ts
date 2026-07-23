@@ -110,6 +110,8 @@ const api = {
     userId?: string;
     search?: string;
   } = {}) => `${baseUrl}/audit${buildAuditQuery(params)}`,
+  platformAuditDelete: () => `${baseUrl}/platform/audit`,
+  platformAuditPurge: () => `${baseUrl}/platform/audit/all`,
 };
 
 export default api;
