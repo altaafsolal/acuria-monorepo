@@ -21,19 +21,15 @@ describe('getPlatformWsUrl', () => {
     warn.mockRestore();
   });
 
-  it('uses VITE_WS_URL when VITE_API_URL is relative', () => {
+  it('in DEV, prefers direct backend WS over VITE_WS_URL when API URL is relative', () => {
     vi.stubEnv('VITE_API_URL', '/api');
     vi.stubEnv('VITE_WS_URL', 'wss://api.example.com/api/ws');
-    const url = new URL(getPlatformWsUrl('tok'));
-    expect(url.host).toBe('api.example.com');
-    expect(url.pathname).toBe('/api/ws');
+    expect(getPlatformWsUrl('tok')).toBe('ws://localhost:3001/api/ws?token=tok');
   });
 
-  it('falls back to same-origin /api/ws', () => {
+  it('in DEV with relative API URL, connects directly to backend WS port', () => {
     vi.stubEnv('VITE_WS_URL', '');
     vi.stubEnv('VITE_API_URL', '/api');
-    const url = new URL(getPlatformWsUrl('tok'));
-    expect(url.pathname).toBe('/api/ws');
-    expect(url.searchParams.get('token')).toBe('tok');
+    expect(getPlatformWsUrl('tok')).toBe('ws://localhost:3001/api/ws?token=tok');
   });
 });

@@ -2,10 +2,12 @@
  * Build the super-admin realtime WebSocket URL.
  *
  * Resolution order:
- * 1. Absolute `VITE_API_URL` → derive `wss://<same-host>/api/ws`
- *    (preferred: keeps REST + WS on the same live API host)
- * 2. `VITE_WS_URL` if set and no absolute API URL
- * 3. Same-origin `/api/ws` (local Vite proxy / monorepo same-host deploy)
+ * 1. Dev + relative API → direct `ws://localhost:3001/api/ws`
+ *    (bypasses Vite's `/api/ws` proxy, which drops connections with ECONNRESET
+ *    and can reconnect-storm Baserow-auth on every upgrade)
+ * 2. Absolute `VITE_API_URL` → derive `wss://<same-host>/api/ws`
+ * 3. `VITE_WS_URL` if set and no absolute API URL
+ * 4. Same-origin `/api/ws` (monorepo same-host deploy)
  *
  * If both `VITE_API_URL` and `VITE_WS_URL` are absolute but on different hosts,
  * we always follow the API host and warn — a stale WS URL is a common deploy bug
@@ -14,6 +16,14 @@
 export function getPlatformWsUrl(token: string): string {
   const configured = (import.meta.env.VITE_WS_URL as string | undefined)?.trim();
   const apiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+
+  // Local Vite: talk to the backend WS port directly. The HTTP `/api` proxy is fine;
+  // the WS proxy is not (see ECONNRESET storms in the Vite terminal).
+  if (import.meta.env.DEV && !absoluteHttpToWsUrl(apiUrl)) {
+    const url = new URL('ws://localhost:3001/api/ws');
+    url.searchParams.set('token', token);
+    return url.toString();
+  }
 
   const fromAbsoluteApi = absoluteHttpToWsUrl(apiUrl);
   if (fromAbsoluteApi) {
