@@ -6,6 +6,10 @@ import { get, post, put } from '../lib/http';
 import type {
   SharepointConfigInput,
   SharepointConnectResponse,
+  SharepointDriveOption,
+  SharepointDrivesResponse,
+  SharepointSiteOption,
+  SharepointSitesResponse,
   SharepointStatus,
   SharepointStatusResponse,
 } from '../types';
@@ -65,5 +69,33 @@ export function useSharepointDisconnect() {
     onSuccess: async (_data, { tenantId }) => {
       await invalidateSharepointQueries(queryClient, tenantId);
     },
+  });
+}
+
+export function useSharepointSites(
+  tenantId: string | null | undefined,
+  query: string,
+  enabled = true,
+) {
+  const q = query.trim();
+  return useGet<SharepointSitesResponse, SharepointSiteOption[]>({
+    path: api.sharepointSites(tenantId ?? '', q),
+    queryKey: queryKeys.tenant.sharepointSites(tenantId ?? '', q),
+    select: (data) => data.sites,
+    enabled: Boolean(tenantId) && enabled,
+  });
+}
+
+export function useSharepointDrives(
+  tenantId: string | null | undefined,
+  siteId: string | null | undefined,
+  enabled = true,
+) {
+  const id = siteId?.trim() ?? '';
+  return useGet<SharepointDrivesResponse, SharepointDriveOption[]>({
+    path: api.sharepointDrives(tenantId ?? '', id),
+    queryKey: queryKeys.tenant.sharepointDrives(tenantId ?? '', id),
+    select: (data) => data.drives,
+    enabled: Boolean(tenantId) && Boolean(id) && enabled,
   });
 }

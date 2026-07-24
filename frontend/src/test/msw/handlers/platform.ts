@@ -94,6 +94,20 @@ export const platformHandlers = [
     });
   }),
 
+  http.get('/api/tenants/:tenantId/sharepoint/sites', () => {
+    return HttpResponse.json({
+      sites: [
+        { id: 'site-1', displayName: 'Test Site', webUrl: 'https://contoso.sharepoint.com' },
+      ],
+    });
+  }),
+
+  http.get('/api/tenants/:tenantId/sharepoint/drives', () => {
+    return HttpResponse.json({
+      drives: [{ id: 'drive-1', name: 'Documents' }],
+    });
+  }),
+
   http.get('/api/tenants/:tenantId/email/status', () => {
     return HttpResponse.json({
       email: {

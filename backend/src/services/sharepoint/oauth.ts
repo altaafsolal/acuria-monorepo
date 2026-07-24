@@ -79,6 +79,17 @@ export interface SiteTarget {
   driveId: string;
 }
 
+export interface SharepointSiteOption {
+  id: string;
+  displayName: string;
+  webUrl: string | null;
+}
+
+export interface SharepointDriveOption {
+  id: string;
+  name: string;
+}
+
 function assertConfigured(): void {
   if (!isAzureConfigured()) {
     throw new HttpError(
@@ -247,10 +258,8 @@ export async function refreshTokens(refreshToken: string, msTenantId: string): P
  * Graph's host is the same for every org — the access token identifies which
  * tenant we're acting in, which is why there is no tid in these URLs.
  *
- * TODO: a "pick which site / library" UI would list `/sites?search=` and
- * `/sites/{id}/drives` instead of assuming the root site. The schema is already
- * shaped for it: sharepoint_site_id and sharepoint_drive_id are distinct columns
- * and both are independently overridable via PUT /sharepoint/config.
+ * Used on OAuth callback to prefill. Admins can override via the site/drive
+ * picker (GET /sites + GET /drives → PUT /config).
  */
 export async function resolveSiteAndDrive(accessToken: string): Promise<SiteTarget> {
   const site = await graphGet<{ id?: string; displayName?: string; name?: string }>(
@@ -270,6 +279,76 @@ export async function resolveSiteAndDrive(accessToken: string): Promise<SiteTarg
     siteDisplayName: site.displayName || site.name || '',
     driveId: drive.id,
   };
+}
+
+interface GraphSite {
+  id?: string;
+  displayName?: string;
+  name?: string;
+  webUrl?: string;
+}
+
+interface GraphDrive {
+  id?: string;
+  name?: string;
+}
+
+interface GraphCollection<T> {
+  value?: T[];
+}
+
+function toSiteOption(site: GraphSite): SharepointSiteOption | null {
+  if (!site.id) return null;
+  return {
+    id: site.id,
+    displayName: site.displayName || site.name || site.id,
+    webUrl: site.webUrl || null,
+  };
+}
+
+/**
+ * Always includes the org root site. When `query` is non-empty, also searches
+ * via Graph `/sites?search=` and merges (deduped by id).
+ */
+export async function listSites(
+  accessToken: string,
+  query = '',
+): Promise<SharepointSiteOption[]> {
+  const byId = new Map<string, SharepointSiteOption>();
+
+  const root = await graphGet<GraphSite>(`${GRAPH}/sites/root`, accessToken);
+  const rootOption = toSiteOption(root);
+  if (rootOption) byId.set(rootOption.id, rootOption);
+
+  const q = query.trim();
+  if (q) {
+    const searched = await graphGet<GraphCollection<GraphSite>>(
+      `${GRAPH}/sites?search=${encodeURIComponent(q)}`,
+      accessToken,
+    );
+    for (const site of searched.value ?? []) {
+      const option = toSiteOption(site);
+      if (option) byId.set(option.id, option);
+    }
+  }
+
+  return [...byId.values()];
+}
+
+export async function listDrives(
+  accessToken: string,
+  siteId: string,
+): Promise<SharepointDriveOption[]> {
+  const data = await graphGet<GraphCollection<GraphDrive>>(
+    `${GRAPH}/sites/${encodeURIComponent(siteId)}/drives`,
+    accessToken,
+  );
+  return (data.value ?? [])
+    .filter((drive): drive is GraphDrive & { id: string } => Boolean(drive.id))
+    .map((drive) => ({
+      id: drive.id,
+      name: drive.name || drive.id,
+    }));
 }
 
 async function graphGet<T>(url: string, accessToken: string): Promise<T> {
@@ -302,8 +381,8 @@ export async function storeConnection(
         driveId: site.driveId,
         siteDisplayName: site.siteDisplayName,
         // Only "connected" once we know where to write. If site resolution failed
-        // the tokens are still stored, but the tenant must supply the ids by hand
-        // before anything will upload.
+        // the tokens are still stored, but the tenant must pick a site/drive in
+        // the Integrations UI before anything will upload.
         connected: true,
       }
       : { connected: false }),
@@ -327,6 +406,44 @@ export interface BrokeredToken {
   siteId: string;
   driveId: string;
   expiresAt: string;
+}
+
+/**
+ * Access token for tenant-admin Graph calls (site/drive picker).
+ * Unlike `getValidAccessToken`, this only requires a stored refresh token —
+ * site/drive may still be unset during the `needs_config` onboarding step.
+ */
+export async function getAccessTokenForAdmin(tenantId: string): Promise<string> {
+  assertConfigured();
+
+  const tenant = await tenantsRepo.findTenantById(tenantId);
+  if (!tenant) throw new HttpError(404, 'Tenant not found');
+
+  if (!tenant.sharepoint_refresh_token) {
+    throw new HttpError(
+      409,
+      'Connectez un compte Microsoft avant de choisir un site.',
+      ERR_NOT_CONNECTED,
+    );
+  }
+
+  const expiresAt = tenant.sharepoint_token_expires_at;
+  const stillValid = Boolean(
+    tenant.sharepoint_access_token
+    && expiresAt
+    && new Date(expiresAt).getTime() - Date.now() > EXPIRY_BUFFER_MS,
+  );
+
+  if (stillValid) {
+    return decryptSecret(tenant.sharepoint_access_token!);
+  }
+
+  const tokens = await refreshForTenant(
+    tenantId,
+    tenant.sharepoint_refresh_token,
+    tenant.sharepoint_ms_tenant_id ?? '',
+  );
+  return tokens.accessToken;
 }
 
 export async function getValidAccessToken(tenantId: string): Promise<BrokeredToken> {

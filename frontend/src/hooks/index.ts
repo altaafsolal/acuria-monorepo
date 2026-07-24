@@ -21,6 +21,8 @@ export {
   useSharepointConnect,
   useSharepointConfig,
   useSharepointDisconnect,
+  useSharepointSites,
+  useSharepointDrives,
 } from './useSharepoint';
 export {
   useEmailStatus,

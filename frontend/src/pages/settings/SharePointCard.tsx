@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FiCheckCircle, FiCloud } from "react-icons/fi";
 import { useApp } from "../../context/AppContext";
 import { useConfirm } from "../../context/ConfirmContext";
@@ -7,9 +7,13 @@ import {
   useSharepointConfig,
   useSharepointConnect,
   useSharepointDisconnect,
+  useSharepointDrives,
+  useSharepointSites,
   useSharepointStatus,
 } from "../../hooks";
 import { formatIntegrationDate } from "./integrationDate";
+
+const SITE_SEARCH_DEBOUNCE_MS = 300;
 
 /**
  * The SharePoint connection card. Self-contained: reads its own status and owns its
@@ -27,21 +31,77 @@ export default function SharePointCard() {
   const saveConfig = useSharepointConfig();
   const disconnect = useSharepointDisconnect();
 
+  const [siteSearch, setSiteSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [siteId, setSiteId] = useState("");
+  const [siteDisplayName, setSiteDisplayName] = useState("");
   const [driveId, setDriveId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(siteSearch.trim());
+    }, SITE_SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [siteSearch]);
+
+  useEffect(() => {
     if (!sharepoint) return;
     setSiteId(sharepoint.siteId ?? "");
+    setSiteDisplayName(sharepoint.siteDisplayName ?? "");
     setDriveId(sharepoint.driveId ?? "");
   }, [sharepoint]);
-
-  if (!tenantId) return null;
 
   const hasTokens = Boolean(
     sharepoint?.connected || sharepoint?.siteId || sharepoint?.connectedAt,
   );
+
+  const {
+    data: sites,
+    isFetching: sitesLoading,
+    error: sitesError,
+  } = useSharepointSites(tenantId, debouncedSearch, hasTokens && Boolean(isTenantAdmin));
+
+  const {
+    data: drives,
+    isFetching: drivesLoading,
+    error: drivesError,
+  } = useSharepointDrives(tenantId, siteId, hasTokens && Boolean(isTenantAdmin) && Boolean(siteId));
+
+  const siteOptions = useMemo(() => {
+    const list = sites ?? [];
+    if (siteId && !list.some((site) => site.id === siteId)) {
+      return [
+        {
+          id: siteId,
+          displayName: siteDisplayName || siteId,
+          webUrl: null,
+        },
+        ...list,
+      ];
+    }
+    return list;
+  }, [sites, siteId, siteDisplayName]);
+
+  const driveOptions = useMemo(() => {
+    const list = drives ?? [];
+    if (driveId && !list.some((drive) => drive.id === driveId)) {
+      return [{ id: driveId, name: "Bibliothèque actuelle" }, ...list];
+    }
+    return list;
+  }, [drives, driveId]);
+
+  // When drives load for a newly chosen site with no drive yet, prefer Documents.
+  useEffect(() => {
+    if (!drives || drives.length === 0) return;
+    if (driveId) return;
+    const preferred =
+      drives.find((drive) => /documents?/i.test(drive.name))
+      ?? drives[0];
+    if (preferred) setDriveId(preferred.id);
+  }, [drives, driveId]);
+
+  if (!tenantId) return null;
 
   // ── Standard users: read-only ───────────────────────────────────────────────
   if (!isTenantAdmin) {
@@ -80,15 +140,32 @@ export default function SharePointCard() {
     );
   };
 
+  const handleSiteChange = (nextSiteId: string) => {
+    setSiteId(nextSiteId);
+    const selected = siteOptions.find((site) => site.id === nextSiteId);
+    setSiteDisplayName(selected?.displayName ?? "");
+    setDriveId("");
+    setFormError(null);
+  };
+
   const handleSaveConfig = (event: React.FormEvent) => {
     event.preventDefault();
     setFormError(null);
     if (!siteId.trim() || !driveId.trim()) {
-      setFormError("Le Site ID et le Drive ID sont obligatoires.");
+      setFormError("Choisissez un site et une bibliothèque de documents.");
       return;
     }
+    const displayName =
+      siteDisplayName
+      || siteOptions.find((site) => site.id === siteId)?.displayName
+      || undefined;
     saveConfig.mutate(
-      { tenantId, siteId: siteId.trim(), driveId: driveId.trim() },
+      {
+        tenantId,
+        siteId: siteId.trim(),
+        driveId: driveId.trim(),
+        ...(displayName ? { siteDisplayName: displayName } : {}),
+      },
       {
         onSuccess: () => notify({ title: "Configuration enregistrée", variant: "success" }),
         onError: (error) => setFormError(error.message),
@@ -114,6 +191,8 @@ export default function SharePointCard() {
       },
     );
   };
+
+  const listError = sitesError?.message || drivesError?.message || null;
 
   return (
     <div className="sp-card">
@@ -154,24 +233,74 @@ export default function SharePointCard() {
           ) : (
             <p className="sp-card__text">
               Compte Microsoft connecté, mais le site SharePoint cible n'est pas encore
-              défini. Renseignez le Site ID et le Drive ID pour terminer.
+              défini. Choisissez un site et une bibliothèque pour terminer.
             </p>
           )}
 
           <form className="sp-form" onSubmit={handleSaveConfig}>
             <label className="field field--full">
-              <span>Site ID</span>
+              <span>Rechercher un site</span>
               <div className="field-input">
-                <input type="text" value={siteId} onChange={(e) => setSiteId(e.target.value)} placeholder="contoso.sharepoint.com,8f1c…,3b2a…" />
+                <input
+                  type="search"
+                  value={siteSearch}
+                  onChange={(e) => setSiteSearch(e.target.value)}
+                  placeholder="Nom du site SharePoint…"
+                  autoComplete="off"
+                />
               </div>
             </label>
+
             <label className="field field--full">
-              <span>Drive ID</span>
+              <span>Site SharePoint</span>
               <div className="field-input">
-                <input type="text" value={driveId} onChange={(e) => setDriveId(e.target.value)} placeholder="b!x9Kd…" />
+                <select
+                  value={siteId}
+                  onChange={(e) => handleSiteChange(e.target.value)}
+                  disabled={sitesLoading && siteOptions.length === 0}
+                >
+                  <option value="">
+                    {sitesLoading ? "Chargement…" : "Sélectionner un site"}
+                  </option>
+                  {siteOptions.map((site) => (
+                    <option key={site.id} value={site.id}>
+                      {site.displayName}
+                    </option>
+                  ))}
+                </select>
               </div>
             </label>
-            {formError && <p className="sp-form__error">{formError}</p>}
+
+            <label className="field field--full">
+              <span>Bibliothèque de documents</span>
+              <div className="field-input">
+                <select
+                  value={driveId}
+                  onChange={(e) => {
+                    setDriveId(e.target.value);
+                    setFormError(null);
+                  }}
+                  disabled={!siteId || (drivesLoading && driveOptions.length === 0)}
+                >
+                  <option value="">
+                    {!siteId
+                      ? "Choisissez d'abord un site"
+                      : drivesLoading
+                        ? "Chargement…"
+                        : "Sélectionner une bibliothèque"}
+                  </option>
+                  {driveOptions.map((drive) => (
+                    <option key={drive.id} value={drive.id}>
+                      {drive.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </label>
+
+            {(formError || listError) && (
+              <p className="sp-form__error">{formError || listError}</p>
+            )}
             <div className="sp-card__actions">
               <button type="submit" className="btn-primary" disabled={saveConfig.isPending}>
                 {saveConfig.isPending ? "Enregistrement…" : "Enregistrer"}

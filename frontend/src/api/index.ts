@@ -91,6 +91,16 @@ const api = {
   sharepointConnect: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/connect`,
   sharepointConfig: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/config`,
   sharepointDisconnect: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/sharepoint/disconnect`,
+  sharepointSites: (tenantId: string, q = '') => {
+    const params = new URLSearchParams();
+    if (q.trim()) params.set('q', q.trim());
+    const qs = params.toString();
+    return `${baseUrl}/tenants/${tenantId}/sharepoint/sites${qs ? `?${qs}` : ''}`;
+  },
+  sharepointDrives: (tenantId: string, siteId: string) => {
+    const params = new URLSearchParams({ siteId });
+    return `${baseUrl}/tenants/${tenantId}/sharepoint/drives?${params.toString()}`;
+  },
 
   // Email integration (per-tenant Microsoft 365 Mail.Send OR Gmail)
   emailStatus: (tenantId: string) => `${baseUrl}/tenants/${tenantId}/email/status`,

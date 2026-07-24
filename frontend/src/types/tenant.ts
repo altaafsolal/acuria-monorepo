@@ -69,6 +69,25 @@ export interface SharepointConfigInput {
   siteDisplayName?: string;
 }
 
+export interface SharepointSiteOption {
+  id: string;
+  displayName: string;
+  webUrl: string | null;
+}
+
+export interface SharepointDriveOption {
+  id: string;
+  name: string;
+}
+
+export interface SharepointSitesResponse {
+  sites: SharepointSiteOption[];
+}
+
+export interface SharepointDrivesResponse {
+  drives: SharepointDriveOption[];
+}
+
 export interface TenantsResponse {
   tenants: Tenant[];
 }

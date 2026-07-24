@@ -18,6 +18,10 @@ export const queryKeys = {
     branding: ['tenant', 'branding'] as const,
     logo: ['tenant', 'logo'] as const,
     sharepoint: (tenantId: string) => ['tenant', tenantId, 'sharepoint'] as const,
+    sharepointSites: (tenantId: string, q: string) =>
+      ['tenant', tenantId, 'sharepoint', 'sites', q] as const,
+    sharepointDrives: (tenantId: string, siteId: string) =>
+      ['tenant', tenantId, 'sharepoint', 'drives', siteId] as const,
     email: (tenantId: string) => ['tenant', tenantId, 'email'] as const,
   },
   assets: {

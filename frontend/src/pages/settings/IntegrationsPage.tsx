@@ -65,7 +65,7 @@ export default function IntegrationsPage({ fullScreen = false, focus }: Integrat
       notify({
         title: "Compte Microsoft connecté",
         message:
-          "Nous n'avons pas pu détecter votre site SharePoint automatiquement. Saisissez le Site ID et le Drive ID.",
+          "Nous n'avons pas pu détecter votre site SharePoint automatiquement. Choisissez un site et une bibliothèque ci-dessous.",
         variant: "info",
       });
     } else if (sp) {

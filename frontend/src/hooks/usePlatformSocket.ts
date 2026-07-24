@@ -31,6 +31,12 @@ export function usePlatformSocket(enabled: boolean): void {
   const reconnectTimerRef = useRef<number | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const shouldReconnectRef = useRef(true);
+  /** Suppress the close→reconnect path when we close on purpose (cleanup / replace). */
+  const intentionalCloseRef = useRef(false);
+  const notifyRef = useRef(notify);
+  const queryClientRef = useRef(queryClient);
+  notifyRef.current = notify;
+  queryClientRef.current = queryClient;
 
   useEffect(() => {
     if (!enabled) {
@@ -44,6 +50,12 @@ export function usePlatformSocket(enabled: boolean): void {
         window.clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
       }
+    };
+
+    const closeSocket = (socket: WebSocket | null) => {
+      if (!socket) return;
+      intentionalCloseRef.current = true;
+      socket.close();
     };
 
     const scheduleReconnect = () => {
@@ -64,9 +76,9 @@ export function usePlatformSocket(enabled: boolean): void {
       }
 
       if (payload.type === 'tenant.provisioned') {
-        void queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenants });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.platform.stats });
-        notify({
+        void queryClientRef.current.invalidateQueries({ queryKey: queryKeys.platform.tenants });
+        void queryClientRef.current.invalidateQueries({ queryKey: queryKeys.platform.stats });
+        notifyRef.current({
           title: 'Tenant prêt',
           message: `${payload.tenant.name} est maintenant disponible.`,
           variant: 'success',
@@ -79,9 +91,9 @@ export function usePlatformSocket(enabled: boolean): void {
       }
 
       if (payload.type === 'tenant.failed') {
-        void queryClient.invalidateQueries({ queryKey: queryKeys.platform.tenants });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.platform.stats });
-        notify({
+        void queryClientRef.current.invalidateQueries({ queryKey: queryKeys.platform.tenants });
+        void queryClientRef.current.invalidateQueries({ queryKey: queryKeys.platform.stats });
+        notifyRef.current({
           title: 'Échec de création du tenant',
           message: payload.error
             ? `${payload.name}: ${payload.error}`
@@ -105,8 +117,13 @@ export function usePlatformSocket(enabled: boolean): void {
         return;
       }
 
+      if (!shouldReconnectRef.current) return;
+
+      // Replace any existing socket without treating the close as a drop.
       if (socketRef.current) {
-        socketRef.current.close();
+        const previous = socketRef.current;
+        socketRef.current = null;
+        closeSocket(previous);
       }
 
       const socket = new WebSocket(getPlatformWsUrl(token));
@@ -118,12 +135,20 @@ export function usePlatformSocket(enabled: boolean): void {
 
       socket.addEventListener('message', handleMessage);
       socket.addEventListener('close', (event) => {
+        if (socketRef.current === socket) {
+          socketRef.current = null;
+        }
+        if (intentionalCloseRef.current) {
+          intentionalCloseRef.current = false;
+          return;
+        }
         if (import.meta.env.DEV) {
           console.warn('[ws] closed', event.code, event.reason || '(no reason)');
         }
         scheduleReconnect();
       });
       socket.addEventListener('error', () => {
+        // Let the close handler schedule reconnect (avoid double-scheduling).
         socket.close();
       });
     };
@@ -133,8 +158,9 @@ export function usePlatformSocket(enabled: boolean): void {
     return () => {
       shouldReconnectRef.current = false;
       clearReconnectTimer();
-      socketRef.current?.close();
+      const socket = socketRef.current;
       socketRef.current = null;
+      closeSocket(socket);
     };
-  }, [enabled, notify, queryClient]);
+  }, [enabled]);
 }

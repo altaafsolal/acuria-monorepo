@@ -7,13 +7,12 @@ import { assertTenantAdminFor } from './_guard.js';
 const router = Router({ mergeParams: true });
 
 /**
- * Manual override for the Site / Drive ids.
+ * Saves the chosen Site / Drive ids from the Integrations picker.
  *
- * The callback resolves both automatically from the tenant's root site, which is
- * right for most cabinets. This exists for the two cases that breaks: the org has
- * several sites and the documents belong somewhere other than the root, or
- * auto-resolution failed outright (in which case the tenant lands here with
- * ?sharepoint=needs_config and has to paste the ids in).
+ * The OAuth callback resolves both automatically from the tenant's root site,
+ * which is right for most cabinets. This endpoint lets admins change destination
+ * (or finish setup when auto-resolution failed and they land with
+ * ?sharepoint=needs_config).
  *
  * Setting both ids is what flips `connected` to true — tokens alone are not a
  * usable connection if we don't know where to write.
